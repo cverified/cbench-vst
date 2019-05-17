@@ -1,4 +1,4 @@
-These subdirectories contain solutions to some of the C verification benchmarks
-in the paper [A benchmark for C program verification](http://www.cs.ru.nl/~freek/cbench/cbench.pdf).
+These are verifications by [Andrew Appel](https://www.cs.princeton.edu/~appel/) of programs from the [cbench](https://github.com/cverified/cbench) benchmark
+using [VST](https://vst.cs.princeton.edu).
 
 BUILD INSTRUCTIONS:  see in each subdirectory.
