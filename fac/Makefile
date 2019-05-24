@@ -10,7 +10,7 @@ VST_DIRS= msl sepcomp veric floyd
 VSTFLAGS= -R $(VST_LOC)/compcert compcert $(foreach d, $(VST_DIRS), -Q $(VST_LOC)/$(d) VST.$(d)) -I . 
 
 
-target: _CoqProject verif_fac1.vo verif_fac2.vo verif_fac3.vo verif_fac4.vo
+target: _CoqProject verif_fac1.vo verif_fac2.vo verif_fac3.vo verif_fac4.vo verif_fac6.vo
 _CoqProject: Makefile CONFIGURE
 	@echo $(VSTFLAGS) > _CoqProject
 
@@ -33,12 +33,16 @@ fac4.v: fac4.c
 fac5.v: fac5.c
 	$(CLIGHTGEN) -normalize $<
 
+fac6.v: fac6.c
+	$(CLIGHTGEN) -normalize $<
+
 fac_facts.vo: fac_facts.v
 
 verif_fac1.vo: verif_fac1.v fac1.vo fac_facts.vo
 verif_fac2.vo: verif_fac2.v fac2.vo fac_facts.vo
 verif_fac3.vo: verif_fac3.v fac3.vo fac_facts.vo
 verif_fac4.vo: verif_fac4.v fac4.vo fac_facts.vo
+verif_fac6.vo: verif_fac6.v fac6.vo fac_facts.vo
 
 
 clean:
