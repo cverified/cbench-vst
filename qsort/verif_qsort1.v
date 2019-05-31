@@ -83,8 +83,8 @@ Definition quicksort_spec :=
   PRE  [ _m OF tint, _n OF tint] 
     PROP(if zlt (Int.signed m) (Int.signed n)
             then   (Zlength before = Int.signed m 
-                          /\ Zlength after = N-(Int.signed n+1)
-                          /\ Zlength al = Int.signed n+1- Int.signed m)
+                     /\ Zlength after = N-(Int.signed n+1)
+                     /\ Zlength al = Int.signed n+1- Int.signed m)
             else al=nil;
             Forall def_float al)
     LOCAL(temp _m (Vint m); temp _n (Vint n); gvars gv)
@@ -111,46 +111,13 @@ Definition Gprog : funspecs :=
 
 Set Nested Proofs Allowed.
 
-Ltac entailer_no_saturate :=
- intros;
- try match goal with POSTCONDITION := @abbreviate ret_assert _ |- _ =>
-        clear POSTCONDITION
-      end;
- try match goal with MORE_COMMANDS := @abbreviate statement _ |- _ =>
-        clear MORE_COMMANDS
-      end;
- match goal with
- | |- local _ && ?P |-- _ => go_lower; (*simpl;*) try (*simple*) apply empTrue
- | |- ?P |-- _ =>
-    match type of P with
-    | ?T => unify T mpred; pull_out_props
-    end
- | |- _ => fail "The entailer tactic works only on entailments  _ |-- _ "
- end;
- (* The following lines are only a temporary solution. Many current proofs
- depend on one original feature of "entailer_no_saturate": sem_cast expressions and
- sem_binary_operation' expressions will be simplified. This step was done
- in go_lower. But that is not a reasonable design. Current version of
- go_lower does not "simpl" user's expressions any longer---go_lower should
- be safe. Thus we add the following lines here. *)
- repeat match goal with
-        | |- context [force_val (sem_binary_operation' ?op ?t1 ?t2 ?v1 ?v2)] =>
-          progress simpl (force_val (sem_binary_operation' op t1 t2 v1 v2))
-        end;
- simpl sem_cast;
- (* end of temporary solution *)
- ent_iter;
- repeat change (mapsto_memory_block.spacer _ _ _ _) with emp;
- first [ contradiction
-        | simple apply prop_right; my_auto
-        | match goal with |- ?Q |-- !! _ && ?Q' => constr_eq  Q Q';
-                      simple apply prop_and_same_derives'; my_auto
-          end
-        | simple apply andp_right;
-            [apply prop_right; my_auto 
-            | cancel; rewrite <- ?sepcon_assoc; autorewrite with norm ]
-        | normalize; cancel; rewrite <- ?sepcon_assoc
-        ].
+Lemma no_saturate_hack:
+  forall sh n al p,
+    data_at sh (tarray tdouble n) al p |-- !!True.
+Proof.
+intros. apply prop_right. auto.
+Qed.
+Hint Resolve no_saturate_hack: saturate_local.
 
 Lemma body_quicksort:  semax_body Vprog Gprog f_quicksort quicksort_spec.
 Proof.
@@ -161,7 +128,7 @@ forward_if (EX bl:list val,
     SEP(data_at Ews (tarray tdouble N)
              (before ++ bl ++ after) (gv _a))).
 2:{
-forward. Exists al. entailer_no_saturate.
+forward. Exists al. entailer!.
 rewrite if_false in H by (apply lt_false_inv; auto).
 subst al. constructor.
 }
@@ -169,7 +136,7 @@ subst al. constructor.
 Intros bl.
 forward.
 Exists bl.
-entailer_no_saturate.
+entailer!.
 }
 apply lt_inv in H0.
 rewrite if_true in H by auto.
@@ -178,12 +145,15 @@ destruct H as [H [H0 H1]].
 rename m into m'. rename n into n'.
 rewrite <- (Int.repr_signed m').
 rewrite <- (Int.repr_signed n').
-forget (Int.signed m') as m.
+set (m := Zlength before) in *.
+rewrite <- H in *.
+clear m' H.
 forget (Int.signed n') as n.
-assert (0 < Zlength  al) by omega.
+pose proof I.
+pose proof I.
 forward.
-entailer_no_saturate.
-entailer_no_saturate.
+entailer!.
+entailer!.
 apply is_float_middle; auto; omega.
 forward.
 forward.
@@ -203,7 +173,7 @@ forward_while (EX i:Z, EX j:Z, EX bl: list val,
                (before ++ bl ++ after) (gv _a))).
 - (* precondition of main while loop *)
 Exists m n al.
-entailer_no_saturate.
+entailer!.
 autorewrite with sublist.
 split3.
 constructor.
@@ -215,7 +185,7 @@ right; split; auto.
 apply float_cmp_eq_refl.
 eapply Forall_forall; try apply Hdef_al. apply Znth_In; omega.
 - (* tc_expr of main while loop *)
-entailer_no_saturate.
+entailer!.
 - (* body of main while loop *)
 assert (Hpivot: def_float pivot)
    by (eapply Forall_Znth; try eassumption; omega).
@@ -230,7 +200,9 @@ assert (Zlength al = Zlength bl). {
  rewrite !Zlength_correct. f_equal. apply Permutation_length; auto.
 }
 assert (Hdef_bl: Forall def_float bl) by (eapply Forall_perm; eauto).
-clear H8c H6b HRE.
+rewrite H2 in *.
+clear H8c H6b HRE Hdef_al H2.
+pose proof I. move H2 before Hmn.
 clear H5. assert (H5: m<=j) by omega.
 forward_loop (EX i:Z,
       PROP(m<=i<=j+1; i<=n;
@@ -255,20 +227,19 @@ forward_loop (EX i:Z,
                (before ++ bl ++ after) (gv _a))).
  + (* precondition of i loop *)
    Exists i.
-   entailer_no_saturate.
+   entailer!.
  + (* body of i loop *)
    clear dependent i.
-   subst m; 
-   set (m := Zlength before) in *.
+   clear H.
    Intros i.
    forward.
-      entailer_no_saturate.
-      entailer_no_saturate.
+      entailer!.
+      entailer!.
       apply is_float_middle; auto; omega.
    forward_if.
    forward.
    Exists (i+1).
-   entailer_no_saturate.
+   entailer!.
    autorewrite with sublist in H11.  fold m in H11.
    apply both_float_cmp_true in H11; auto.
    2: eapply Forall_Znth; try eassumption; auto; omega.
@@ -296,7 +267,7 @@ forward_loop (EX i:Z,
     apply Exists_app. auto.
 
    forward.
-   Exists i. entailer_no_saturate.
+   Exists i. entailer!.
    apply both_float_cmp_false in H11; auto.
    autorewrite with sublist in H11.
    fold m in H11. 
@@ -307,7 +278,6 @@ forward_loop (EX i:Z,
  + (* after i loop *)
  clear dependent i.
  Intros i.
- subst m.  set (m:= Zlength before) in *.
  rename H10 into H13. rename H12 into H10.
  rename H11 into H14.
  forward_loop (EX j':Z,
@@ -328,18 +298,18 @@ forward_loop (EX i:Z,
        SEP (data_at Ews (tarray tdouble N)
                (before ++ bl ++ after) (gv _a))).
   * 
-    Exists j; entailer_no_saturate.
+    Exists j; entailer!.
     autorewrite with sublist. constructor.
-  *
+  * clear H.
     Intros j'. rename H11 into H'. destruct H6 as [_ H6']. rename H12 into H6.
     forward.
-      entailer_no_saturate.
-      entailer_no_saturate.
+      entailer!.
+      entailer!.
       apply is_float_middle; auto; rep_omega.
    forward_if.
    forward.
    Exists (j'-1).
-   entailer_no_saturate.
+   entailer!.
    autorewrite with sublist in H11.
    apply both_float_cmp_true in H11; auto.
    2: eapply Forall_Znth; try eassumption; auto; omega.
@@ -387,12 +357,13 @@ forward_loop (EX i:Z,
 
    forward. (* break *)
    Exists j'.
-   entailer_no_saturate.
+   entailer!.
    apply f_cmp_swap in H11; auto.
  * (* after the j loop *)
+   clear H.
   Intros j'.
-  rename H11 into H'. rename H5 into H5'. assert (H5: m<=j<=n) by omega.
-  clear H5' H6. rename H12 into H6.
+  rename H11 into H'. clear H5. assert (H5: m<=j<=n) by omega.
+  clear H6. rename H12 into H6.
   assert (H10': Exists (f_cmp Ceq pivot) (sublist 0 (i - m) bl) \/
       j' = n /\ f_cmp Ceq pivot (Znth (n - m) bl)). {
    destruct H10; auto. destruct H10; subst j.
@@ -410,8 +381,7 @@ forward_loop (EX i:Z,
   rewrite (sublist_split _ (j+1-m)) by omega.
   rewrite Forall_app. split; auto.
   eapply Forall_impl; try apply H6.
-  clear; intros. 
-          rewrite f_cmp_le_lt_eq. auto.
+  clear; intros; rewrite f_cmp_le_lt_eq; auto.
   clear H6.
   assert (j'<=n) by omega.
   destruct H as [H _].
@@ -438,21 +408,15 @@ forward_loop (EX i:Z,
           (before ++ bl ++ after) 
           (gv _a))).
    -- 
-     forward. entailer_no_saturate. entailer_no_saturate.
+     forward. entailer!. entailer!.
      apply is_float_middle; auto; omega.
-     forward. entailer_no_saturate. entailer_no_saturate.
+     forward. entailer!. entailer!.
      apply is_float_middle; auto; omega.
-     forward. entailer_no_saturate.
-     forward. entailer_no_saturate.
+     forward. entailer!.
+     forward. entailer!.
      forward.
      forward.
-     rewrite app_Znth2 by omega.
-     rewrite app_Znth1 by (autorewrite with sublist; omega).
-     rewrite app_Znth2 by omega.
-     rewrite app_Znth1 by (autorewrite with sublist; omega).
-     rewrite !upd_Znth_app2 by (autorewrite with sublist; rep_omega).
-     rewrite !upd_Znth_app1 by (autorewrite with sublist; omega).
-     simpl force_val.
+     autorewrite with sublist.
      fold m.
      rewrite !def_float_f2f
        by (eapply Forall_Znth; try eassumption; omega).
@@ -462,14 +426,11 @@ forward_loop (EX i:Z,
              (Znth (i - m) bl)) with bl.
           2:{ apply Znth_eq_ext. list_solve. intros j ? .
                destruct (zeq j (i-m)); try subst j; autorewrite with sublist.
-               rewrite (upd_Znth_same); auto.
-               autorewrite with sublist. auto.
-               rewrite (upd_Znth_diff).
-               rewrite (upd_Znth_diff); auto. omega. 
-               autorewrite with sublist. auto.
-               autorewrite with sublist. omega. auto.
+               rewrite !(upd_Znth_same); autorewrite with sublist; auto.
+               rewrite !(upd_Znth_diff) by (autorewrite with sublist; omega).
+               auto.
              }
-          Exists (i+1) (i-1) bl. entailer_no_saturate.
+          Exists (i+1) (i-1) bl. entailer!.
           rewrite Z.sub_add.
           assert (f_cmp Ceq pivot (Znth (i-m) bl)). {
              clear - H14 H15.
@@ -484,9 +445,8 @@ forward_loop (EX i:Z,
           rewrite f_cmp_ge_gt_eq; auto.
           rewrite (sublist_split _ (i+1-m)) by omega. rewrite Forall_app.
           split; auto.
-          rewrite sublist_one by omega. constructor.
+          rewrite sublist_one by omega. repeat constructor.
           rewrite f_cmp_le_lt_eq; auto.
-          constructor.
           split.
           left. apply Exists_exists. exists (Znth (i-m) bl); split; auto.
           replace (Znth (i-m) bl) with (Znth (i-m) (sublist 0 (i+1-m) bl)).
@@ -495,7 +455,7 @@ forward_loop (EX i:Z,
           intros. rewrite Z.add_simpl_r.  auto.
      ++
       Exists (i+1) (j-1)   (upd_Znth (j - m) (upd_Znth (i - m) bl (Znth (j - m) bl)) (Znth (i - m) bl)).
-      entailer_no_saturate.
+      entailer!.
      assert (i<j) by omega.
      clear n0 H8 H12 H6 P_a HP_a.
      replace (upd_Znth (j - m) (upd_Znth (i - m) bl (Znth (j - m) bl)) (Znth (i - m) bl))
@@ -511,10 +471,10 @@ forward_loop (EX i:Z,
           replace (j-m - (i-m)) with (j-i) by omega.
           replace (i - m + (Z.succ 0 + (Zlength bl - (i - m + 1))))
                    with (Zlength bl) by omega.
-          rewrite <- (app_ass (sublist 0 (i-m) _)).
           replace (j-m+1-(i-m)-Z.succ 0 +(i-m+1)) with (j+1-m) by omega.
           replace (j-i- Z.succ 0 +(i-m+1)) with (j-m) by omega.
           replace (i-m+1) with (i+1-m) by omega.
+          rewrite <- (app_ass (sublist 0 (i-m) _)).
           rewrite !app_ass. reflexivity.
         }
        split3.
@@ -543,11 +503,12 @@ forward_loop (EX i:Z,
        rewrite Forall_app. split.
        rewrite sublist_one by rep_omega. repeat constructor.
        auto.
-       rewrite <- H2, H1. auto.
+       rewrite H1. auto.
        replace (n-m-(i-m)-(j+1-m-(j-m))-(j-m-(i+1-m)))
                   with (n -j) by omega.
        rewrite (sublist0_app2 (i+1-m)) by list_solve.
        autorewrite with sublist.
+       replace (i+1-m-(i-m)+(j-m)) with (j+1-m) by omega.
        split.
        destruct (zeq n j).
        rewrite app_Znth1 by list_solve. rewrite sublist_one by list_solve.
@@ -557,7 +518,6 @@ forward_loop (EX i:Z,
        replace (n - j - (i + 1 - m - (i - m)) + (j + 1 - m))
            with (n-m) by omega. auto.
        left.
-       replace (i + 1 - m - (i - m) + (j - m)) with (j+1-m) by omega.
        destruct H10 as [? | [? ?]].
        apply Exists_app. left. rewrite (sublist_split _ (i-m)) by rep_omega.
        apply Exists_app; left. auto.
@@ -566,10 +526,10 @@ forward_loop (EX i:Z,
    --
        forward.
        Exists i j bl.
-       entailer_no_saturate.
+       entailer!.
    --
        Intros i2 j2 bl2.
-       Exists (i2,j2,bl2). entailer_no_saturate.
+       Exists (i2,j2,bl2). entailer!.
 -
     assert (Zlength al = Zlength bl). {
      rewrite !Zlength_correct. f_equal. apply Permutation_length; auto.
@@ -603,7 +563,7 @@ forward_loop (EX i:Z,
      apply Forall_sublist; auto.
      Intros cl. Exists cl.
      rewrite !app_ass.
-     entailer_no_saturate.
+     entailer!.
    * rewrite !app_ass.
       rewrite <- (app_ass (sublist _ _ _)).
       rewrite <- sublist_split by omega.
@@ -614,8 +574,7 @@ forward_loop (EX i:Z,
       rewrite if_false by omega. split; auto.
       Intros vret.
       Exists (sublist 0 (j + 1 - m) bl).
-      entailer_no_saturate.
-      set (m:=Zlength before) in *.
+      entailer!. clear H. 
       assert (Zlength bl > 0) by omega.
       clear - H H15. destruct H15; subst j.
       rewrite sublist_one by rep_omega.
@@ -650,14 +609,13 @@ forward_loop (EX i:Z,
      rewrite if_true by auto.
      split. split3; auto.
      autorewrite with sublist.
-     rewrite <- H17, H. omega.
+     rewrite <- H17. omega.
      autorewrite with sublist. omega.
      apply Forall_sublist; auto.
      Intros dl. Exists (cl ++ [Znth (i - 1 - m) bl] ++ dl).
      rewrite !app_ass.
-     entailer_no_saturate.
+     entailer!.
      clear P_a HP_a.
-     set (m:=Zlength before) in *.
      split.
      eapply perm_trans; try apply H11.
      rewrite <- (sublist_same 0 (n+1-m) bl) by omega.
@@ -701,9 +659,8 @@ destruct H9; auto.
      apply Forall_sublist; auto.
      Intros dl. Exists (cl ++ dl).
      rewrite !app_ass.
-     entailer_no_saturate.
+     entailer!.
      clear  P_a HP_a.
-     set (m := Zlength before) in *.
      split.
      eapply perm_trans; try apply H11.
      rewrite <- (sublist_same 0 (n+1-m) bl) by omega.
@@ -722,8 +679,8 @@ destruct H9; auto.
       Intros vret.
       apply Permutation_nil in H18. subst vret.
       Exists (cl ++ sublist (j + 1 - m) (n + 1 - m) bl).
-      entailer_no_saturate.
-     set (m := Zlength before) in *.
+      entailer!.
+     clear H.
      split.
      eapply perm_trans; try apply H11.
      rewrite <- (sublist_same 0 (n+1-m) bl) by omega.
