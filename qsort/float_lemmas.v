@@ -189,9 +189,10 @@ contradiction (f_cmp_lt_ge_false _ _ H H0).
 Qed.
 
 Lemma f_cmp_le_trans:
-  forall a b c,  f_cmp Cle a b -> f_cmp Cle b c -> f_cmp Cle a c.
+   transitive val (f_cmp Cle).
 Proof.
 intros.
+intros a b c ? ?.
 destruct a,b; try contradiction.
 destruct c; try contradiction.
 simpl in *.
@@ -258,4 +259,96 @@ auto.
 -
 rewrite (Zcompare_Lt_trans _ _ _ H1 H2).
 auto.
+Qed.
+
+Theorem Forall_perm: forall {A} (f: A -> Prop) al bl,
+  Permutation al bl ->
+  Forall f al -> Forall f bl.
+Proof.
+  induction 1; simpl; intros; auto.
+  inv H0; constructor; auto.
+  inv H. inv H3. constructor; auto.
+Qed.
+
+Lemma Exists_app:
+  forall {A} (P: A->Prop) (l1 l2: list A),
+     Exists P (l1++l2) <-> Exists P l1 \/ Exists P l2.
+Proof.
+intros.
+induction l1; simpl; auto.
+split; intros. right; auto. destruct H; auto. inv H.
+split; intro.
+inv H. left. left. auto.
+rewrite IHl1 in H1.
+destruct H1; auto. 
+destruct H.
+inv H. left; auto.
+right. rewrite IHl1; auto.
+right. rewrite IHl1; auto.
+Qed.
+
+Inductive sorted {A} (le: A -> A -> Prop): list A -> Prop := 
+| sorted_nil:
+    sorted le nil
+| sorted_1: forall x,
+    sorted le (x::nil)
+| sorted_cons: forall x y l,
+     le x y -> sorted le (y::l) -> sorted le (x::y::l).
+
+Lemma sorted_app:
+  forall {A} {le: A->A->Prop} (TRANS: transitive A le)
+    pivot al bl,
+    sorted le al -> sorted le bl ->
+    Forall (fun x => le x pivot) al ->
+    Forall (le pivot) bl ->
+    sorted le (al++bl).
+Proof.
+intros.
+induction H.
+simpl; auto.
+simpl.
+inv H1. inv H5.
+inv H0.
+constructor.
+inv H2.
+constructor.
+apply TRANS with pivot; auto.
+constructor.
+inv H2.
+constructor.
+apply TRANS with pivot; auto.
+constructor; auto.
+simpl.
+constructor; auto.
+apply IHsorted.
+inv H1; auto.
+Qed.
+
+Lemma sorted_app_e3:
+  forall {A} {le: A->A->Prop} (TRANS: transitive A le)
+    pivot al bl,
+    sorted le (al++[pivot]++bl) ->
+    sorted le al /\ sorted le bl /\ 
+    Forall (fun x => le x pivot) al /\
+    Forall (le pivot) bl.
+Proof.
+ intros.
+ induction al.
+ simpl in *.
+ split. constructor.
+ induction bl; inv  H. repeat constructor.
+ spec IHbl. destruct bl; inv H4; constructor; auto. 
+ eapply TRANS; eassumption.
+ split3; auto. destruct IHbl as [? [? ?]]; constructor; auto.
+ inv H. destruct al; inv H2. destruct al; inv H1.
+ simpl in IHal. spec IHal; auto.
+ destruct IHal as [_ [? [_ ?]]].
+ split3. constructor. auto. split; auto.
+ spec IHal; auto.
+ destruct IHal as [? [? [? ?]]].
+ split3; auto. constructor; auto.
+ split; auto.
+ constructor; auto.
+ apply TRANS with a0; auto.
+ inv H1; auto.
 Qed.

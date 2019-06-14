@@ -13,70 +13,6 @@ Hint Rewrite N_eq : rep_omega.
 Opaque N.
 
 
-Theorem Forall_perm: forall {A} (f: A -> Prop) al bl,
-  Permutation al bl ->
-  Forall f al -> Forall f bl.
-Proof.
-  induction 1; simpl; intros; auto.
-  inv H0; constructor; auto.
-  inv H. inv H3. constructor; auto.
-Qed.
-
-Lemma Exists_app:
-  forall {A} (P: A->Prop) (l1 l2: list A),
-     Exists P (l1++l2) <-> Exists P l1 \/ Exists P l2.
-Proof.
-intros.
-induction l1; simpl; auto.
-split; intros. right; auto. destruct H; auto. inv H.
-split; intro.
-inv H. left. left. auto.
-rewrite IHl1 in H1.
-destruct H1; auto. 
-destruct H.
-inv H. left; auto.
-right. rewrite IHl1; auto.
-right. rewrite IHl1; auto.
-Qed.
-
-Inductive sorted: list val -> Prop := 
-| sorted_nil:
-    sorted nil
-| sorted_1: forall x,
-    sorted (x::nil)
-| sorted_cons: forall x y l,
-    f_cmp Cle x y -> sorted (y::l) -> sorted (x::y::l).
-
-Lemma sorted_app:
-  forall pivot al bl,
-    sorted al -> sorted bl ->
-    Forall (f_cmp Cge pivot) al ->
-    Forall (f_cmp Cle pivot) bl ->
-    sorted (al++bl).
-Proof.
-intros.
-induction H.
-simpl; auto.
-simpl.
-inv H1. inv H5.
-inv H0.
-constructor.
-inv H2.
-constructor.
-apply f_cmp_le_trans with pivot; auto.
-apply f_cmp_swap in H4; auto.
-constructor.
-inv H2.
-constructor.
-apply f_cmp_le_trans with pivot; auto.
-apply f_cmp_swap in H4; auto.
-constructor; auto.
-simpl.
-constructor; auto.
-apply IHsorted.
-inv H1; auto.
-Qed.
-
 Definition quicksort_spec :=
  DECLARE _quicksort
   WITH gv : globals, m: int, n: int, before: list val, al: list val, after: list val
@@ -92,7 +28,7 @@ Definition quicksort_spec :=
              (before ++ al ++ after) (gv _a))
   POST [ tvoid ]
     EX bl: list val,
-     PROP(Permutation al bl; sorted bl) 
+     PROP(Permutation al bl; sorted (f_cmp Cle) bl) 
      LOCAL ()
     SEP(data_at Ews (tarray tdouble N)
              (before ++ bl ++ after) (gv _a)).
@@ -124,7 +60,7 @@ Proof.
 start_function.
 rename H0 into Hdef_al.
 forward_if (EX bl:list val, 
-              PROP(Permutation al bl; sorted bl) LOCAL()
+              PROP(Permutation al bl; sorted (f_cmp Cle) bl) LOCAL()
     SEP(data_at Ews (tarray tdouble N)
              (before ++ bl ++ after) (gv _a))).
 2:{
@@ -543,7 +479,7 @@ forward_loop (EX i:Z,
    apply semax_seq' with 
  (EX cl:list val,
    PROP (Permutation (sublist 0 (j + 1 - m) bl) cl;
-             sorted cl)
+             sorted (f_cmp Cle) cl)
    LOCAL (temp _i (Vint (Int.repr i)); temp _j (Vint (Int.repr j));
    temp _pivot pivot; temp _m (Vint (Int.repr m));
    temp _n (Vint (Int.repr n)); gvars gv)
@@ -625,11 +561,11 @@ forward_loop (EX i:Z,
      rewrite (sublist_one (i-1-m) (i-m)) by omega.
      autorewrite with sublist.
      apply Permutation_app_head; auto.
-apply (sorted_app pivot); auto.
-apply (sorted_app pivot); auto.
+apply (sorted_app f_cmp_le_trans pivot); auto.
+apply (sorted_app f_cmp_le_trans pivot); auto.
 constructor.
 constructor.
-apply f_cmp_ge_gt_eq; auto.
+apply f_cmp_le_lt_eq. right. apply (f_cmp_swap _ _ _ H13).
 constructor.
 eapply Forall_perm; try apply H2; auto.
 rewrite (sublist_split _ (i-m)) in H9 by omega.
@@ -638,7 +574,9 @@ destruct H9; auto.
 eapply Forall_perm; try apply H15; auto.
 rewrite (sublist_split _ (i-1-m)) in H8 by omega.
 rewrite Forall_app in H8.
-destruct H8; auto.
+destruct H8.
+eapply Forall_impl; try apply H8.
+clear; intros; apply (f_cmp_swap _ _ _ H).
 constructor.
 apply f_cmp_le_lt_eq; auto.
 eapply Forall_perm; try apply H2; auto.
@@ -666,8 +604,10 @@ destruct H9; auto.
      rewrite <- (sublist_same 0 (n+1-m) bl) by omega.
      rewrite (sublist_split 0 (i-m) (n+1-m)) by omega.
      apply Permutation_app; auto.
-     apply (sorted_app pivot); auto.
-     eapply Forall_perm; try apply H15. auto.
+     apply (sorted_app f_cmp_le_trans pivot); auto.
+     eapply Forall_perm; try apply H15.
+     eapply Forall_impl; try apply H8.
+     clear; intros; apply (f_cmp_swap _ _ _ H).
      eapply Forall_perm; try apply H2. auto.     
    * subst MORE_COMMANDS; unfold abbreviate.
       rewrite !app_ass.
@@ -688,7 +628,7 @@ destruct H9; auto.
      apply Permutation_app; auto.
      autorewrite with sublist.
      apply Permutation_refl.
-     apply (sorted_app pivot); auto.
+     apply (sorted_app f_cmp_le_trans pivot); auto.
      clear P_a HP_a H18 H19. clear dependent cl. 
      assert (j=i-2 \/ j = i-1) by omega.
      assert (i=n \/ i=n+1) by omega.
@@ -712,7 +652,9 @@ destruct H9; auto.
      autorewrite with sublist. omega.
      eapply Forall_perm; try apply H15.
      rewrite (sublist_split _ (j+1-m)) in H8 by omega.
-     rewrite Forall_app in H8. destruct H8; auto.
+     rewrite Forall_app in H8. destruct H8.
+     eapply Forall_impl; try apply H.
+     clear; intros; apply (f_cmp_swap _ _ _ H).
 Qed.
 
 
