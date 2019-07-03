@@ -263,6 +263,80 @@ apply f_cmp_false; auto.
 destruct (Float.cmp op f f0); auto. inv H1.
 Qed.
 
+Lemma sum_sub_pp_base:
+ forall N base i j, 
+  0 < N <= Z.min Int.max_signed (Ptrofs.max_signed / 8) ->
+  isptr base ->
+  0 <= i < N ->
+  0 <= j < N ->
+  force_val (sem_sub_pp tdouble (dnth base j) (dnth base i)) = Vint (Int.repr (j-i)).
+Proof.
+intros.
+make_Vptr base.
+set (M := Z.min _ _) in H; compute in M; subst M.
+unfold sem_sub_pp, dnth; simpl.
+rewrite if_true by auto.
+normalize.
+f_equal.
+rewrite !(Ptrofs.add_commut i0), Ptrofs.sub_shifted.
+normalize.
+unfold Ptrofs.divs.
+normalize.
+rewrite <- Z.mul_sub_distr_l.
+rewrite !Ptrofs.signed_repr by rep_omega.
+f_equal.
+rewrite Z.mul_comm, Z.quot_mul by omega.
+auto.
+Qed.
+
+Lemma sorted_le_last:
+ forall (i j: Z) (bl: list val), i<j -> 0<= i -> j <= Zlength bl ->
+   Forall def_float bl ->
+   sorted (f_cmp Cle) (sublist i j bl) ->
+   Forall (f_cmp Cge (Znth (j-1) bl)) (sublist i j bl).
+Proof.
+intros.
+rewrite (sublist_split i (j-1)) in * by omega.
+rewrite Forall_app.
+split.
+2:{ rewrite sublist_one by omega; repeat constructor.
+    change Cge with (swap_comparison Cle).
+    apply f_cmp_swap.
+    apply f_le_refl. apply Forall_Znth; auto; omega.
+}
+rewrite (sublist_split _ j j) in H3 by omega.
+rewrite (sublist_one (j-1) j) in H3 by omega.
+apply sorted_app_e3 in H3.
+destruct H3 as [_ [_ [? ?]]].
+eapply Forall_impl; try apply H3.
+simpl; intros.
+apply f_cmp_swap in H5; auto.
+apply f_cmp_le_trans.
+Qed.
+
+Lemma sorted_ge_first:
+ forall (i j: Z) (bl: list val), i<j -> 0<= i -> j <= Zlength bl ->
+   Forall def_float bl ->
+   sorted (f_cmp Cle) (sublist i j bl) ->
+   Forall (f_cmp Cle (Znth i bl)) (sublist i j bl).
+Proof.
+intros.
+rewrite (sublist_split i (i+1)) in * by omega.
+rewrite Forall_app.
+split.
+{  rewrite sublist_one by omega; repeat constructor.
+    change Cge with (swap_comparison Cle).
+    apply f_le_refl. apply Forall_Znth; auto; omega.
+}
+rewrite (sublist_split i i) in H3 by omega.
+rewrite (sublist_one i (i+1)) in H3 by omega.
+rewrite app_ass in H3.
+apply sorted_app_e3 in H3.
+destruct H3 as [_ [_ [? ?]]].
+auto.
+apply f_cmp_le_trans.
+Qed.
+
 Lemma Permutation_Zlength:
   forall {A} {al bl: list A}, Permutation al bl -> Zlength al = Zlength bl.
 Proof.
@@ -706,4 +780,75 @@ apply derives_refl'. f_equal. f_equal. f_equal.
 normalize.
 saturate_local.
 destruct H4; inv H4.
+Qed.
+
+Lemma f_cmp_swap':
+ forall op y,
+  (fun x => f_cmp op x y) = (f_cmp (swap_comparison op) y).
+Proof.
+intros.
+extensionality x.
+apply prop_ext; split; intro.
+apply f_cmp_swap; auto.
+apply f_cmp_swap in H.
+replace op with (swap_comparison (swap_comparison op)); auto.
+destruct op; reflexivity.
+Qed.
+
+Lemma Forall_f_cmp_le_trans:
+ forall x y bl,
+  f_cmp Cle x y ->
+  Forall (f_cmp Cle y) bl ->
+  Forall (f_cmp Cle x) bl.
+Proof.
+intros.
+eapply Forall_impl; try eassumption.
+intros.
+eapply f_cmp_le_trans; eassumption.
+Qed.
+
+Lemma Forall_f_cmp_ge_trans:
+ forall x y bl,
+  f_cmp Cge x y ->
+  Forall (f_cmp Cge y) bl ->
+  Forall (f_cmp Cge x) bl.
+Proof.
+intros.
+eapply Forall_impl; try eassumption.
+intros.
+apply f_cmp_swap in H.
+apply f_cmp_swap in H1.
+apply (f_cmp_swap Cle).
+eapply f_cmp_le_trans; eassumption.
+Qed.
+
+
+Lemma Forall_Znth_sublist:
+  forall {A}{Ha: Inhabitant A} (F: A -> Prop) lo i hi (bl: list A),
+  Forall F (sublist lo hi bl) ->
+  0 <= lo <= i ->
+  i < hi <= Zlength bl ->
+  F (Znth i bl).
+Proof.
+intros.
+replace (Znth i bl) with (Znth (i-lo) (sublist lo hi bl))
+  by (autorewrite with sublist; auto).
+eapply Forall_Znth; eauto.
+autorewrite with sublist; omega.
+Qed.
+
+Lemma Forall_sublist':
+  forall lo' hi' lo hi {A}(F: A -> Prop) (bl: list A),
+  Forall F (sublist lo' hi' bl) ->
+  0 <= lo' <= lo ->
+  lo <= hi ->
+  hi <= hi' <= Zlength bl ->
+  Forall F (sublist lo hi bl).
+Proof.
+intros.
+rewrite (sublist_split lo' lo) in H by rep_omega.
+rewrite Forall_app in H; destruct H as [_ ?].
+rewrite (sublist_split _ hi hi') in H by rep_omega.
+rewrite Forall_app in H; destruct H as [? _].
+auto.
 Qed.

@@ -7,32 +7,6 @@ Require Import qsort3_aux.
 Require Import verif_qsort3_part1.
 Require Import verif_qsort3_part2.
 
-Lemma sum_sub_pp_base:
- forall N base i j, 
-  0 < N <= Z.min Int.max_signed (Ptrofs.max_signed / 8) ->
-  isptr base ->
-  0 <= i < N ->
-  0 <= j < N ->
-  force_val (sem_sub_pp tdouble (dnth base j) (dnth base i)) = Vint (Int.repr (j-i)).
-Proof.
-intros.
-make_Vptr base.
-set (M := Z.min _ _) in H; compute in M; subst M.
-unfold sem_sub_pp, dnth; simpl.
-rewrite if_true by auto.
-normalize.
-f_equal.
-rewrite !(Ptrofs.add_commut i0), Ptrofs.sub_shifted.
-normalize.
-unfold Ptrofs.divs.
-normalize.
-rewrite <- Z.mul_sub_distr_l.
-rewrite !Ptrofs.signed_repr by rep_omega.
-f_equal.
-rewrite Z.mul_comm, Z.quot_mul by omega.
-auto.
-Qed.
-
 Lemma body_quicksort_while_part2:
 forall (Espec : OracleKind) (base : val) (al : list val) 
   (lo mid hi : Z) (bl : list val),
