@@ -13,7 +13,7 @@ POINTS CLAIMED:
 | `fac3.c`   |   4 |
 | `fac4.c`   |   4 |
 | `fac6.c`   |   4 |
-| `qsort1.c` |   4 |  (Note 1)
+| `qsort1.c` |   4 |
 | `qsort3.c` |   4 |
 
-Note 1: qsort1.c contains a main() with calls to printf().  At the moment, VST cannot do printf.  However, the chart in the paper (A benchmark for C program verification) lists qsort1.c as "not containing standard library calls, not containing I/O", so I assume that main() is not part of the task in qsort1.c.
+Note 1: qsort1.c contains a main() with calls to printf().  At the moment, VST cannot do printf.  However, the chart in the [paper](https://arxiv.org/abs/1904.01009) lists qsort1.c as "not containing standard library calls, not containing I/O", so I assume that main() is not part of the task in qsort1.c.
