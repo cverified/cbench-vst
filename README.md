@@ -7,7 +7,7 @@ POINTS CLAIMED:
 
 |            | [VST](https://vst.cs.princeton.edu) |
 |------------|----:|
-| **Total**  |  20 |
+| **Total**  |  28 |
 | `fac1.c`   |   4 |
 | `fac2.c`   |   4 |
 | `fac3.c`   |   4 |
