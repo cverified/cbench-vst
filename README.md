@@ -1,4 +1,4 @@
-These are verifications by [Andrew Appel](https://www.cs.princeton.edu/~appel/) and [William Mansky](https://cs.uic.edu/~mansky/) of programs from the [cbench](https://github.com/cverified/cbench) benchmark
+These are verifications by [Andrew Appel](https://www.cs.princeton.edu/~appel/) and [William Mansky](https://www.cs.uic.edu/~mansky/) of programs from the [cbench](https://github.com/cverified/cbench) benchmark
 using [VST](https://vst.cs.princeton.edu).
 
 BUILD INSTRUCTIONS:  see in each subdirectory.
