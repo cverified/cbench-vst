@@ -1,6 +1,6 @@
+Require Import VST.progs.io_specs.
 Require Import VST.floyd.proofauto.
-Require Import io_specs_enough.
-Require Import cat1.
+Require Import cat1a.
 Require Import ITree.ITree.
 Require Import ITree.Eq.Eq.
 (*Import ITreeNotations.*)
@@ -48,9 +48,8 @@ Lemma body_main: semax_body Vprog Gprog f_main main_spec.
 Proof.
   start_function.
   sep_apply (has_ext_ITREE(file_id := nat)).
-  sep_apply has_enough.
-  forward_loop (PROP () LOCAL () SEP (enough_console; ITREE cat_loop))
-    break: (PROP () LOCAL () SEP (enough_console; ITREE cat_loop)).
+  forward_loop (PROP () LOCAL () SEP (ITREE cat_loop))
+    break: (PROP () LOCAL () SEP (ITREE cat_loop)).
   - entailer!.
   - rewrite cat_loop_eq.
     forward_call (fun c => write stdout c;; cat_loop).
@@ -63,6 +62,12 @@ Proof.
       { entailer!.
         unfold Vubyte.
         rewrite Byte.unsigned_repr, Int.repr_signed by omega; auto. }
+      Intros r.
+      forward_if.
+      { forward. (* putchar fails; no guarantee about remaining ops *) }
+      forward.
+      if_tac.
+      { apply f_equal with (f := Int.repr) in H4; rewrite Int.repr_signed in H4; contradiction. }
       entailer!.
     + rewrite if_true.
       forward.
@@ -84,6 +89,7 @@ semax_func_cons_ext.
 { simpl; Intro i.
   apply typecheck_return_value; auto. }
 semax_func_cons_ext.
-{ apply typecheck_return_value; auto; apply I. }
+{ simpl; Intro i'.
+  apply typecheck_return_value; auto. }
 semax_func_cons body_main.
 Qed.

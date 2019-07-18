@@ -10,7 +10,7 @@ VST_DIRS= msl sepcomp veric floyd progs
 VSTFLAGS= -R $(VST_LOC)/compcert compcert $(foreach d, $(VST_DIRS), -Q $(VST_LOC)/$(d) VST.$(d)) -Q $(VST_LOC)/InteractionTrees/theories ITree -I .
 
 
-target: _CoqProject verif_cat1.vo
+target: _CoqProject verif_cat1.vo verif_cat1a.vo verif_cat2.vo
 _CoqProject: Makefile CONFIGURE
 	@echo $(VSTFLAGS) > _CoqProject
 
@@ -21,7 +21,15 @@ _CoqProject: Makefile CONFIGURE
 cat1.v: cat1.c
 	$(CLIGHTGEN) -normalize $<
 
-verif_cat1.vo: verif_cat1.v cat1.vo
+cat1a.v: cat1a.c
+	$(CLIGHTGEN) -normalize $<
+
+cat2.v: cat2.c
+	$(CLIGHTGEN) -normalize $<
+
+verif_cat1.vo: verif_cat1.v cat1.vo io_specs_enough.vo
+verif_cat1a.vo: verif_cat1a.v cat1a.vo
+verif_cat2.vo: verif_cat2.v cat2.vo fio_specs.vo
 
 
 clean:
