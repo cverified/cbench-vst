@@ -88,10 +88,9 @@ Proof.
     { rewrite app_nil_r; cancel. }
     entailer!.
     { forward.
-      entailer!.
-      admit. }
+      discriminate. (* At the moment, we assume that fread blocks until it can fill the buffer, but this probably isn't realistic. *) }
   - forward.
-Admitted.
+Qed.
 
 Definition ext_link := ext_link_prog prog.
 
@@ -100,7 +99,7 @@ Instance Espec : OracleKind := IO_Espec ext_link.
 Lemma prog_correct:
   semax_prog_ext prog cat_loop Vprog Gprog.
 Proof.
-(*prove_semax_prog. (* giant struct makes this run forever (or just for a long time) *)
+Time prove_semax_prog. (* giant struct makes this run forever (or just for a long time) *)
 semax_func_cons_ext.
 { simpl; Intro i.
   apply typecheck_return_value; auto. }
