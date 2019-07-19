@@ -4,6 +4,11 @@ Require Export VST.floyd.io_events.
 Require Export ITree.ITree.
 Require Export ITree.Eq.SimUpToTaus.
 Require Export ITree.Events.Nondeterminism.
+Notation "x <- t1 ;; t2" := (ITree.bind t1 (fun x => t2))
+  (at level 100, t1 at next level, right associativity) : itree_scope.
+Notation "' p <- t1 ;; t2" :=
+  (ITree.bind t1 (fun x_ => match x_ with p => t2 end))
+(at level 100, t1 at next level, p pattern, right associativity) : itree_scope.
 
 (* these should be in ITrees *)
 Instance Reflexive_sutt {E R} : RelationClasses.Reflexive (@sutt E R R eq).

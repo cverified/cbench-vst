@@ -91,7 +91,7 @@ Instance Espec : OracleKind := IO_Espec ext_link.
 Lemma prog_correct:
   semax_prog_ext prog cat_loop Vprog Gprog.
 Proof.
-Time prove_semax_prog. (* giant struct makes this run forever *)
+(*Time prove_semax_prog. (* giant struct makes this run forever *)
 semax_func_cons_ext.
 { simpl; Intro i.
   apply typecheck_return_value; auto. }
