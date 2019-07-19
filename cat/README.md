@@ -1,9 +1,9 @@
 This directory contains solutions to some of the C verification benchmarks
 in the paper [A benchmark for C program verification](http://www.cs.ru.nl/~freek/cbench/cbench.pdf).
 
-For cat1, there is a choice of two solutions:
-`cat1.c` and `verif_cat1.v` use the code as written, plus an axiom that there are enough resources for `putchar` to always succeed.
-`cat1a.c` and `verif_cat1a.v` modify the code to check for failing `putchar`, and use no additional axioms.
+For cat1, there is a choice of two solutions.
+`cat1.c` and `verif_cat1.v` use the code as written, but the spec isn't what we might expect: because `putchar` may fail, the program may drop input characters arbitrarily.
+`cat1a.c` and `verif_cat1a.v` modify the code to check for failing `putchar`, and guarantee correct cat behavior.
 
 ## BUILD INSTRUCTIONS:
 

@@ -27,7 +27,7 @@ cat1a.v: cat1a.c
 cat2.v: cat2.c
 	$(CLIGHTGEN) -normalize $<
 
-verif_cat1.vo: verif_cat1.v cat1.vo io_specs_enough.vo
+verif_cat1.vo: verif_cat1.v cat1.vo io_specs_rollback.vo
 verif_cat1a.vo: verif_cat1a.v cat1a.vo
 verif_cat2.vo: verif_cat2.v cat2.vo fio_specs.vo
 
