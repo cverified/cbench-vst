@@ -29,6 +29,7 @@ cat2.v: cat2.c
 
 verif_cat1.vo: verif_cat1.v cat1.vo io_specs_rollback.vo
 verif_cat1a.vo: verif_cat1a.v cat1a.vo
+verif_cat1b.vo: verif_cat1b.v cat1.vo io_specs_cap.vo
 verif_cat2.vo: verif_cat2.v cat2.vo fio_specs.vo
 
 

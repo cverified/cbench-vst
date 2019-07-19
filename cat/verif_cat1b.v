@@ -1,18 +1,17 @@
 Require Import VST.floyd.proofauto.
-Require Import io_specs_rollback.
+Require Import io_specs_cap.
 Require Import cat1.
-Require Import ITree.Eq.Eq.
 
 Instance CompSpecs : compspecs. make_compspecs prog. Defined.
 Definition Vprog : varspecs. mk_varspecs prog. Defined.
 
-Definition event := nondetE +' @IO_event nat.
+Definition event := IO_cap_event +' @IO_event nat.
 
-Definition putchar_spec := DECLARE _putchar putchar_spec(E := event).
+Definition putchar_spec := DECLARE _putchar putchar_cap_spec(E := event).
 Definition getchar_spec := DECLARE _getchar getchar_spec(E := event).
 
 Definition cat_loop : IO_itree :=
-   ITree.aloop (fun _ => inl (c <- read stdin;; or (write stdout c) (Ret tt))) tt.
+   ITree.aloop (fun _ => inl (c <- read stdin;; write_cap stdout c)) tt.
 
 Definition main_spec :=
  DECLARE _main
@@ -23,17 +22,14 @@ Definition main_spec :=
 Definition Gprog : funspecs := ltac:(with_library prog [putchar_spec; getchar_spec;
   main_spec]).
 
-Lemma cat_loop_eq : cat_loop ≈ (c <- read stdin;; or (write stdout c;; cat_loop) (cat_loop)).
+Lemma cat_loop_eq : cat_loop ≈ (c <- read stdin;; write_cap stdout c;; cat_loop).
 Proof.
   intros.
   unfold cat_loop; rewrite unfold_aloop.
   unfold ITree._aloop.
   rewrite tau_eutt, bind_bind.
   apply eqit_bind; [intro | reflexivity].
-  unfold or; rewrite bind_vis.
-  apply eqit_Vis; intros [|].
-  - apply eqit_bind; [intros []|]; reflexivity.
-  - rewrite bind_ret; reflexivity.
+  apply eqit_bind; [intros []|]; reflexivity.
 Qed.
 
 Lemma body_main: semax_body Vprog Gprog f_main main_spec.
@@ -44,21 +40,17 @@ Proof.
     break: (PROP () LOCAL () SEP (ITREE cat_loop)).
   - entailer!.
   - rewrite cat_loop_eq.
-    forward_call_io (fun c => or (write stdout c;; cat_loop) (cat_loop)).
+    forward_call (fun c => write_cap stdout c;; cat_loop).
     Intros c.
     forward.
     forward_if.
     + if_tac.
       { apply f_equal with (f := Int.repr) in H1; rewrite Int.repr_signed in H1; contradiction. }
-      forward_call_io (Byte.repr (Int.signed c), cat_loop).
+      forward_call (Byte.repr (Int.signed c), cat_loop).
       { entailer!.
         unfold Vubyte.
         rewrite Byte.unsigned_repr, Int.repr_signed by omega; auto. }
-      { apply or_case1. }
-      Intros r.
       entailer!.
-      if_tac; [|apply derives_refl].
-      apply ITREE_impl', or_case2.
     + rewrite if_true.
       forward.
       rewrite cat_loop_eq; entailer!.
@@ -79,7 +71,6 @@ semax_func_cons_ext.
 { simpl; Intro j.
   apply typecheck_return_value; auto. }
 semax_func_cons_ext.
-{ simpl; Intro j.
-  apply typecheck_return_value; auto; apply I. }
+{ apply typecheck_return_value; auto; apply I. }
 semax_func_cons body_main.
 Qed.

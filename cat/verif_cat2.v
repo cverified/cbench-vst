@@ -1,32 +1,22 @@
 Require Import VST.floyd.proofauto.
 Require Import fio_specs.
 Require Import cat2.
-Require Import ITree.ITree.
-Require Import ITree.Eq.Eq.
-(*Import ITreeNotations.*)
-Notation "t1 >>= k2" := (ITree.bind t1 k2)
-  (at level 50, left associativity) : itree_scope.
-Notation "x <- t1 ;; t2" := (ITree.bind t1 (fun x => t2))
-  (at level 100, t1 at next level, right associativity) : itree_scope.
-Notation "t1 ;; t2" := (ITree.bind t1 (fun _ => t2))
-  (at level 100, right associativity) : itree_scope.
-Notation "' p <- t1 ;; t2" :=
-  (ITree.bind t1 (fun x_ => match x_ with p => t2 end))
-(at level 100, t1 at next level, p pattern, right associativity) : itree_scope.
 
 Instance CompSpecs : compspecs. make_compspecs prog. Defined.
 Definition Vprog : varspecs. mk_varspecs prog. Defined.
 
 Instance file_struct : FileStruct := {| FILEid := ___sFILE64; reent := __reent; f_stdin := __stdin; f_stdout := __stdout |}.
 
-Definition fwrite_spec := DECLARE _fwrite fwrite_spec.
-Definition fread_spec := DECLARE _fread fread_spec.
+Definition event := nondetE +' @IO_event file_id.
+
+Definition fwrite_spec := DECLARE _fwrite fwrite_spec(E := event).
+Definition fread_spec := DECLARE _fread fread_spec(E := event).
 Definition get_reent_spec := DECLARE ___getreent get_reent_spec.
 
 Notation buf_size := 131072%nat.
 Notation buf_size_Z := 131072%Z.
 
-Definition cat_loop : IO_itree :=
+Definition cat_loop : IO_itree(E := event) :=
    ITree.aloop (fun _ => inl (c <- read_list stdin buf_size;; write_list stdout c)) tt.
 
 Definition main_spec :=
@@ -55,7 +45,7 @@ Proof. reflexivity. Qed.
 Lemma body_main: semax_body Vprog Gprog f_main main_spec.
 Proof.
   start_function.
-  sep_apply (has_ext_ITREE(file_id := nat)).
+  sep_apply (has_ext_ITREE(E := event)).
   sep_apply init_stdio; Intros reentp inp outp inp' outp'; simpl in inp', outp'.
   change (reptype (tptr (Tstruct ___sFILE64 noattr))) with val in *.
   repeat match goal with H : JMeq _ _ |- _ => apply JMeq_eq in H; subst end.
@@ -76,19 +66,21 @@ Proof.
     forward_call (Ews, gv _buf, 1, buf_size_Z, stdin, inp, fun c => write_list stdout c;; cat_loop).
     { simpl Z.mul; rewrite buf_size_eq; simpl; cancel. }
     Intros bytes.
-    assert_PROP (Zlength bytes = buf_size_Z) as Hbytes.
-    { entailer!.
-      rewrite Zlength_map in *; auto. }
     forward.
     forward.
     forward_if.
     forward_call.
     forward.
-    forward_call (Ews, gv _buf, buf_size_Z, bytes, 1, buf_size_Z, @nil val, stdout, outp, cat_loop).
-    { rewrite app_nil_r; cancel. }
+    forward_call (Ews, gv _buf, buf_size_Z, bytes, 1, Zlength bytes,
+      repeat Vundef (Z.to_nat (buf_size_Z - Zlength bytes)), stdout, outp, cat_loop).
+    { rewrite Z.mul_1_l; auto. }
     entailer!.
     { forward.
-      discriminate. (* At the moment, we assume that fread blocks until it can fill the buffer, but this probably isn't realistic. *) }
+      entailer!.
+      assert (Zlength bytes = 0) as ?%Zlength_nil_inv; [|subst; simpl; rewrite bind_ret; auto].
+      rewrite Zlength_app, Zlength_map, repeat_list_repeat, Zlength_list_repeat' in H1.
+      assert (0 <= 1 * 131072 - Zlength bytes) by omega.
+      rewrite Int.unsigned_repr in *; rep_omega. }
   - forward.
 Qed.
 
@@ -99,7 +91,7 @@ Instance Espec : OracleKind := IO_Espec ext_link.
 Lemma prog_correct:
   semax_prog_ext prog cat_loop Vprog Gprog.
 Proof.
-Time prove_semax_prog. (* giant struct makes this run forever (or just for a long time) *)
+Time prove_semax_prog. (* giant struct makes this run forever *)
 semax_func_cons_ext.
 { simpl; Intro i.
   apply typecheck_return_value; auto. }
