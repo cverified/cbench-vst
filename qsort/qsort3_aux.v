@@ -337,12 +337,6 @@ auto.
 apply f_cmp_le_trans.
 Qed.
 
-Lemma Permutation_Zlength:
-  forall {A} {al bl: list A}, Permutation al bl -> Zlength al = Zlength bl.
-Proof.
-intros. rewrite !Zlength_correct. f_equal. apply Permutation_length; auto.
-Qed.
-
 Definition swap_in_list {A}{INa: Inhabitant A} i j (bl: list A) :=
   (upd_Znth i (upd_Znth j bl (Znth i bl)) (Znth j bl)).
 

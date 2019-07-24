@@ -352,3 +352,9 @@ Proof.
  apply TRANS with a0; auto.
  inv H1; auto.
 Qed.
+
+Lemma Permutation_Zlength:
+  forall {A} {al bl: list A}, Permutation al bl -> Zlength al = Zlength bl.
+Proof.
+intros. rewrite !Zlength_correct. f_equal. apply Permutation_length; auto.
+Qed.

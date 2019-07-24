@@ -1,0 +1,20 @@
+# Object files, in general
+*.o
+*.a
+*.cmi
+*.cmo
+*.cmx
+*.cma
+*.cmxa
+.*.aux
+*.cmti
+*.cmt
+*.merlin
+# Emacs saves
+*~
+*.vo
+*.glob
+*.v.d
+# Executables and configuration
+CONFIGURE
+_CoqProject
