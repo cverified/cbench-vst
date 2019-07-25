@@ -6,6 +6,69 @@ Require Import float_lemmas.
 Require Import Permutation.
 Set Nested Proofs Allowed.
 
+
+Lemma field_compatible_subarray' {cs: compspecs}:
+ forall i j N t p,
+ field_compatible (tarray t N) nil p ->
+ 0 <= i <= j ->
+ j <= N ->
+ field_compatible (tarray t (j-i)) nil (offset_val (i*sizeof t) p).
+Proof.
+intros.
+destruct H as [? [? [? [? ?]]]].
+destruct p; try contradiction.
+pose proof (sizeof_pos t).
+assert (0 <= sizeof t * i <= sizeof t * j).
+split.
+apply Z.mul_nonneg_nonneg; omega.
+apply Z.mul_le_mono_nonneg_l; try omega.
+assert (sizeof t * j <= sizeof t * N).
+apply Z.mul_le_mono_nonneg_l; try omega.
+pose proof (Ptrofs.unsigned_range i0).
+split3; auto.
+split3; auto.
+-
+simpl in H3|-*.
+rewrite Z.max_r in * by omega.
+rewrite <- (Ptrofs.repr_unsigned i0).
+rewrite ptrofs_add_repr.
+rewrite (Z.mul_comm i).
+rewrite Ptrofs.unsigned_repr.
+rewrite <- Z.add_assoc.
+rewrite <- Z.mul_add_distr_l.
+replace (i+(j-i)) with j by omega.
+omega.
+rep_omega.
+-
+pose proof (align_compatible_nested_field_array (tarray t N) nil i j (Vptr b i0)).
+simpl nested_field_array_type in H10.
+change (Tarray t (j - i) (no_alignas_attr noattr))
+  with (tarray t (j-i)) in H10.
+simpl offset_val in H10.
+simpl offset_val.
+rewrite Z.add_0_l in H10.
+rewrite (Z.mul_comm).
+apply H10.
+simpl; split; auto; try omega.
+simpl; split; auto; try omega.
+assumption.
+assumption.
+auto.
+Qed.
+
+Lemma field_compatible_subarray'' {cs: compspecs}:
+ forall j N t p,
+ field_compatible (tarray t N) nil p ->
+ 0 <= j <= N ->
+ field_compatible (tarray t j) nil p.
+Proof.
+intros.
+apply (field_compatible_subarray' 0 j) in H; auto; try omega.
+rewrite Z.sub_0_r in H. 
+rewrite Z.mul_0_l in H.
+normalize in H.
+Qed.
+
 Definition call_memcpy_ij :=
                            (Scall None
                             (Evar _memcpy (Tfunction
@@ -24,6 +87,41 @@ Definition call_memcpy_ij :=
                                (Ebinop Omul (Etempvar _j tint)
                                  (Etempvar _size tuint) tuint) (tptr tuchar)) ::
                              (Etempvar _size tuint) :: nil)).
+
+Lemma forward_illegal_memcpy:
+ forall (Espec : OracleKind)
+  (sh : share) (base : val) (t : type)
+  (Hok : complete_legal_cosu_type t = true /\
+      align_compatible_rec cenv_cs t 0 /\ no_volatiles t)
+  (bl : list (reptype t))
+  (SH : writable_share sh),
+  let N := Zlength bl in 
+  forall (H0 : N <= Int.max_signed)
+  (H1 : N * sizeof t <= Int.max_signed)
+  (H'' : 0 <= sizeof t <= 1024)
+  (Hbase : field_compatible (tarray t N) [] base)
+  (i : Z)
+  (H : 0 <= i < N),
+semax (func_tycontext f_qsort Vprog Gprog [])
+  (PROP ( )
+   LOCAL (temp _i (Vint (Int.repr i));
+   temp _j (Vint (Int.repr i)); temp _base base;
+   temp _size (Vint (Int.repr (sizeof t))))
+   SEP (data_at sh t (Znth i bl)
+          (field_address0 (Tarray t (i + 1) noattr)
+             [ArraySubsc i] base)))
+  call_memcpy_ij
+  (normal_ret_assert
+     (PROP ( )
+      LOCAL (temp _i (Vint (Int.repr i));
+      temp _j (Vint (Int.repr i)); temp _base base;
+      temp _size (Vint (Int.repr (sizeof t))))
+      SEP (data_at sh t (Znth i bl)
+             (field_address0 (Tarray t (i + 1) noattr)
+                [ArraySubsc i] base)))).
+Admitted.  (* This program has a bug!  According to the C specification,
+                 it is illegal to call memcpy with overlapping arguments,
+                 but i=j here.  *)
 
 Lemma forward_call_memcpy_ij:
  forall (Espec : OracleKind)
@@ -60,14 +158,69 @@ Proof.
 intros.
 destruct (zeq i j).
 -
+(* Yes, it really is possible that i=j here;
+  just sort the sequence [0;1] and it will happen.
+  And it is "undefined behavior" to call memcpy with
+  overlapping source and destination.   Therefore
+  this program has a bug. *)
 subst j.
 assert (0 <= i < N) by omega.
 clear Hmn H6 H5.
-admit.   (* This program has a bug!  According to the C specification,
-                 it is illegal to call memcpy with overlapping arguments,
-                 but in fact it's possible that i=j here.  Just sort
-                 the sequence [0;1]  and it will happen.  Therefore,
-                 we cannot prove correctness of this call. *)
+replace (upd_Znth i bl (Znth i bl)) with bl.
+2:{
+rewrite upd_Znth_unfold.
+rewrite <- (sublist_one i (i+1)) by omega.
+autorewrite with sublist.
+auto.
+}
+ erewrite (split2_data_at_Tarray sh t N (i+1))
+     with (v' := bl);
+    try (autorewrite with sublist; try omega; reflexivity).
+  erewrite (split2_data_at_Tarray sh t (i+1) i)
+     with (v' := bl);
+  try (autorewrite with sublist; try omega; reflexivity).
+  rewrite (sublist_one i) by list_solve.
+  replace (i+1-i) with 1 by (clear; omega).
+  fold (tarray t 1).
+  erewrite data_at_singleton_array_eq by reflexivity.
+  Intros.
+ apply (semax_pre_post' 
+   (PROP ( )
+   (LOCALx
+      ([temp _i (Vint (Int.repr i));
+       temp _j (Vint (Int.repr i)); temp _base base;
+       temp _size (Vint (Int.repr (sizeof t)))] ++ [])
+      (SEPx
+         ([data_at sh t (Znth i bl)
+             (field_address0 (Tarray t (i + 1) noattr)
+                [ArraySubsc i] base)] ++
+          [data_at sh (Tarray t i noattr) 
+             (sublist 0 i bl) base;          
+          data_at sh (Tarray t (N - (i + 1)) noattr)
+            (sublist (i + 1) N bl)
+            (field_address0 (Tarray t N noattr)
+               [ArraySubsc (i + 1)] base)]))))
+     (PROP ( )
+      (LOCALx
+         ([temp _i (Vint (Int.repr i));
+          temp _j (Vint (Int.repr i)); 
+          temp _base base;
+          temp _size (Vint (Int.repr (sizeof t)))] ++ [])
+         (SEPx
+            ([data_at sh t (Znth i bl)
+             (field_address0 (Tarray t (i + 1) noattr)
+                [ArraySubsc i] base)] ++
+          [data_at sh (Tarray t i noattr) 
+             (sublist 0 i bl) base;          
+          data_at sh (Tarray t (N - (i + 1)) noattr)
+            (sublist (i + 1) N bl)
+            (field_address0 (Tarray t N noattr)
+               [ArraySubsc (i + 1)] base)]))))).
+apply andp_left2; go_lowerx; entailer!.
+apply andp_left2; go_lowerx; entailer!.
+apply semax_frame_PQR.
+auto with closed.
+apply forward_illegal_memcpy; auto.
 -
 assert (0 <= i < j) by omega.
 clear n H6.
@@ -95,21 +248,18 @@ forward_call (sh, sh, offset_val (i*sizeof t) base, offset_val (j*sizeof t) base
   rewrite (field_adr_ofs) by (auto; omega).
   sep_apply (split2_data_at_Tarray_unfold sh t (N-j) 1).
   omega.
-  rewrite (field_adr_ofs); auto; try omega.
-  2:{ admit. (* field_compatible *) }
   rewrite (sublist_one 0 1) by list_solve.
-  autorewrite with sublist.
   fold (tarray t 1).
   erewrite data_at_singleton_array_eq by reflexivity.
+  autorewrite with sublist.
   cancel.
   sep_apply (split2_data_at_Tarray_unfold sh t j i).
   omega.
+  autorewrite with sublist.
   rewrite (field_adr_ofs); auto; try omega.
-  2:{ admit. (* field_compatible *) }
+  2: eapply (field_compatible_subarray'' j N); eauto; omega.
   sep_apply (split2_data_at_Tarray_unfold sh t (j-i) 1).
   omega.
-  rewrite (field_adr_ofs); auto; try omega.
-  2:{ admit. (* field_compatible *) }
   rewrite (sublist_one 0 1) by list_solve.
   autorewrite with sublist.
   fold (tarray t 1).
@@ -119,18 +269,55 @@ forward_call (sh, sh, offset_val (i*sizeof t) base, offset_val (j*sizeof t) base
  simpl. destruct Hok as [_ [_ ?]]; auto.
  entailer!.
  simpl.
-(*  need to finish this proof.
- rewrite <- (data_at_singleton_array_eq sh t (Znth i bl) (sublist i (i+1) bl)).
-  2: rewrite sublist_one by omega; auto.
- change (tarray t 1) with (Tarray t 1 noattr).
- sep_apply (split2_data_at_Tarray_fold' sh t (N-i) 1 (N-i-1) (sublist i N bl) (sublist i N bl));
- try (autorewrite with sublist; auto; try omega).
- f_equal. omega.
- rewrite <- (field_adr_ofs _ _ N) by (auto; omega).
- sep_apply (split2_data_at_Tarray_fold' sh t N i (N-i) bl bl);
-   try (autorewrite with sublist; auto; try omega).
-*)
-Admitted.
+ match goal with |- ?A |-- _ => set (LHS := A) end.
+ erewrite (split2_data_at_Tarray sh t N (j+1))
+     with (v' := upd_Znth i bl (Znth j bl) );
+    try (autorewrite with sublist; try omega; reflexivity).
+  erewrite (split2_data_at_Tarray sh t (j+1) j)
+     with (v' := upd_Znth i bl (Znth j bl) );
+  try (autorewrite with sublist; try omega; reflexivity).
+  rewrite (sublist_one j) by list_solve.
+  rewrite upd_Znth_diff by list_solve.
+  replace (j+1-j) with 1 by (clear; omega).
+  fold (tarray t 1).
+  erewrite data_at_singleton_array_eq by reflexivity.
+  erewrite (split2_data_at_Tarray sh t j (i+1))
+     with (v' := upd_Znth i bl (Znth j bl) );
+    try (autorewrite with sublist; try omega; reflexivity).
+  erewrite (split2_data_at_Tarray sh t (i+1) i)
+     with (v' := upd_Znth i bl (Znth j bl) );
+  try (autorewrite with sublist; try omega; reflexivity).
+  rewrite (sublist_one i) by list_solve.
+  rewrite upd_Znth_same by list_solve.
+  replace (i+1-i) with 1 by (clear; omega).
+  fold (tarray t 1).
+  erewrite data_at_singleton_array_eq by reflexivity.
+  rewrite sublist_upd_Znth_l by omega.
+  rewrite sublist_upd_Znth_r by omega.
+  rewrite sublist_upd_Znth_r by omega.
+  subst LHS.
+  rewrite (field_adr_ofs); auto; try omega.
+  2: apply (field_compatible_subarray' i j N _ _ Hbase); eauto; omega.
+  rewrite (field_adr_ofs); auto; try omega.
+  2: eapply (field_compatible_subarray' _ _ _ _ _ Hbase);
+        try apply Hbase; omega.
+  rewrite (field_adr_ofs); auto; try omega.
+  2: eapply (field_compatible_subarray'');
+        try apply Hbase; omega.
+  rewrite (field_adr_ofs); auto; try omega.
+  2: eapply (field_compatible_subarray'');
+        try apply Hbase; omega.
+  rewrite (field_adr_ofs); auto; try omega.
+  2: eapply (field_compatible_subarray'');
+        try apply Hbase; omega.
+  rewrite (field_adr_ofs); auto; try omega.
+  rewrite !offset_offset_val.
+  rewrite <- !Z.mul_add_distr_r.
+  replace  (j - i - 1) with (j-(i+1)) by (clear; omega).
+  replace  (N - j - 1) with (N-(j+1)) by (clear; omega).
+  rewrite !(Z.add_comm 1).
+  cancel.
+Qed.
 
 Definition qsort_then2 :=
                      (Ssequence
