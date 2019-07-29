@@ -232,6 +232,9 @@ forward_loop (EX i:Z,
   rewrite field_adr_ofs by (auto; omega).
   cancel.
   }
+ split3; auto.
+ split; auto.
+ eapply Forall_Znth; eauto. omega.
  Intros vret.
  rewrite <- (data_at_singleton_array_eq sh t (Znth i bl) [Znth i bl]) by reflexivity.
  rewrite <- (field_adr_ofs i t N) by (auto; omega).
@@ -426,6 +429,9 @@ unfold loop_j.
   rewrite field_adr_ofs by (auto; omega).
   cancel.
   }
+ split3; auto.
+ split; auto.
+ eapply Forall_Znth; auto. omega.
  Intros vret.
  rewrite <- (data_at_singleton_array_eq sh t (Znth j' bl) [Znth j' bl]) by reflexivity.
  rewrite <- (field_adr_ofs j' t N) by (auto; omega).

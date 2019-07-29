@@ -40,7 +40,9 @@ verif_qsort3_part1.vo: verif_qsort3_part1.v qsort3_aux.vo spec_qsort3.vo
 verif_qsort3_part2.vo: verif_qsort3_part2.v verif_qsort3_part1.vo spec_qsort3.vo 
 verif_qsort3.vo: verif_qsort3.v qsort3_aux.vo verif_qsort3_part1.vo verif_qsort3_part2.vo
 verif_qsort4_aux1.vo: verif_qsort4_aux1.v spec_qsort4.vo
-verif_qsort4.vo: verif_qsort4.v verif_qsort4_aux1.vo spec_qsort4.vo
+verif_qsort4_qsort.vo: verif_qsort4_qsort.v verif_qsort4_aux1.vo spec_qsort4.vo
+verif_qsort4_main.vo: verif_qsort4_main.v verif_qsort4_aux1.vo spec_qsort4.vo
+verif_qsort4.vo: verif_qsort4.v spec_qsort4.vo verif_qsort4_qsort.vo verif_qsort4_main.vo
 spec_qsort4.vo: spec_qsort4.v qsort4a.vo float_lemmas.vo
 
 

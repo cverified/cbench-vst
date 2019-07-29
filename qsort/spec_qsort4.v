@@ -71,7 +71,7 @@ Definition ord_lt {t} ord x y := @ord_le t ord x y /\ ~@ord_le t ord y x.
 Definition compare_spec (t: type) (ord: le_order (reptype t)) :=
   WITH shp: share, shq: share, p: val, q: val, x: reptype t, y: reptype t
   PRE [ _p OF tptr tvoid, _q OF tptr tvoid ]
-    PROP (readable_share shp; readable_share shq)
+    PROP (readable_share shp; readable_share shq; ord_def ord x; ord_def ord y)
     LOCAL (temp _p p; temp _q q)
     SEP (data_at shp t x p; data_at shq t y q)
   POST [ tint ]
@@ -122,6 +122,15 @@ Definition qsort_spec {cs: compspecs} :=
      LOCAL ()
     SEP (data_at sh (tarray (qsort_t wit) (Zlength (qsort_al wit))) bl base).
 
+Definition main_spec :=
+ DECLARE _main
+  WITH gv : globals
+  PRE  [] main_pre prog nil gv
+  POST [ tint ]  
+     PROP() 
+     LOCAL (temp ret_temp (Vint (Int.repr 0)))
+     SEP(TT).
+
 Definition f_le (x y: val) := def_float x /\ def_float y /\ f_cmp Cle x y.
 
 Definition double_le_order : le_order val.
@@ -161,12 +170,9 @@ Definition compar_double_spec :=
   DECLARE _compar_double 
   (compare_spec tdouble double_le_order).
 
-Definition N6: Z := 666666.
-
-Lemma N6_eq: N6 = ltac:(let n := eval compute in N6 in exact n).
-Proof. reflexivity. Qed.
+Definition N6: Z := proj1_sig (opaque_constant 666666).
+Definition N6_eq: N6 = 666666  := proj2_sig (opaque_constant _).
 Hint Rewrite N6_eq : rep_omega.
-Opaque N6.
 
 Require Import float_lemmas.
 
