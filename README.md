@@ -7,7 +7,7 @@ POINTS CLAIMED:
 
 |            | [VST](https://vst.cs.princeton.edu) |
 |------------|----:|
-| **Total**  |  35 |
+| **Total**  |  39 |
 | `fac1.c`   |   4 |
 | `fac2.c`   |   4 |
 | `fac3.c`   |   4 |
@@ -17,6 +17,8 @@ POINTS CLAIMED:
 | `qsort3.c` |   4 |
 | `qsort4.c` |   3 |  [see note]
 | `cat1.c`   |   4 |  [see note]
+| `malloc1.c`|   4 |
+
 
 Notes:
 
@@ -25,5 +27,8 @@ Notes:
 `qsort4.c` uses "variable length arrays", a feature of C not supported by CompCert or by VST.  We modified one line of the program to avoid using them.
 
 `qsort4.c` has a bug: it can call memcpy with overlapping source and destination arguments.  This is "undefined behavior" in the C standard.  Therefore our verification of qsort4 has one admitted lemma, for the case where we must assume that memcpy(dest,src,size) has no effect when dest=src.
+
+`qsort4.c` has calls to printf in main(); these are not verified, since the paper lists 
+ qsort4.c as "not containing standard library calls, not containing I/O".
 
 `cat1.c` has a bug: it calls putchar() without checking the return code, and therefore its output can be lacking arbitrary missing subsequence of the intended output.  We worked around this bug by proving it to this weaker specification.
