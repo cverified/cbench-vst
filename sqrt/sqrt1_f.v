@@ -799,6 +799,8 @@ assert (tmp := body_exp_finite_value x y finx finy intx' inty').
 tauto.
 Qed.
 
+End From_floating_point_numbers_to_reals.
+
 Lemma positive_finite x : 0 < B2R' x -> is_finite _ _ x = true.
 Proof. destruct x; simpl; auto; lra. Qed.
 
