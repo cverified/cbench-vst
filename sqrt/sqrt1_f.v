@@ -394,7 +394,7 @@ Open Scope R_scope.
 Definition ulp1 := bpow radix2 (-23).
 
 Lemma pure_decrease_16 (x y : R) :
-  1 <= x <= 4 -> sqrt x + 16 * ulp1 <= y <= x ->
+  1 <= x <= 4 -> sqrt x + 16 * ulp1 <= y <= 4 ->
   sqrt x <= (y + x / y) / 2 < y - 8 * ulp1.
 Proof.
 intros intx inty.
@@ -416,7 +416,7 @@ lra.
 Qed.
 
 Lemma decrease_above_16 (x y : R) :
-  1 <= x <= 4 -> sqrt x + 16 * ulp1 <= y <= x ->
+  1 <= x <= 4 -> sqrt x + 16 * ulp1 <= y <= 4 ->
   sqrt x - 16 * ulp1 <= round' (round' (y + round' (x / y)) / 2) < y.
 Proof.
 intros intx inty.
@@ -799,6 +799,8 @@ assert (tmp := body_exp_finite_value x y finx finy intx' inty').
 tauto.
 Qed.
 
+End From_floating_point_numbers_to_reals.
+
 Lemma positive_finite x : 0 < B2R' x -> is_finite _ _ x = true.
 Proof. destruct x; simpl; auto; lra. Qed.
 
@@ -948,3 +950,14 @@ destruct c; try discriminate; contradiction.
 Qed.
 
 End main_loop_reasoning.
+
+Lemma main_loop_correct x :
+  1 <= B2R 24 128 x <= 4 ->
+  Rabs (B2R 24 128 (main_loop (x, x)) - sqrt (B2R 24 128 x)) <= 5 / (2 ^ 23).
+Proof.
+set (s := sqrt _); set (m := B2R _ _ (main_loop _)); set (e := _ / _).
+intros intx; apply Rabs_le.
+enough (s - e <= m <= s + e) by lra.
+replace e with (5 * ulp1) by (unfold ulp1, e; simpl; lra).
+now apply main_loop_prop.
+Qed.
