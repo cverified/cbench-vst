@@ -887,7 +887,8 @@ destruct (Rle_dec (B2R' x) (sqrt (B2R' x) + 5 * ulp1)) as [xclose | xfar].
 simpl in cnd2; rewrite Rmax_left in cnd2 by lra.
 assert (yg16' : sqrt (B2R' x) + 16 * ulp1 <= B2R' y) by lra.
 rewrite body_exp_val; simpl in cnd2; try lra.
-assert (tmp := decrease_above_16 _ (B2R' y) intx (conj yg16' (proj2 cnd2))).
+assert (yl4 : B2R' y <= 4) by lra.
+assert (tmp := decrease_above_16 _ (B2R' y) intx (conj yg16' yl4)).
 split;[ | rewrite Rmax_left]; lra.
 Qed.
 
@@ -933,7 +934,8 @@ assert (inty : sqrt (B2R' x) + 16 * ulp1 <= B2R' y <= B2R' x).
   destruct (Rle_dec (B2R' x) (sqrt (B2R' x) + 5 * ulp1)).
     rewrite Rmax_right in cnd2; lra.
   rewrite Rmax_left in cnd2; lra.
-assert (tmp := decrease_above_16 _ (B2R' y) intx inty); lra.
+assert (yl4 : B2R' y <= 4) by lra.
+assert (tmp := decrease_above_16 _ (B2R' y) intx (conj (proj1 inty) yl4)); lra.
 Qed.
 
 Lemma main_loop_prop :
