@@ -393,13 +393,12 @@ Open Scope R_scope.
 
 Definition ulp1 := bpow radix2 (-23).
 
-Lemma pure_decrease_16 (x y : R) :
-  1 <= x <= 4 -> sqrt x + 16 * ulp1 <= y <= 4 ->
-  sqrt x <= (y + x / y) / 2 < y - 8 * ulp1.
+Lemma pure_decrease_2u (lbs ubx u x y : R) :
+  0 < lbs -> 0 < x -> lbs <= sqrt x -> 0 < u ->
+  sqrt x + 2 * u <= y <= ubx ->
+  sqrt x <= (y + x / y) / 2 < y - u.
 Proof.
-intros intx inty.
-assert (1 <= sqrt x).
-  now rewrite <- sqrt_1; apply sqrt_le_1_alt.
+intros lbs0 x0 lbss intu inty.
 assert (0 < ulp1) by (unfold ulp1; simpl; lra).
 rewrite <- (sqrt_sqrt x) at 2 3 by lra.
 replace ((y + (sqrt x * sqrt x) / y) / 2) with
@@ -420,18 +419,19 @@ Lemma decrease_above_16 (x y : R) :
   sqrt x - 16 * ulp1 <= round' (round' (y + round' (x / y)) / 2) < y.
 Proof.
 intros intx inty.
-assert (0 < ulp1 < / 1024) by (unfold ulp1; simpl; lra).
+assert (intu : 0 < ulp1 < / 1024) by (unfold ulp1; simpl; lra).
+assert (ugt0 : 0 < 8 * ulp1) by lra.
 assert (tmp := from_g_proof x y intx).
-assert (1 <= sqrt x).
+assert (sg1 : 1 <= sqrt x).
   now rewrite <- sqrt_1; apply sqrt_le_1_alt.
-assert (sqrt x - 16 * bpow r2 (-23) <= y <= sqrt x + 3) by (fold ulp1; lra).
+assert (xgt0 : 0 < x) by lra.
+assert (inty' : sqrt x - 16 * bpow r2 (-23) <= y <= sqrt x + 3) by (fold ulp1; lra).
+assert (inty2 : sqrt x + 2 * (8 * bpow r2 (-23)) <= y <= 4) by (fold ulp1; lra).
+assert (tmp2 := pure_decrease_2u 1 4 _ x y Rlt_0_1 xgt0 sg1 ugt0 inty2).
 split.
   apply Rle_trans with ((y + x / y) / 2 - 9 * bpow r2 (-24));[ | lra].
-  assert (tmp2 := pure_decrease_16 _ _ intx inty).
   enough (9 * bpow r2 (-24) < 16 * ulp1);[ | compute]; lra.
 apply Rle_lt_trans with ((y + x / y) / 2 + 9 * bpow r2 (-24));[lra | ].
-clear tmp.
-assert (tmp2 := pure_decrease_16 _ _ intx inty).
 assert (step : (y + x / y) / 2 + 8 * ulp1 < y) by lra.
 apply Rlt_trans with (2 := step).
 apply Rplus_lt_compat_l.
