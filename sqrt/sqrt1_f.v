@@ -1124,13 +1124,16 @@ Section above1.
 
 Variables x : float32.
 
-Definition invariant (p : float32 * float32) :=
-    fst p = x /\
-    (sqrt (B2R' x) - 16 * ulp1 * sqrt (B2R' x) <= B2R' (snd p) <= 
-       Rmax (B2R' x) (sqrt (B2R' x) + 5 * ulp1 * sqrt (B2R' x)))%R.
+Definition invariantR x' y' :=
+  sqrt x' - 16 * ulp1 * sqrt x' <= y' <= Rmax x' (sqrt x' + 5 * ulp1 * sqrt x').
 
-Definition final (v : float32) :=
-  sqrt (B2R' x) - 5 * ulp1 <= B2R' v <= sqrt (B2R' x) + 5 * ulp1.
+Definition invariant (p : float32 * float32) :=
+    fst p = x /\ invariantR (B2R' x) (B2R' (snd p)).
+
+Definition finalR x' y' := 
+  sqrt x' - 5 * ulp1 * sqrt x' <= y' <= sqrt x' + 5 * ulp1 * sqrt x'.
+
+Definition final (v : float32) := finalR (B2R' x) (B2R' v).
 
 Hypothesis intx : 1 <= B2R' x < /2 * B2R' predf32max.
 
@@ -1138,7 +1141,7 @@ Lemma invariant_test x' y :
   invariant (x', y) -> Bcompare _ _ (body_exp x y) y <> Some Lt ->
   ~ (B2R' (body_exp x y) < B2R' y).
 Proof.
-intros [xx' inty]; simpl in inty; clear x' xx'.
+unfold invariant, invariantR; intros [xx' inty]; simpl in inty; clear x' xx'.
 assert (0 < ulp1 < / 1024) by (unfold ulp1; simpl; lra).
 assert (1 <= sqrt (B2R' x)).
   now rewrite <- sqrt_1; apply sqrt_le_1_alt.
@@ -1218,7 +1221,7 @@ Lemma invariant_final :
      Bcompare 24 128 (body_exp x y) y <> Some Lt ->
      final x (body_exp x' y).
 Proof.
-intros x' y iv test.
+unfold invariant, invariantR; intros x' y iv test.
 assert (0 < ulp1 < / 1024) by (unfold ulp1; simpl; lra).
 assert (sqrt (B2R' x) <= 2).
   replace 2 with (sqrt(2 ^ 2)) by (rewrite sqrt_pow2; try lra).
@@ -1239,7 +1242,10 @@ unfold final; rewrite body_exp_val; try lra; cycle 1.
 intros test.
 destruct (Rle_dec (B2R' y) (sqrt (B2R' x) + 16 * ulp1 * sqrt (B2R' x)))
    as [yl16 | yg16].
-  assert (tmp := converge_below_16 _ _ intx (conj (proj1 cnd2) yl16)); lra.
+  unfold finalR.
+  assert (tmp := converge_below_16 _ _ intx (conj (proj1 cnd2) yl16)).
+  split;[apply Rle_trans with (sqrt (B2R' x) - 5 * ulp1);[nra | lra] |
+         apply Rle_trans with (sqrt (B2R' x) + 5 * ulp1);[lra | nra]].
 assert (inty : sqrt (B2R' x) + 16 * ulp1 * sqrt (B2R' x) <= B2R' y <= B2R' x).
   destruct (Rle_dec (B2R' x) (sqrt (B2R' x) + 5 * ulp1 * sqrt (B2R' x))).
     rewrite Rmax_right in cnd2 by lra.
@@ -1257,6 +1263,7 @@ Lemma invariant_spec_1_4 :
               invariant x (x', y) ->
               invariant x (x', body_exp x' y).
 Proof.
+unfold invariant, invariantR.
 intros x' y cmp [cnd1 cnd2]; simpl in cnd1; rewrite cnd1 in cnd2 |- *.
 clear cnd1; split;[reflexivity | ].
 simpl.
@@ -1270,7 +1277,7 @@ destruct (Rle_dec (B2R' y) (sqrt (B2R' x) + 16 * ulp1 * sqrt (B2R' x)))
      as [yl16 | yg16].
   assert (tmp:= converge_below_16 _ (B2R' y) intx (conj (proj1 cnd2) yl16)).
   assert (tmp1 := converge_below_16 _ (B2R' y) intx (conj (proj1 cnd2) yl16)).
-  rewrite body_exp_val; simpl in cnd2;[ |lra |nra ].
+  rewrite body_exp_val; simpl in cnd2;[ |lra | nra ].
   split; [nra | ].
   apply Rle_trans with (sqrt (B2R' x) + 5 * ulp1).
     lra.
