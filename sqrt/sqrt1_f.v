@@ -1476,6 +1476,7 @@ Lemma invariant_spec_max  x' y :
        Bcompare 24 128 (body_exp x' y) y = Some Lt ->
        invariant x (x', y) -> invariant x (x', body_exp x' y).
 Proof.
+unfold invariant, invariantR.
 destruct (Rle_lt_dec (B2R' x) 4) as [xle4 | xgt4].
   apply invariant_spec_1_4; lra.
 assert (0 < ulp1 < /1024) by (compute; lra).
@@ -1620,10 +1621,8 @@ assert (t := body_exp_value_scale _ _ _ inx2 ybnds egt cx'bounds).
 rewrite xval, yval, <- t.
 rewrite sqrt_mult, <- bpow_square;[ | lra | apply bpow_ge_0]. 
 rewrite sqrt_pow2.
-assert (invariant x2 (x2, y2)).
- <- Rmult_assoc, <- Rmult_minus_distr_r;[ | apply bpow_ge_0].
-rewrite <- Rmult_assoc, <- Rmult_plus_distr_r.
-split.
+assert (invariantR x2 y2).
+  unfold invariantR.
 
 End.
 
