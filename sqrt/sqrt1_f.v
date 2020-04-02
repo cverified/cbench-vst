@@ -6,6 +6,28 @@ Require Import FunInd Recdef.
 (* This file is generated from sqrt1.g *)
 Require from_g.
 
+Lemma Rdiv_1_r x : x / 1 = x.
+Proof.
+now unfold Rdiv; rewrite Rinv_1, Rmult_1_r.
+Qed.
+
+Lemma Rdiv_cancel x y : y <> 0 -> x / y * y = x.
+Proof.
+intro yn0; unfold Rdiv; rewrite Rmult_assoc, Rinv_l, Rmult_1_r; lra.
+Qed.
+
+Lemma Rdiv_le_swap x y z : 0 < y -> x <= z * y -> x / y <= z.
+Proof.
+intros y0 cnd; apply Rmult_le_reg_r with y;[lra | ].
+rewrite Rdiv_cancel; lra.
+Qed.
+
+Lemma Rdiv_lt_swap x y z : 0 < y -> x < z * y -> x / y < z.
+Proof.
+intros y0 cnd; apply Rmult_lt_reg_r with y;[lra | ].
+rewrite Rdiv_cancel; lra.
+Qed.
+
 Definition float32 := binary_float 24 128.
 
 Definition round' x := 
@@ -47,7 +69,7 @@ assert (h : 0 < f x).
   assert (cgt0 : 0 < c) by lra.
   rewrite Pc; simpl.
   rewrite (is_derive_unique (fun x :R => f x) c _ (df c cgt0)).
-  unfold Rdiv; rewrite f4, Rmult_0_r, Rinv_1, !Rmult_1_r, Rplus_0_l.
+  rewrite !Rdiv_1_r, Rmult_1_l, Rmult_1_r, f4, Rplus_0_l.
   apply Rmult_lt_0_compat;[lra | ].
  assert (2 < sqrt c).
     replace 2 with (sqrt (2 ^ 2)) by (rewrite sqrt_pow2; lra).
@@ -113,34 +135,6 @@ Definition float_to_nat (z: float32) : nat :=
         + Pos.to_nat m * 2 ^ Z.to_nat(e + 149)
   end.
 
-Definition float_to_exp (z : float32) : Z :=
-  match z with
-  | B754_finite _ m e _ => e
-  | _ => 0
-  end.
-
-Lemma Rabs_INR (n : nat) : Rabs(INR n) = INR n.
-Proof.
-apply Rabs_pos_eq, pos_INR.
-Qed.
-
-Lemma natpow_Zpow (x y : nat) : Z.of_nat (x ^ y) =
-  Z.of_nat x ^ Z.of_nat y.
-Proof.
-induction y as [ | y IH].
-  reflexivity.
-rewrite <- Zpower_nat_Z.
-simpl.
-now rewrite Nat2Z.inj_mul, IH, <- Zpower_nat_Z.
-Qed.
-
-Lemma IZR_INR_Z2N n :
-  0 <= n -> IZR n = INR (Z.to_nat n).
-Proof.
-destruct n as [ | p | p]; auto; try lia.
-now unfold Z.to_nat, IZR; rewrite INR_IPR.
-Qed.
-
 Lemma bounded_bound_exp m e : 
   Binary.bounded 24 128 m e = true -> -149 <= e <= 104.
 Proof.
@@ -153,14 +147,6 @@ revert vc1.
 unfold canonical, F2R, cexp; simpl; unfold FLT_exp.
 destruct (mag radix2 (IZR (Z.pos m) * bpow radix2 e) - 24);
   intros v; rewrite v; apply Z.le_max_r.  
-Qed.
-
-Lemma bound_exp_float32 (z : float32) :
-  -149 <= float_to_exp z <= 104.
-Proof.
-destruct z as [dummy | dummy | dum1 dum2 dum3 | sign m e vc];
-  try (split; intros; discriminate).
-now simpl; apply (bounded_bound_exp m).
 Qed.
 
 Lemma pow2_pos x : (0 < 2 ^ x)%nat.
@@ -373,33 +359,10 @@ destruct a as [da | da | da1 da2 da3 | signa ma ea vca];
     now apply Nat.mul_le_mono_l, pow2_pos.
 Qed.
 
-Lemma Float32cmp_correct x y :
-  is_finite 24 128 x = true ->
-  is_finite 24 128 y = true ->
-  Bcompare 24 128 x y = Some Lt ->
-  (B2R' x < B2R' y)%R.
-Proof.
-intros finx finy.
-rewrite Bcompare_correct; auto.
-fold (B2R' x) (B2R' y).
-destruct (Rcompare (B2R' x) (B2R' y)) eqn:test;
- simpl; try discriminate.
-now apply Rcompare_Lt_inv in test.
-Qed.
-
 Definition main_loop_measure (p : float32 * float32) : nat :=
   float_to_nat (snd p).
 
 Definition float2 := B754_finite 24 128 false (2 ^ 23) (-22) eq_refl.
-
-Definition float1 := B754_finite 24 128 false (2 ^ 23) (-23) eq_refl.
-
-Lemma float2_val : B2R 24 128 float2 = 2%R.
-Proof.  compute; lra. Qed.
-
-Lemma float1_val : B2R 24 128 float1 = 1%R.
-Proof.  compute; lra. Qed.
-
 
 Definition dummy_nan (x y : float32) :=
   exist (fun e => is_nan _ _ e = true) (B754_nan 24 128 false 1 eq_refl)
@@ -461,9 +424,7 @@ split.
   apply Rlt_le, Rinv_0_lt_compat; lra.
 apply Rlt_le_trans with (sqrt x + ((y - sqrt x) / 2) * 1);[ | lra].
 apply Rplus_lt_compat_l, Rmult_lt_compat_l; try lra.
-apply Rmult_lt_reg_r with y;[lra |unfold Rdiv; rewrite Rmult_assoc, Rinv_l ].
-  lra.   
-lra.
+apply Rdiv_lt_swap; lra.
 Qed.
 
 Lemma decrease_above_16 (x y : R) :
@@ -525,7 +486,7 @@ apply Rabs_le_inv; rewrite Rabs_pos_eq; cycle 1.
   apply Rmult_le_pos;[apply pow2_ge_0 | apply Rlt_le, Rinv_0_lt_compat]; lra.
 apply Rle_trans with ((y - sqrt x) ^ 2 / 1).
 apply Rmult_le_compat_l;[apply pow2_ge_0 | apply Rinv_le_contravar;lra].
-unfold Rdiv; rewrite Rinv_1, Rmult_1_r.
+rewrite Rdiv_1_r.
 replace (bpow r2 (- (24))) with (bpow r2 (-(12)) ^ 2) by (compute; lra).
 assert (ulp1 = bpow r2 (-23)) by reflexivity.
 destruct (Rle_dec y (sqrt x)).
@@ -608,17 +569,6 @@ Qed.
 Definition f32max : float32 :=
     B754_finite 24 128 false (2 ^ 24 - 1) 104 eq_refl.
 
-Lemma f32max_val : B2R 24 128 f32max = 
-  ((bpow radix2 24 - 1) * bpow radix2 104)%R.
-unfold B2R, f32max, Fnum, F2R; simpl.
-simpl Defs.Fexp.
-rewrite Pos2Z.inj_sub by reflexivity.
-rewrite Pos2Z.inj_pow.
-rewrite !Z.pow_pos_fold.
-rewrite minus_IZR.
-reflexivity.
-Qed.
-
 (* a conservative bound that can be improved. *)
 Definition predf32max : float32 :=
     B754_finite 24 128 false (2 ^ 23) 103 eq_refl.
@@ -657,9 +607,8 @@ intros intx inty.
 assert (ygt0 : y <> 0) by lra.
 split.
   apply Rmult_lt_reg_r with y;[lra | ].
-  now unfold Rdiv; rewrite Rmult_assoc, Rinv_l; lra.
-apply Rmult_le_reg_r with y;[lra | ].
-unfold Rdiv; rewrite Rmult_assoc, Rinv_l, Rmult_1_r; [ nra | lra].
+  rewrite Rdiv_cancel; lra.
+apply Rdiv_le_swap; nra.
 Qed.
 
 Lemma body_exp_div_x_y_bounds x y :
@@ -723,8 +672,7 @@ split; apply round_le'; try lra.
 assert (0 < sqrt x)%R.
   apply sqrt_lt_R0; lra.
 assert (divsqrt : (x / y <= sqrt x)%R).
-  apply Rmult_le_reg_r with y;[lra | ].
-    unfold Rdiv; rewrite Rmult_assoc, Rinv_l, Rmult_1_r;[ | lra].
+  apply Rdiv_le_swap;[lra | ].
     rewrite <- (sqrt_sqrt x) at 1;[ | lra].
     now apply Rmult_le_compat_l;[lra | ].
 apply Rle_trans with (B2R' predf32max + bpow radix2 64)%R.
@@ -865,15 +813,6 @@ assert (tmp := body_exp_finite_value x y finx finy intx' inty').
 tauto.
 Qed.
 
-Lemma body_exp_val4 x y:
-  1 <= B2R' x <= 4 -> / 2 <= B2R' y <= B2R' predf32max ->
-  B2R' (body_exp x y) =
-  round' (round' (B2R' y + round' (B2R' x / B2R' y )) / 2).
-Proof.
-assert (4 < /2 * B2R' predf32max) by (compute; lra).
-intros intx; apply body_exp_val; lra.
-Qed.
-
 End From_floating_point_numbers_to_reals.
 
 Lemma float32_bound_ulp x :
@@ -889,8 +828,7 @@ apply mag_ge_bpow; rewrite Rabs_pos_eq by lra; assumption.
 unfold FLT_exp; rewrite Z.max_l by lia.
 split;[now apply bpow_gt_0 | ].
 apply Rmult_le_reg_r with (bpow r2 23);[now apply bpow_gt_0 | ].
-unfold Rdiv; rewrite <- bpow_plus, Rmult_assoc, Rinv_l, Rmult_1_r; cycle 1.
-  now apply Rgt_not_eq; apply bpow_gt_0.
+rewrite Rdiv_cancel, <- bpow_plus;[ | now apply Rgt_not_eq; apply bpow_gt_0].
 apply Rle_trans with (bpow r2 (mag r2 x - 1)).
   now apply bpow_le; lia.
 now generalize (bpow_mag_le r2 _ xn0); rewrite Rabs_pos_eq by lra.
@@ -958,8 +896,7 @@ assert (yge1 : 1 <= y).
   apply Rle_trans with (2 := proj1 inty).
   rewrite <- (Rmult_1_r 1) at 1; apply Rmult_le_compat; lra.
 assert (boundxy1 : (x / y < sqrt x * (1 - 15 * bpow r2 (- (23))))%R).
-  unfold Rdiv; apply Rmult_lt_reg_r with y;[lra | ].
-  rewrite Rmult_assoc, Rinv_l, Rmult_1_r;[ | lra].
+  apply Rdiv_lt_swap;[lra | ].
   rewrite <- (sqrt_sqrt x) at 1;[ | lra].
   rewrite Rmult_assoc; apply Rmult_lt_compat_l;[lra | ].
   apply Rmult_lt_reg_l with (/ (1 - 15 * bpow r2 (- (23)))).
@@ -988,9 +925,7 @@ assert (y + round' (x / y) <= 2 * y).
     rewrite !Rplus_assoc; apply Rplus_le_compat_l.
     replace 16 with (1 + 15) by ring; rewrite Rmult_plus_distr_r, Rmult_1_l.
     apply Rplus_le_compat_l.
-    apply Rmult_le_reg_r with (1 - bpow r2 (- (23)));[lra | ].
-    unfold Rdiv; rewrite Rmult_assoc, Rinv_l, Rmult_1_r by lra.
-    compute; lra.
+    apply Rdiv_le_swap;[ | compute]; lra.
   enough (round' (x / y) <= y) by lra. (* simpler if round' y = y *)
   rewrite <- ry at 2; apply round_le'; lra.
 assert (1 <= mag r2 y)%Z.
@@ -1023,7 +958,7 @@ assert (rdiv : Rabs (round' (x / y) - x / y) <= ulp r2 f32_exp y).
   apply ulp_le; try typeclasses eauto; rewrite !Rabs_pos_eq; lra.
 assert (rsum' : Rabs ((y + round' (x / y)) / 2 - (y + x / y) / 2) <=
                     ulp r2 f32_exp y / 2).
-  unfold Rdiv at 1 3 5; rewrite <- Rmult_minus_distr_r, Rabs_mult.
+  rewrite <- Rdiv_minus_distr; unfold Rdiv at 1 4;rewrite Rabs_mult.
   rewrite (Rabs_pos_eq (/ 2)) by lra.
   apply Rmult_le_compat_r; [lra | ].
   replace (y + round' (x / y) - (y + x / y)) with (round' (x / y) - x / y); lra.
@@ -1076,10 +1011,10 @@ assert (0 < y ^ 2) by (apply pow2_gt_0; assumption).
 assert (y ^ 2 <> 0) by now apply Rgt_not_eq.
 enough (10 * bpow r2 (-(24)) < 1 - x / y ^ 2) by lra.
 apply Rmult_lt_reg_r with (y ^ 2);[ assumption | ].
-unfold Rdiv; rewrite Rmult_minus_distr_r, Rmult_1_l.
-rewrite (Rmult_assoc x), Rinv_l, Rmult_1_r by auto.
+rewrite Rmult_minus_distr_r, Rmult_1_l, Rdiv_cancel by auto.
 enough (x < (1 - 10 * bpow r2 (-(24))) * y ^ 2) by lra.
-apply Rlt_le_trans with (x * ((1 + 16 * ulp1) ^ 2 * (1 - 10 * bpow r2 (-(24))))).
+apply Rlt_le_trans with (x * ((1 + 16 * ulp1) ^ 2 *
+                               (1 - 10 * bpow r2 (-(24))))).
   rewrite <- (Rmult_1_r x) at 1.
   apply Rmult_lt_compat_l;[ | unfold ulp1; simpl];lra.
 rewrite <- Rmult_assoc, (Rmult_comm (1 - _)).
@@ -1121,7 +1056,7 @@ assert (ders :forall t, y' <= t <= y -> forall k, (k <= 1)%nat -> ex_derive_n f 
   assert (abs : (S k' <= 0)%nat) by assumption; inversion abs.
 destruct (Taylor_Lagrange f 0 y' y ygty' ders) as [c [intc Pc]].
 rewrite Pc; clear Pc; simpl; replace (1 / 1) with 1 by field.
-unfold Rdiv; rewrite Rinv_1, !Rmult_1_l, !Rmult_1_r.
+rewrite Rdiv_1_r, Rmult_1_l, Rmult_1_r.
 enough (0 <= (y - y') * Derive (fun z => f z) c) by lra.
 apply Rmult_le_pos;[lra | ].
 assert (cn0 : c <> 0) by lra.
@@ -1283,13 +1218,11 @@ Lemma body_exp_decrease4 x y :
 Proof.
 intros intx inty.
 assert (dlt1 : x / y < 1).
-  apply Rmult_lt_reg_r with y;[lra | ].
-  unfold Rdiv; rewrite Rmult_assoc, Rinv_l, Rmult_1_r; lra.
+  apply Rdiv_lt_swap;[| rewrite Rmult_1_l]; lra.
 assert (rdle1 : round' (x / y) <= 1).
   rewrite <- round'1; apply round_le'; lra.
 assert (dge0 : 0 <= x / y).
-  apply Rmult_le_reg_r with y;[lra | ].
-  unfold Rdiv; rewrite Rmult_assoc, Rinv_l, Rmult_1_r; lra.
+  apply Rmult_le_reg_r with y;[| rewrite Rdiv_cancel]; lra.
 assert (rdge0 : 0 <= round' (x / y)).
   rewrite <- (round_0 r2 f32_exp (round_mode mode_NE)).
   now apply round_le'.
@@ -1408,20 +1341,6 @@ assert (t := body_exp_finite_value x y (positive_finite _ px)
 rewrite (fun h1 h2 => proj1 (t h1 h2)) in test';[exact test' | lra| lra].
 Qed.
 
-Lemma invariant_initial : invariant x (x, x).
-Proof.
-split;[reflexivity | ]; simpl; split.
-  apply Rle_trans with (sqrt (B2R' x)).
-    rewrite <- (Rmult_1_l (sqrt (B2R' x))) at 1 3.
-    rewrite <- Rmult_minus_distr_r; apply Rmult_le_compat_r;[ | compute]; lra.
-  assert (1 <= sqrt (B2R' x)).
-    now rewrite <- sqrt_1; apply sqrt_le_1_alt.
-  rewrite <- (Rmult_1_r (sqrt (B2R' x))).
-  rewrite <- (sqrt_sqrt (B2R' x)) at 2 by lra.
-  apply Rmult_le_compat_l; lra.
-lra.
-Qed.
-
 Lemma invariant_finalR x' y :
   1 <= x' <= 4 ->
   1 <= sqrt x' ->
@@ -1485,8 +1404,8 @@ destruct (Rle_dec y (sqrt x' + 16 * ulp1 * sqrt x'))
   apply Rle_trans with (sqrt x' + 5 * ulp1).
     lra.
   apply Rle_trans with (2 + 5 * ulp1);[ | compute]; lra.
-destruct (Rle_dec y 4) as [yl4 | yg4].
-assert (yg16' : sqrt x' + 16 * ulp1 * sqrt x' <= y) by lra.
+destruct (Rle_lt_dec y 4) as [yl4 | yg4].
+  assert (yg16' : sqrt x' + 16 * ulp1 * sqrt x' <= y) by lra.
   assert (tmp := decrease_above_16 _ y intx' (conj yg16' yl4)).
   fold (body_exp_R x' y) in tmp.
   split;[ | lra].
@@ -1498,29 +1417,14 @@ assert (tmp := body_exp_decrease4 _ _ intx' inty); lra.
 Qed.
 
 Lemma invariant_spec_1_4 :
-  forall x' y,  Bcompare _ _ (body_exp x' y) y = Some Lt ->
-              invariant x (x', y) ->
-              invariant x (x', body_exp x' y).
+  forall x' y, invariant x (x', y) -> invariant x (x', body_exp x' y).
 Proof.
 unfold invariant.
-intros x' y cmp [cnd1 cnd2]; simpl in cnd1; rewrite cnd1 in cnd2 |- *.
+intros x' y [cnd1 cnd2]; simpl in cnd1; rewrite cnd1 in cnd2 |- *.
 clear cnd1; split;[reflexivity | ].
 cbv [snd] in cnd2 |- *; unfold invariantR in cnd2 |- *.
 rewrite body_exp_val; [ | lra | nra].
 now apply invariant_spec_1_4_R.
-Qed.
-
-Lemma main_loop_prop :
-  final x (main_loop (x, x)).
-Proof.
-generalize invariant_initial.
-apply main_loop_ind.
-  now intros p x' y pxy test IH v; apply IH, invariant_spec_1_4.
-intros p x' y pxy test vtest cndtest iv. 
-apply invariant_final; auto.
-destruct iv as [cnd1 cnd2]; rewrite <- cnd1; simpl; rewrite vtest.
-destruct test as [c |] eqn: tq; try discriminate.
-destruct c; try discriminate; contradiction.
 Qed.
 
 End interval_1_4.
@@ -1539,7 +1443,6 @@ intros intx inty elb inte.
 assert (1 <= sqrt x')%R.
   rewrite <- sqrt_1.
   apply sqrt_le_1_alt; lra.
-assert (yn0 : y' <> 0%R) by lra.
 assert (bpgt0 : (0 < bpow radix2 e)%R) by apply bpow_gt_0.
 assert (sqrtle : (sqrt x' <= x')%R).
   enough (1 * sqrt x' <= x')%R by lra.
@@ -1550,33 +1453,23 @@ assert (sle2 : (sqrt x' <= 2)%R).
   apply sqrt_le_1_alt; lra.
 assert (qgth : (/ 2 <= x' / y')%R).
   apply Rmult_le_reg_r with y';[lra | ].
-  unfold Rdiv; rewrite Rmult_assoc, Rinv_l, Rmult_1_r by lra.
-  lra.
-assert (qgt0 : (0 < x' / y')%R) by lra.
+  rewrite Rdiv_cancel; lra.
 replace (2 * e)%Z with (e + e)%Z by ring.
 rewrite bpow_plus.
 replace (x' * (bpow radix2 e * bpow radix2 e) / (y' * bpow radix2 e))%R with
     ((x' / y') * bpow radix2 e)%R by now field; lra.
-assert (rh : (round' (/ 2) = / 2)%R).
-  apply round_generic; try typeclasses eauto.
-  replace (/ 2)%R with (bpow radix2 (-1)) by (compute; lra).
-  apply generic_format_bpow'.
-    apply FLT_exp_valid; reflexivity.
-  apply Z.lt_le_incl; reflexivity.
 assert (rqgth : (/ 2 <= round' (x' / y'))%R).
-  rewrite <- rh; apply round_le'; lra.
+  rewrite <- round'h; apply round_le'; lra.
 assert (sumgt1 : (1 <= y' + round' (x' / y'))%R) by lra.
 assert (rsumgt1 : (1 <= round' (y' + round' (x' / y')))%R).
   rewrite <- round'1; apply round_le'; lra.
 assert (expgeh : (/ 2 <= round' (y' + round' (x' / y')) / 2)%R) by lra.
 assert (rexpgeh : (/ 2 <= round' (round' (y' + round' (x' / y')) / 2))%R).
-  now rewrite <- rh; apply round_le'.
+  now rewrite <- round'h; apply round_le'.
 assert (qle2s : x' / y' <= 2 * sqrt x').
   rewrite <- (sqrt_sqrt x') at 1 by lra.
-  unfold Rdiv; rewrite Rmult_assoc, Rmult_comm.
-  apply Rmult_le_compat_r;[lra | ].
-  apply Rmult_le_reg_r with y';[lra |].
-  rewrite Rmult_assoc, Rinv_l, Rmult_1_r; lra.
+  apply Rdiv_le_swap;[lra | rewrite (Rmult_comm 2), Rmult_assoc].
+  apply Rmult_le_compat_l;lra.
 assert (qle4 : (x' / y' <= 4)%R) by lra.
 assert (rqle2 : (round' (x' / y') <= 4)%R).
   now rewrite <- round'4; apply round_le'.
@@ -1609,10 +1502,9 @@ assert (sumle6: (y' + round' (x' / y') <= 6)%R).
   destruct (Rle_dec y' (sqrt x'));[lra | ].
     enough (round' (x' / y') <= 2) by lra.
     assert (x' / y' <= 2).
-      rewrite <- (sqrt_sqrt x') by lra.
-      apply Rmult_le_reg_r with y';[lra | ].
-      unfold Rdiv; rewrite Rmult_assoc, Rinv_l, Rmult_1_r by lra.
+      apply Rdiv_le_swap; [lra | ].
       apply Rle_trans with (2 * sqrt x'); try lra.
+      rewrite <- (sqrt_sqrt x') at 1 by lra.
       apply Rmult_le_compat_r; lra.
     now rewrite <- round'2; apply round_le'.
 assert (rsumle6 : (round' (y' + round' (x' / y')) <= 6)%R).
