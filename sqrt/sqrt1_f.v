@@ -1657,7 +1657,7 @@ Lemma invariant_spec_1_max  x' y :
 Proof.
 unfold invariant, invariantR.
 destruct (Rle_lt_dec (B2R' x) 4) as [xle4 | xgt4].
-  apply invariant_spec_1_4; lra.
+  intros _; apply invariant_spec_1_4; lra.
 assert (ulp1_small : 0 < ulp1 < / 1024) by (compute; lra).
 assert (sge0 : 1 <= sqrt (B2R' x)).
   now rewrite <- sqrt_1; apply sqrt_le_1_alt.
