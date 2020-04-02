@@ -831,24 +831,47 @@ split;[exact vexp | rewrite finsum in finexp;exact finexp].
 Qed.
 
 Lemma body_exp_val x y:
-  1 <= B2R' x <= 4 -> / 2 <= B2R' y <= 5 ->
+  1 <= B2R' x < / 2 * B2R' predf32max -> / 2 <= B2R' y <= B2R' predf32max ->
   B2R' (body_exp x y) =
   round' (round' (B2R' y + round' (B2R' x / B2R' y )) / 2).
 Proof.
-assert (4 < B2R' predf32max) by (compute; lra).
 intros intx inty.
 assert (finx : is_finite 24 128 x = true).
   destruct x; auto; compute in intx; lra.
 assert (finy : is_finite 24 128 y = true).
   destruct y; auto; compute in inty; lra.
 assert (intx' : / 2 <= B2R' x < / 2 * B2R' predf32max).
-  split;[apply Rle_trans with (2 := proj1 intx); lra | ].
-  apply Rle_lt_trans with (1 := proj2 intx); compute; lra.
+  lra.
 assert (inty' : / 2 <= B2R' y <= B2R' predf32max).
-  split;[apply Rle_trans with (2 := proj1 inty); lra | ].
-  apply Rle_trans with (1 := proj2 inty); compute; lra.
+  lra.
 assert (tmp := body_exp_finite_value x y finx finy intx' inty').
 tauto.
+Qed.
+
+Lemma body_exp_finite x y:
+  1 <= B2R' x < / 2 * B2R' predf32max -> / 2 <= B2R' y <= B2R' predf32max ->
+  is_finite 24 128 (body_exp x y) = true.
+Proof.
+intros intx inty.
+assert (finx : is_finite 24 128 x = true).
+  destruct x; auto; compute in intx; lra.
+assert (finy : is_finite 24 128 y = true).
+  destruct y; auto; compute in inty; lra.
+assert (intx' : / 2 <= B2R' x < / 2 * B2R' predf32max).
+  lra.
+assert (inty' : / 2 <= B2R' y <= B2R' predf32max).
+  lra.
+assert (tmp := body_exp_finite_value x y finx finy intx' inty').
+tauto.
+Qed.
+
+Lemma body_exp_val4 x y:
+  1 <= B2R' x <= 4 -> / 2 <= B2R' y <= B2R' predf32max ->
+  B2R' (body_exp x y) =
+  round' (round' (B2R' y + round' (B2R' x / B2R' y )) / 2).
+Proof.
+assert (4 < /2 * B2R' predf32max) by (compute; lra).
+intros intx; apply body_exp_val; lra.
 Qed.
 
 End From_floating_point_numbers_to_reals.
@@ -1210,16 +1233,14 @@ assert (inty' : / 2 <= B2R' y <= B2R' predf32max).
   rewrite Rmax_left; lra.
 assert (expb := body_exp_bounds (B2R' x) (B2R' y) intx' inty').
 rewrite vmax in expb.
-assert (finx : is_finite _ _ x = true).
-  apply positive_finite; lra.
-assert (finy : is_finite _ _ y = true).
-  apply positive_finite; lra.
-destruct (body_exp_finite_value x y finx finy intx' inty') as [vb finb].
+assert (bval : B2R' (body_exp x y) = body_exp_R (B2R' x) (B2R' y)).
+  apply body_exp_val; lra.
 assert (B2R' y <= 2 ^ 126).
   replace (2 ^ 126) with (B2R' predf32max) by (compute; lra).
   lra.  
-clear -finb finy.
-rewrite Bcompare_correct; auto.
+assert (is_finite _ _ (body_exp x y) = true).
+  apply body_exp_finite; lra.
+rewrite Bcompare_correct; auto;[ | apply positive_finite; lra].
 destruct (Rcompare _ _) eqn:vcmp.
     apply Rcompare_Eq_inv in vcmp; unfold B2R'; lra.
   now intros abs; case abs.
@@ -1253,6 +1274,77 @@ destruct (Rle_lt_dec 4 x).
 destruct (Rle_lt_dec 2 x).
   rewrite (cexp_32 2);[lia | lia| simpl bpow; split; lra].
 rewrite (cexp_32 1);[lia | lia| simpl bpow; split; lra].
+Qed.
+
+Lemma body_exp_decrease4 x y :
+  1 <= x <= 4 ->
+  4 < y <= B2R 24 128 predf32max ->
+  sqrt x - 16 * ulp1 * sqrt x <= body_exp_R x y < y.
+Proof.
+intros intx inty.
+assert (dlt1 : x / y < 1).
+  apply Rmult_lt_reg_r with y;[lra | ].
+  unfold Rdiv; rewrite Rmult_assoc, Rinv_l, Rmult_1_r; lra.
+assert (rdle1 : round' (x / y) <= 1).
+  rewrite <- round'1; apply round_le'; lra.
+assert (dge0 : 0 <= x / y).
+  apply Rmult_le_reg_r with y;[lra | ].
+  unfold Rdiv; rewrite Rmult_assoc, Rinv_l, Rmult_1_r; lra.
+assert (rdge0 : 0 <= round' (x / y)).
+  rewrite <- (round_0 r2 f32_exp (round_mode mode_NE)).
+  now apply round_le'.
+assert (sl5 : y + round' (x / y) <= 5 / 4 * y) by lra.
+assert (sge4 : 4 < y + round' (x / y)) by lra.
+assert (sgt0 : 0 < y + round' (x / y)) by lra.
+assert (rsg4 : 4 <= round' (y + round' (x / y))).
+  rewrite <- round'4; apply round_le'; lra.
+assert (rsl5 : round' (y + round' (x / y)) <= 11 / 8 * y).
+  assert (tmp := error_le_ulp r2 f32_exp (round_mode mode_NE)
+             (y + round' (x / y))).
+  apply Rabs_def2b in tmp.
+  assert (a : bpow r2 (-149 + 24 - 1) <= Rabs (y + round' (x / y))).
+    rewrite Rabs_pos_eq by lra.
+    apply Rle_trans with (2 := Rlt_le _ _ sge4); compute; lra.
+  generalize (ulp_FLT_le r2 (-149) 24 _ a); rewrite Rabs_pos_eq by lra.
+  intros tm2.
+  fold (round' (y + round'(x/y))) in tmp.
+  apply Rle_trans with 
+    (5 / 4 * y + (y + round' (x / y)) * bpow r2 (1 - 24) );[lra | ].
+  enough ((y + round' (x / y)) * bpow r2 (1 - 24) <= / 8 * y) by lra.
+  apply Rle_trans with (5 / 4 * y * bpow r2 (1 - 24)).
+    apply Rmult_le_compat_r;[apply bpow_ge_0 | lra].
+  rewrite <- (Rmult_comm y), Rmult_assoc, (Rmult_comm y).
+  apply Rmult_le_compat_r; [ | compute]; lra.
+assert (round' (y + round' (x / y)) / 2 <= 11 / 16 * y) by lra.
+assert (bge2 : 2 <= round' (y + round' (x / y)) / 2) by lra.
+assert (tmp := error_le_ulp r2 f32_exp (round_mode mode_NE)
+             (round' (y + round' (x / y)) / 2)).
+apply Rabs_def2b in tmp; fold (round' (round' (y + round' (x / y)) / 2)) in tmp.
+fold (body_exp_R x y) in tmp.
+assert (a : bpow r2 (-149 + 24 - 1) <= Rabs (round' (y + round' (x / y)) / 2)).
+  rewrite Rabs_pos_eq by lra.
+  apply Rle_trans with (2 := bge2); compute; lra.
+generalize (ulp_FLT_le r2 (-149) 24 _ a); rewrite Rabs_pos_eq by lra.
+intros tm2.
+split.
+  assert (sge1 := sqrt_1_4 x intx).
+  apply Rle_trans with (round' (sqrt x)).
+    assert (tm3 := error_le_ulp r2 f32_exp (round_mode mode_NE) (sqrt x)).
+    assert (a2 : bpow r2 (-149 + 24 - 1) <= Rabs (sqrt x)).
+      rewrite Rabs_pos_eq by lra.
+      apply Rle_trans with (2 := proj1 sge1); compute; lra.
+    generalize (ulp_FLT_le r2 (-149) 24 _ a2); rewrite Rabs_pos_eq by lra.
+    change (bpow r2 (1 - 24)) with ulp1; intros tm4.
+    apply Rabs_def2b in tm3; fold (round' (sqrt x)) in tm3; lra.
+  unfold body_exp_R; apply round_le'; lra.
+enough (body_exp_R x y <= 3 / 4 * y) by lra.
+apply Rle_trans with (11 / 16 * y +
+                round' (y + round' (x / y)) / 2 * bpow r2 (1 - 24));[lra | ].
+enough (round' (y + round' (x / y)) / 2 * bpow r2 (1 - 24) <= / 16 * y) by lra.
+apply Rle_trans with (11 / 16 * y * bpow r2 (1 - 24)).
+  apply Rmult_le_compat_r;[apply bpow_ge_0 | lra].
+rewrite <- (Rmult_comm y), Rmult_assoc, (Rmult_comm y).
+apply Rmult_le_compat_r; [ | compute]; lra.
 Qed.
 
 Section interval_1_4.
@@ -1367,16 +1459,15 @@ assert (1 <= sqrt (B2R' x)).
   now rewrite <- sqrt_1; apply sqrt_le_1_alt.
 destruct iv as [cnd1 cnd2]; cbv [snd fst] in cnd1, cnd2.
 assert (bv : B2R' (body_exp x y) = body_exp_R (B2R' x) (B2R' y)).
-  apply body_exp_val;[assumption | ].
+  apply body_exp_val; [assumption | ].
   split.
     apply Rle_trans with (2 := proj1 cnd2).
     rewrite <- (Rmult_1_l (sqrt _)) at 1; rewrite <- Rmult_minus_distr_r.
     rewrite <- (Rmult_1_r (/ 2)); apply Rmult_le_compat; lra. 
-  destruct (Rle_dec (B2R' x) (sqrt (B2R' x) + 5 * ulp1 * sqrt (B2R' x))).
-    rewrite Rmax_right in cnd2;[nra | lra].
-  rewrite Rmax_left in cnd2; lra.
+  lra.
 unfold final; rewrite cnd1, bv.
-apply (invariant_finalR (B2R' x) (B2R' y));[easy | easy | easy | ].
+apply (invariant_finalR (B2R' x) (B2R' y));[easy | easy | | easy | ].
+  now apply round_B2R'.
 apply (invariant_test_1_4 x); [split; easy | exact test].
 Qed.
 
@@ -1393,24 +1484,17 @@ destruct (Rle_dec y (sqrt x' + 16 * ulp1 * sqrt x'))
   unfold body_exp_R; split; [nra | ].
   apply Rle_trans with (sqrt x' + 5 * ulp1).
     lra.
-  apply Rle_trans with (2 := Rmax_r _ _); nra.
-destruct (Rle_dec x' (sqrt x' + 5 * ulp1 * sqrt x'))
-   as [xclose | xfar].
-  rewrite Rmax_right in cnd2 by auto; simpl in cnd2.
-  assert (yl16 : y <= sqrt x' + 16 * ulp1 * sqrt x') by nra.
-  assert (tmp1 := converge_below_16 _ y intx' (conj (proj1 cnd2) yl16)).
-  split; [| rewrite Rmax_right]; lra.
-simpl in cnd2; rewrite Rmax_left in cnd2 by lra.
+  apply Rle_trans with (2 + 5 * ulp1);[ | compute]; lra.
+destruct (Rle_dec y 4) as [yl4 | yg4].
 assert (yg16' : sqrt x' + 16 * ulp1 * sqrt x' <= y) by lra.
-assert (yl4 : y <= 4) by lra.
-assert (tmp := decrease_above_16 _ y intx' (conj yg16' yl4)).
-split; cycle 1.
-  rewrite Rmax_left by lra.
-  apply Rlt_le, Rlt_le_trans with (1 := proj2 tmp); lra.
-apply Rle_trans with (2 := proj1 tmp).
-apply Rplus_le_compat_l, Ropp_le_contravar.
-rewrite <- (Rmult_1_r (16 * ulp1)) at 1.
-apply Rmult_le_compat_l;[compute |];lra.
+  assert (tmp := decrease_above_16 _ y intx' (conj yg16' yl4)).
+  fold (body_exp_R x' y) in tmp.
+  split;[ | lra].
+  apply Rle_trans with (2 := proj1 tmp), Rplus_le_compat_l.
+  apply Ropp_le_contravar.
+  rewrite <- (Rmult_1_r (_ * _)) at 1; apply Rmult_le_compat_l; lra.
+assert (inty : 4 < y <= B2R' predf32max) by lra.
+assert (tmp := body_exp_decrease4 _ _ intx' inty); lra.
 Qed.
 
 Lemma invariant_spec_1_4 :
@@ -1422,11 +1506,7 @@ unfold invariant.
 intros x' y cmp [cnd1 cnd2]; simpl in cnd1; rewrite cnd1 in cnd2 |- *.
 clear cnd1; split;[reflexivity | ].
 cbv [snd] in cnd2 |- *; unfold invariantR in cnd2 |- *.
-rewrite body_exp_val; [ | lra | ]; cycle 1.
-  destruct (Rle_dec (B2R' x) (sqrt (B2R' x) + 5 * ulp1 * sqrt (B2R' x)))
-     as [xclose | xfar].
-    rewrite Rmax_right in cnd2 by easy; nra.
-  rewrite Rmax_left in cnd2 by lra; nra.
+rewrite body_exp_val; [ | lra | nra].
 now apply invariant_spec_1_4_R.
 Qed.
 
@@ -1581,7 +1661,7 @@ Lemma scale_data x y :
     1 <= x2 <= 4 /\
     sqrt x2 - 16 * ulp1 * sqrt x2 <= y2 <= sqrt x2 + 16 * ulp1 * sqrt x2 /\
     x = x2 * bpow r2 (2 * e) /\ y = y2 * bpow r2 e /\
-    (1 <= e)%Z /\
+    (1 <= e <= 64)%Z /\
     body_exp_R x y = body_exp_R x2 y2 * bpow r2 e.
 Proof.
 intros intx inty.
@@ -1617,8 +1697,13 @@ assert (ybnds : / 2 * sqrt x2 <= y2 <= 2 * sqrt x2).
          apply sub_16_ulp_2; lra|
          apply Rle_lt_trans with (1 := proj2 y2close);
          apply add_16_ulp_2; lra].
-assert (mx'bound : (2 < mag r2 (x))%Z).
-  apply mag_gt_bpow; simpl; rewrite Rabs_pos_eq; lra.
+assert (mx'bound : (2 < mag r2 (x) < 127)%Z).
+  split.
+    apply mag_gt_bpow; simpl; rewrite Rabs_pos_eq; lra.
+  enough (mag r2 x <= 126)%Z by lia.
+  apply mag_le_bpow; auto; rewrite Rabs_pos_eq by lra.
+  replace (bpow r2 126) with (B2R' predf32max);[lra | ].
+  unfold B2R'; rewrite predf32max_val, <- bpow_plus; reflexivity.
 assert ((2 > 0)%Z /\ (0 < 2)%Z) as [twogt0 twogt0'] by lia.
 assert (ediv2 : e = (mag_val _ _ (mag r2 (x)) / 2 +
                      mag_val _ _ (mag r2 (x)) mod 2 - 1)%Z).
@@ -1647,12 +1732,14 @@ assert (ediv2 : e = (mag_val _ _ (mag r2 (x)) / 2 +
   lra.
 assert (-23 <= (cexp' x2) <= -21)%Z.
   apply cexp_1_8; lra.
-assert (ege1 : (1 <= e)%Z).
+assert (ege1 : (1 <= e <= 64)%Z).
   destruct (Z.eq_dec (mag r2 (x)) 3) as [mx3 | mxgt3].
     rewrite mx3 in ediv2; simpl in ediv2; lia.
-  assert (2 <= mag r2 (x) / 2)%Z.
+  assert (2 <= mag r2 x / 2)%Z.
     change 2%Z with (4 / 2)%Z; apply Z_div_le;[reflexivity | lia].
-  enough (0 <= mag r2 (x) mod 2)%Z by lia.
+  assert (mag r2 x / 2 <= 63)%Z.
+    change 63%Z with (127 / 2)%Z; apply Z_div_le;[reflexivity | lia].
+  enough (0 <= mag r2 (x) mod 2 < 2)%Z by lia.
   assert (tmp := Z.mod_pos_bound (mag r2 (x)) 2); lia.
 assert (cx'bounds : (-149  < 2 * e + cexp' x2)%Z) by lia.
 assert (egt : (-125 < e)%Z) by lia.
@@ -1672,7 +1759,7 @@ Variable x : float32.
 
 Hypothesis intx : 1 <= B2R' x < / 2 * B2R' predf32max.
 
-Lemma invariant_spec_max  x' y :
+Lemma invariant_spec_1_max  x' y :
        Bcompare 24 128 (body_exp x' y) y = Some Lt ->
        invariant x (x', y) -> invariant x (x', body_exp x' y).
 Proof.
@@ -1689,31 +1776,25 @@ cbv [snd] in cnd2; clear cnd1.
 assert (ry : round' (B2R' y) = B2R' y) by (apply round_B2R').
 assert (maxval : B2R' predf32max = 2 ^ 126).
   unfold B2R'; rewrite predf32max_val; compute; lra.
-assert (finx : is_finite 24 128 x = true) by (apply positive_finite; lra).
 assert (0 < B2R' y).
   apply Rlt_le_trans with (2 := proj1 cnd2).
   rewrite <- (Rmult_1_l (sqrt (B2R' x))) at 1.
   rewrite <- Rmult_minus_distr_r; apply Rmult_lt_0_compat;[compute|]; lra.
-assert (finy : is_finite 24 128 y = true) by (apply positive_finite; auto).
 assert (inx' : 1 <= B2R' x <= B2R' predf32max).
   rewrite maxval in intx |- *; lra.
 cbv [snd] in cnd2.
 assert (xfar : sqrt (B2R' x) + 5 * ulp1 * sqrt (B2R' x) <= B2R' x).
   apply Rle_trans with (sqrt (B2R' x) + 16 * ulp1 * sqrt (B2R' x));[nra | ].
   apply Rlt_le, Rlt_le_trans with (1 := add_16_ulp_2 _ sge0); lra.
-rewrite Rmax_left in cnd2 by lra.
 assert (inx2 : / 2 <= B2R' x < / 2 * B2R' predf32max) by lra.
-assert (iny2 : / 2 <= B2R' y < B2R' predf32max).
+assert (iny2 : / 2 <= B2R' y <= B2R' predf32max).
   split; [| lra].
   apply Rle_trans with (2:= proj1 cnd2).
   apply Rlt_le, Rle_lt_trans with (2 := sub_16_ulp_2 _ sge0); lra.
-destruct (body_exp_finite_value _ _ finx finy inx2 iny2) as [bval _].
-clear finx finy inx2 iny2.
 destruct (Rle_lt_dec (sqrt (B2R' x) + 16 * bpow r2 (- (23)) * sqrt (B2R' x))
              (B2R' y)) as [ybig | yclose].
   unfold invariant;split;[easy | cbv [snd] in cnd2 |- *].
-  rewrite Rmax_left by lra.
-  rewrite bval.
+  rewrite body_exp_val; try lra.
   destruct (body_exp_decrease16' _ _ ry inx' (conj ybig (proj2 cnd2)))
       as [lb  ub].
   rewrite Rmult_minus_distr_l, Rmult_1_r, (Rmult_comm (sqrt _)) in lb.
@@ -1722,41 +1803,33 @@ destruct (Rle_lt_dec (sqrt (B2R' x) + 16 * bpow r2 (- (23)) * sqrt (B2R' x))
 destruct (scale_data _ _ (conj (Rlt_le _ _ xgt4) (Rlt_le _ _ (proj2 intx)))
               (conj (proj1 cnd2) (Rlt_le _ _ yclose))) as
     [e [x2 [y2 [intx2 [inty2 [xval [yval [ege1 bval']]]]]]]].
-split;[easy | ].
-cbn [snd].
-rewrite bval.
-fold (body_exp_R (B2R' x) (B2R' y)); rewrite bval'.
-rewrite Rmax_left by lra.
-rewrite xval, sqrt_mult, <- bpow_square;[ | lra | apply bpow_ge_0]. 
-rewrite sqrt_pow2, <- !Rmult_assoc, <- Rmult_minus_distr_r; cycle 1.
-  now apply bpow_ge_0.
-assert (tmp := converge_below_16 x2 y2 intx2 inty2).
 assert (ints2 := sqrt_1_4 _ intx2).
-assert (incls2 : 5 * ulp1 <= 16 * ulp1 * sqrt x2).
-  rewrite <- (Rmult_1_r (5 * _)); apply Rmult_le_compat; lra.
+split;[easy | ].
+assert (sval : sqrt (B2R' x) =  bpow r2 e * sqrt x2).
+  rewrite xval, sqrt_mult, <- bpow_square;[ | lra | apply bpow_ge_0].
+  rewrite sqrt_pow2, Rmult_comm;[easy | apply bpow_ge_0].
+cbn [snd].
+rewrite body_exp_val; try lra.
+fold (body_exp_R (B2R' x) (B2R' y)); rewrite bval'.
+assert (tmp := converge_below_16 x2 y2 intx2 inty2).
+fold (body_exp_R x2 y2) in tmp.
+rewrite sval, (Rmult_comm (bpow _ _)), <- Rmult_assoc, <- Rmult_minus_distr_r.
 split.
-  unfold body_exp_R; apply Rmult_le_compat_r;[apply bpow_ge_0 |]; lra.
-simpl; rewrite Rmult_1_r, <- Rmult_assoc.
-apply Rmult_le_compat_r;[apply bpow_ge_0 |].
-unfold body_exp_R.
-apply Rle_trans with (sqrt x2 + 5 * ulp1);[lra | ].
-apply Rle_trans with (sqrt x2 + 16 * ulp1 * sqrt x2);[lra | ].
-rewrite (Rmult_comm x2); rewrite <- (sqrt_sqrt x2) at 3 by lra.
-rewrite <- (Rmult_1_l (sqrt x2)) at 1.
-rewrite <- Rmult_plus_distr_r, <- Rmult_assoc; apply Rmult_le_compat_r;[lra | ].
-apply Rle_trans with (bpow r2 1 * sqrt x2).
-  replace (bpow r2 1) with 2 by (compute; lra).
-  lra.
-apply Rmult_le_compat_r;[lra | apply bpow_le; lia].
+  apply Rmult_le_compat_r;[apply bpow_ge_0 | ].
+  apply Rle_trans with (sqrt x2 - 5 * ulp1);[ | lra ].
+  apply Rplus_le_compat_l, Ropp_le_contravar.
+  rewrite <- (Rmult_1_r (_ * _)) at 1; apply Rmult_le_compat; lra.
+apply Rle_trans with (2 * sqrt (B2R' x));[ | lra].
+rewrite sval, (Rmult_comm (bpow _ _)), <- Rmult_assoc.
+apply Rmult_le_compat_r;[apply bpow_ge_0 | lra].
 Qed.
 
-Lemma interval_final_1_max x' y :
+Lemma invariant_final_1_max x' y :
   invariant x (x', y) ->
   Bcompare 24 128 (body_exp x y) y <> Some Lt ->
   final x (body_exp x' y).
 Proof.
-intros iv test.
-assert (test' := invariant_test _ intx _ _ iv test).
+unfold invariant, invariantR.
 destruct (Rle_lt_dec (B2R' x) 4) as [xle4 | xgt4].
   apply invariant_final; auto; lra.
 assert (ulp1_small : 0 < ulp1 < / 1024) by (compute; lra).
@@ -1764,58 +1837,114 @@ assert (sge0 : 1 <= sqrt (B2R' x)).
   now rewrite <- sqrt_1; apply sqrt_le_1_alt.
 assert (sxh : sqrt (B2R' x) < B2R' x / 2).
   apply sqrt_above_4_lb; assumption.
-destruct iv as [cnd1 cnd2]; simpl in cnd1; rewrite cnd1 in cnd2 |- *.
-clear x' cnd1.
-cbv [snd] in cnd2.
+intros [cnd1 cnd2] test; simpl in cnd1; rewrite cnd1 in cnd2 |- *.
+assert (test' := invariant_test _ intx _ _ (conj cnd1 cnd2) test).
+cbv [snd] in cnd2; clear cnd1.
 assert (ry : round' (B2R' y) = B2R' y) by (apply round_B2R').
 assert (maxval : B2R' predf32max = 2 ^ 126).
   unfold B2R'; rewrite predf32max_val; compute; lra.
-assert (finx : is_finite 24 128 x = true) by (apply positive_finite; lra).
 assert (0 < B2R' y).
   apply Rlt_le_trans with (2 := proj1 cnd2).
   rewrite <- (Rmult_1_l (sqrt (B2R' x))) at 1.
   rewrite <- Rmult_minus_distr_r; apply Rmult_lt_0_compat;[compute|]; lra.
-assert (finy : is_finite 24 128 y = true) by (apply positive_finite; auto).
 assert (inx' : 1 <= B2R' x <= B2R' predf32max).
   rewrite maxval in intx |- *; lra.
-unfold invariantR in cnd2; cbv [snd] in cnd2.
+cbv [snd] in cnd2.
 assert (xfar : sqrt (B2R' x) + 5 * ulp1 * sqrt (B2R' x) <= B2R' x).
-  apply Rle_trans with (sqrt (B2R' x) + 16 * ulp1 * sqrt (B2R' x));[nra | ].
+  apply Rle_trans with (sqrt (B2R' x) + 16 * ulp1 * sqrt (B2R' x)).
+    apply Rplus_le_compat_l; apply Rmult_le_compat_r; lra.
   apply Rlt_le, Rlt_le_trans with (1 := add_16_ulp_2 _ sge0); lra.
 assert (inx2 : / 2 <= B2R' x < / 2 * B2R' predf32max) by lra.
-rewrite Rmax_left in cnd2 by lra.
-assert (iny2 : / 2 <= B2R' y < B2R' predf32max).
+assert (iny2 : / 2 <= B2R' y <= B2R' predf32max).
   split; [| lra].
   apply Rle_trans with (2:= proj1 cnd2).
   apply Rlt_le, Rle_lt_trans with (2 := sub_16_ulp_2 _ sge0); lra.
-destruct (body_exp_finite_value _ _ finx finy inx2 iny2) as [bval _].
-clear finx finy inx2 iny2.
 destruct (Rle_lt_dec (sqrt (B2R' x) + 16 * bpow r2 (- (23)) * sqrt (B2R' x))
              (B2R' y)) as [ybig | yclose].
   destruct (body_exp_decrease16' _ _ ry inx' (conj ybig (proj2 cnd2)))
       as [lb  ub].
-  case test'; rewrite bval; exact ub.
+  case test'; cbv [snd]; rewrite body_exp_val; [|lra | lra]. 
+  fold (body_exp_R (B2R' x) (B2R' y)); lra.
 destruct (scale_data _ _ (conj (Rlt_le _ _ xgt4) (Rlt_le _ _ (proj2 intx)))
               (conj (proj1 cnd2) (Rlt_le _ _ yclose))) as
     [e [x2 [y2 [intx2 [inty2 [xval [yval [ege1 bval']]]]]]]].
-unfold final; rewrite bval; fold (body_exp_R (B2R' x) (B2R' y)).
+unfold final; cbv [snd] in test'.
+rewrite body_exp_val in test' |- *;[ | lra | lra | lra | lra].
+fold (body_exp_R (B2R' x) (B2R' y)) in test' |- *.
 rewrite bval'.
 assert (ints2 := sqrt_1_4 _ intx2).
-rewrite bval in test'.
 assert (test2 : ~ body_exp_R x2 y2 < y2).
   intros t2; case test'; fold (body_exp_R (B2R' x) (B2R' y)).
   now rewrite bval', yval; apply Rmult_lt_compat_r;[apply bpow_gt_0 | ].
-assert (tmp := fun h => invariant_finalR _ _ intx2 (proj1 ints2) h test2).
+assert (iv2 : invariantR x2 y2).
+  split;[lra | ].
+  apply Rle_trans with (B2R' y);[ | lra].
+  rewrite <- (Rmult_1_r y2), yval; apply Rmult_le_compat_l.
+   apply Rle_trans with (2 := proj1 inty2).
+   rewrite <- (Rmult_1_l (sqrt _)) at 1.
+   rewrite <- Rmult_minus_distr_r; apply Rmult_le_pos;[compute | ]; lra.
+  replace 1 with (bpow r2 0) by (compute; lra).
+  apply bpow_le; lia.
+assert (-24 <= cexp' (B2R' y))%Z.
+  apply (cexp_ge_bpow r2 f32_exp (B2R' y) 0).
+  replace (bpow r2 (0 - 1)) with (/ 2) by (compute; lra).
+  rewrite Rabs_pos_eq; lra.
+assert (ry2 : round' y2 = y2).
+  assert (y2v : y2 = B2R' y * bpow r2 (-e)).
+    rewrite yval, Rmult_assoc, <- bpow_plus, Z.add_opp_diag_r; simpl; ring.
+  rewrite y2v, round_mult_bpow, ry; auto; try lra; lia.
+assert (sval : sqrt (B2R' x) =  bpow r2 e * sqrt x2).
+  rewrite xval, sqrt_mult, <- bpow_square;[ | lra | apply bpow_ge_0].
+  rewrite sqrt_pow2, Rmult_comm;[easy | apply bpow_ge_0].
+unfold finalR.
+rewrite sval, (Rmult_comm (bpow _ _)), <- Rmult_assoc, <-Rmult_minus_distr_r.
+rewrite <- Rmult_plus_distr_r.
+assert (tmp := converge_below_16 x2 y2 intx2 inty2).
+fold (body_exp_R x2 y2) in tmp.
+assert (5 * ulp1 <= 5 * ulp1 * sqrt x2).
+  rewrite <- (Rmult_1_r (_ * _)) at 1.
+  apply Rmult_le_compat; lra.
+split; apply Rmult_le_compat_r; try apply bpow_ge_0; lra.
+Qed.
+
+Lemma invariant_initial_1_max : invariant x (x, x).
+Proof.
+  assert (1 <= sqrt (B2R' x)).
+    now rewrite <- sqrt_1; apply sqrt_le_1_alt.
+split;[reflexivity | ]; simpl; split.
+  apply Rle_trans with (sqrt (B2R' x)).
+    rewrite <- (Rmult_1_l (sqrt (B2R' x))) at 1 3.
+    rewrite <- Rmult_minus_distr_r; apply Rmult_le_compat_r;[ | compute]; lra.
+  rewrite <- (Rmult_1_r (sqrt (B2R' x))).
+  rewrite <- (sqrt_sqrt (B2R' x)) at 2 by lra.
+  apply Rmult_le_compat_l; lra.
+lra.
+Qed.
+
+Lemma main_loop_1_max :
+  final x (main_loop (x, x)).
+generalize invariant_initial_1_max.
+apply main_loop_ind.
+  now intros p x' y pxy test IH v; apply IH, invariant_spec_1_max.
+intros p x' y pxy test vtest cndtest iv. 
+apply invariant_final_1_max; auto.
+destruct iv as [cnd1 cnd2]; rewrite <- cnd1; simpl; rewrite vtest.
+destruct test as [c |] eqn: tq; try discriminate.
+destruct c; try discriminate; contradiction.
+Qed.
 
 End interval_1_max.
 
-Lemma main_loop_correct x :
-  1 <= B2R 24 128 x <= 4 ->
-  Rabs (B2R 24 128 (main_loop (x, x)) - sqrt (B2R 24 128 x)) <= 5 / (2 ^ 23).
+Lemma main_loop_correct_1_max x :
+  1 <= B2R 24 128 x < /2 * B2R 24 128 predf32max ->
+  Rabs (B2R 24 128 (main_loop (x, x)) - sqrt (B2R 24 128 x)) <=
+       5 / (2 ^ 23) * sqrt (B2R 24 128 x).
 Proof.
-set (s := sqrt _); set (m := B2R _ _ (main_loop _)); set (e := _ / _).
+set (s := sqrt _); set (m := B2R _ _ (main_loop _)); set (e := _ / _ * _).
 intros intx; apply Rabs_le.
 enough (s - e <= m <= s + e) by lra.
-replace e with (5 * ulp1) by (unfold ulp1, e; simpl; lra).
-now apply main_loop_prop.
+replace e with (5 * ulp1 * s); cycle 1.
+   unfold e, ulp1, s; rewrite bpow_opp; compute; lra.
+now apply main_loop_1_max.
 Qed.
+
