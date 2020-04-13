@@ -7,7 +7,7 @@ endif
 CLIGHTGEN= $(COMPCERT_LOC)/clightgen
 
 VST_DIRS= msl sepcomp veric floyd progs
-VSTFLAGS= -R $(VST_LOC)/compcert compcert $(foreach d, $(VST_DIRS), -Q $(VST_LOC)/$(d) VST.$(d)) -Q $(VST_LOC)/paco/src Paco -Q $(VST_LOC)/InteractionTrees/theories ITree -I .
+VSTFLAGS= -R $(VST_LOC)/compcert compcert $(foreach d, $(VST_DIRS), -Q $(VST_LOC)/$(d) VST.$(d)) -Q $(VST_LOC)/paco/src Paco -Q $(VST_LOC)/InteractionTrees/theories ITree -Q . Top
 
 
 target: _CoqProject verif_cat1.vo verif_cat1a.vo verif_cat2.vo
