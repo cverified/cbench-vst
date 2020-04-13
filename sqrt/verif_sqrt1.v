@@ -8,9 +8,9 @@ Require Import model_sqrt1.
 Definition sqrt_newton_spec :=
    DECLARE _sqrt_newton
    WITH x: float32
-   PRE [ _x OF tfloat ]
+   PRE [ tfloat ]
        PROP ()
-       LOCAL (temp _x (Vsingle x))
+       PARAMS (Vsingle x) GLOBALS()
        SEP ()
     POST [ tfloat ]
        PROP ()

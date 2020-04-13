@@ -2,6 +2,7 @@ Require Import VST.floyd.proofauto.
 Require Import malloc1.
 Instance CompSpecs : compspecs. make_compspecs prog. Defined.
 Definition Vprog : varspecs. mk_varspecs prog. Defined.
+Open Scope logic.  (* this should not be necessary *)
 
 Definition malloc_token (sh: share) (t: type) (p: val) :=
   emp.
@@ -28,12 +29,12 @@ Definition BOGUS (t: type) :=
 Definition malloc_spec :=
    DECLARE _malloc
    WITH t:type, gv: globals
-   PRE [ _n OF tint ]
+   PRE [ tint ]
        PROP (0 <= sizeof t <= Int.max_signed;
                 complete_legal_cosu_type t = true;
                 natural_aligned natural_alignment t = true;
                 BOGUS t)
-       LOCAL (temp _n (Vint (Int.repr (sizeof t))); gvars gv)
+       PARAMS (Vint (Int.repr (sizeof t))) GLOBALS (gv)
        SEP (mem_mgr gv)
     POST [ tptr tuchar ] EX p:_,
        PROP ()
@@ -45,7 +46,7 @@ Definition malloc_spec :=
 Definition main_spec :=
  DECLARE _main
   WITH gv : globals
-  PRE  [] main_pre prog nil gv
+  PRE  [] main_pre prog tt gv
   POST [ tint ]  
      PROP() 
      LOCAL (temp ret_temp (Vint (Int.repr 0)))

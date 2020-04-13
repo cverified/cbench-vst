@@ -55,7 +55,7 @@ Definition get_reent_spec :=
   WITH p : val
   PRE [ ]
     PROP ()
-    LOCAL ()
+    PARAMS () GLOBALS ()
     SEP (reent_struct p)
   POST [ tptr (Tstruct reent noattr) ]
     PROP ()
@@ -65,10 +65,9 @@ Definition get_reent_spec :=
 (* In reality, this might also fail to write all the characters (unless it's a capability version). *)
 Definition fwrite_spec {CS : compspecs} :=
   WITH sh : share, buf : val, len : Z, msg : list byte, sz : Z, count : Z, rest : list val, f : _, fp : val, k : IO_itree
-  PRE [ 1%positive OF tptr tvoid, 2%positive OF tuint, 3%positive OF tuint, 4%positive OF tptr (Tstruct FILEid noattr) ]
+  PRE [ tptr tvoid, tuint, tuint, tptr (Tstruct FILEid noattr) ]
     PROP (readable_share sh; Zlength msg = (sz * count)%Z)
-    LOCAL (temp 1%positive buf; temp 2%positive (Vint (Int.repr sz));
-               temp 3%positive (Vint (Int.repr count)); temp 4%positive fp)
+    PARAMS (buf; Vint (Int.repr sz); Vint (Int.repr count); fp) GLOBALS ()
     SEP (ITREE (write_list f msg;; k); file_at f fp;
            data_at sh (tarray tschar len) (map Vbyte msg ++ rest) buf)
   POST [ tuint ]
@@ -79,10 +78,9 @@ Definition fwrite_spec {CS : compspecs} :=
 
 Definition fread_spec {CS : compspecs} :=
   WITH sh : share, buf : val, sz : Z, count : Z, f : _, fp : val, k : list byte -> IO_itree
-  PRE [ 1%positive OF tptr tvoid, 2%positive OF tuint, 3%positive OF tuint, 4%positive OF tptr (Tstruct FILEid noattr) ]
+  PRE [ tptr tvoid, tuint, tuint, tptr (Tstruct FILEid noattr) ]
     PROP (writable_share sh)
-    LOCAL (temp 1%positive buf; temp 2%positive (Vint (Int.repr sz));
-               temp 3%positive (Vint (Int.repr count)); temp 4%positive fp)
+    PARAMS (buf; Vint (Int.repr sz); Vint (Int.repr count); fp) GLOBALS ()
     SEP (ITREE (r <- read_list f (Z.to_nat (sz * count)) ;; k r); file_at f fp;
            data_at_ sh (tarray tschar (sz * count)) buf)
   POST [ tuint ]

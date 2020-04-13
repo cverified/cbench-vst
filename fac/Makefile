@@ -46,5 +46,5 @@ verif_fac6.vo: verif_fac6.v fac6.vo fac_facts.vo
 
 
 clean:
-	rm -f *.vo *.o .*.aux *.glob
+	rm -f *.vo *.vo? *.o .*.aux *.glob
 

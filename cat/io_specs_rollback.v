@@ -34,9 +34,9 @@ Context {E : Type -> Type} `{IO_event(file_id := nat) -< E}.
 (* If putchar fails, we shouldn't be forced to commit to writing. *)
 Definition putchar_spec :=
   WITH c : byte, k : IO_itree, t : IO_itree
-  PRE [ 1%positive OF tint ]
+  PRE [ tint ]
     PROP (sutt eq (write stdout c;; k) t)
-    LOCAL (temp 1%positive (Vubyte c))
+    PARAMS (Vubyte c) GLOBALS()
     SEP (ITREE t)
   POST [ tint ]
    EX i : int,
@@ -48,7 +48,7 @@ Definition getchar_spec :=
   WITH k : byte -> IO_itree, t : IO_itree
   PRE [ ]
     PROP (sutt eq (r <- read stdin ;; k r) t)
-    LOCAL ()
+    PARAMS () GLOBALS()
     SEP (ITREE t)
   POST [ tint ]
    EX i : int,

@@ -349,7 +349,7 @@ Lemma Forall_swap_in_list {A}{INa: Inhabitant A}:
 Proof.
 intros.
 unfold swap_in_list.
-rewrite !upd_Znth_unfold.
+rewrite !upd_Znth_unfold by list_solve.
 rewrite !Forall_app.
 split3.
 apply Forall_sublist. 
@@ -380,7 +380,7 @@ Proof.
 intros.
   unfold swap_in_list.
   set (N := Zlength bl) in *.
-  rewrite !upd_Znth_unfold.
+  rewrite !upd_Znth_unfold by list_solve.
   autorewrite with sublist.
  replace  (mid + (Z.succ 0 + (Zlength bl - (mid + 1))))
     with N by omega.
@@ -646,11 +646,11 @@ Lemma sublist_swap_in_list {A}{INH: Inhabitant A}:
 Proof.
 intros.
 unfold swap_in_list.
-rewrite upd_Znth_unfold.
+rewrite upd_Znth_unfold by list_solve.
 destruct (zle hi i).
 rewrite sublist_app1 by (autorewrite with sublist; omega).
 rewrite sublist_sublist by omega.
-rewrite upd_Znth_unfold.
+rewrite upd_Znth_unfold by list_solve.
 destruct (zle hi j).
 rewrite sublist_app1 by (autorewrite with sublist; omega).
 rewrite sublist_sublist by omega.
@@ -660,7 +660,7 @@ autorewrite with sublist.
 f_equal; omega.
 rewrite sublist_app2 by  (autorewrite with sublist; omega).
 autorewrite with sublist.
-rewrite upd_Znth_unfold.
+rewrite upd_Znth_unfold by list_solve.
 destruct (zle hi j).
 rewrite sublist_app1 by (autorewrite with sublist; omega).
 rewrite sublist_sublist by omega.
@@ -682,20 +682,20 @@ Lemma sublist_swap_in_list' {A}{INH: Inhabitant A}:
 Proof.
 intros.
 unfold swap_in_list.
-rewrite upd_Znth_unfold.
+rewrite upd_Znth_unfold by list_solve.
 rewrite sublist_app by (autorewrite with sublist; rep_omega).
 autorewrite with sublist.
-rewrite upd_Znth_unfold.
+rewrite upd_Znth_unfold by list_solve.
 rewrite sublist_app by (autorewrite with sublist; rep_omega).
 autorewrite with sublist.
-rewrite upd_Znth_unfold.
+rewrite upd_Znth_unfold by list_solve.
 destruct (zlt i j); [ | destruct (zeq i j)].
 -
 rewrite Z.min_l by omega.
 rewrite Z.max_r by omega.
 rewrite sublist_app by (autorewrite with sublist; rep_omega).
 autorewrite with sublist.
-rewrite upd_Znth_unfold.
+rewrite upd_Znth_unfold by list_solve.
 rewrite sublist_app by (autorewrite with sublist; rep_omega).
 autorewrite with sublist.
 rewrite sublist_app by (autorewrite with sublist; rep_omega).
@@ -720,7 +720,7 @@ subst.
 autorewrite with sublist.
 rewrite sublist_app by (autorewrite with sublist; rep_omega).
 autorewrite with sublist.
-rewrite upd_Znth_unfold.
+rewrite upd_Znth_unfold by list_solve.
 rewrite sublist_app by (autorewrite with sublist; rep_omega).
 autorewrite with sublist.
 rewrite <- !sublist_len_1 by omega.
@@ -731,7 +731,7 @@ rewrite Z.min_r by omega.
 rewrite Z.max_l by omega.
 rewrite sublist_app by (autorewrite with sublist; rep_omega).
 autorewrite with sublist.
-rewrite upd_Znth_unfold.
+rewrite upd_Znth_unfold by list_solve.
 rewrite sublist_app by (autorewrite with sublist; rep_omega).
 autorewrite with sublist.
 rewrite <- !sublist_len_1 by omega.
