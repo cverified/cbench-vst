@@ -168,7 +168,7 @@ assert (0 <= i < N) by omega.
 clear Hmn H6 H5.
 replace (upd_Znth i bl (Znth i bl)) with bl.
 2:{
-rewrite upd_Znth_unfold.
+rewrite upd_Znth_unfold by list_solve.
 rewrite <- (sublist_one i (i+1)) by omega.
 autorewrite with sublist.
 auto.
@@ -552,28 +552,28 @@ apply semax_seq'
  try (subst bl'' bl'; autorewrite with sublist; auto; try omega).
  f_equal. clear; omega.
  destruct (zeq i j). subst.
- rewrite upd_Znth_unfold. autorewrite with sublist. auto.
- rewrite upd_Znth_unfold. autorewrite with sublist.
- rewrite upd_Znth_unfold. autorewrite with sublist.
+ rewrite upd_Znth_unfold by list_solve. autorewrite with sublist. auto.
+ rewrite upd_Znth_unfold by list_solve. autorewrite with sublist.
+ rewrite upd_Znth_unfold by list_solve. autorewrite with sublist.
  f_equal; clear; omega.
  rewrite <- (field_adr_ofs _ _ N) by (auto; omega).
  sep_apply (split2_data_at_Tarray_fold' sh t N j (N-j));
    try (autorewrite with sublist; auto; try omega).
  destruct (zeq i j). subst.
- rewrite upd_Znth_unfold. autorewrite with sublist. auto.
+ rewrite upd_Znth_unfold by list_solve. autorewrite with sublist. auto.
  rewrite (sublist_upd_Znth_l _ j 0 j); try list_solve; auto.
  forward.
  forward.
  Exists (i+1) (j-1) (upd_Znth j (upd_Znth i bl (Znth j bl)) (Znth i bl)).
  entailer!.
  clear H2 H3 H4 H7 H PNbase PNcompar Pv_pivot0 HPv_pivot.
- clear Delta_specs Delta FR2 Pv_tmp HPv_tmp Pv_tmp0 Pv_pivot.
+ clear Delta_specs FR2 Pv_tmp HPv_tmp Pv_tmp0 Pv_pivot.
  autorewrite with sublist.
  split3; [ | | split3; [ | | split3]].
  +
  eapply Permutation_trans; try apply H9.
- rewrite upd_Znth_unfold. autorewrite with sublist.
- rewrite upd_Znth_unfold.
+ rewrite upd_Znth_unfold by list_solve. autorewrite with sublist.
+ rewrite upd_Znth_unfold by list_solve.
  rewrite sublist_app; autorewrite with sublist; try list_solve.
  rewrite sublist_app; autorewrite with sublist; try list_solve.
  change (Z.succ 0) with 1.
@@ -633,8 +633,8 @@ apply semax_seq'
  constructor; [ | constructor].
  red. auto.
  +
- rewrite upd_Znth_unfold. autorewrite with sublist.
- rewrite upd_Znth_unfold. autorewrite with sublist.
+ rewrite upd_Znth_unfold by list_solve. autorewrite with sublist.
+ rewrite upd_Znth_unfold by list_solve. autorewrite with sublist.
  change (Z.succ 0) with 1.
  constructor.
  auto.
@@ -642,8 +642,8 @@ apply semax_seq'
  replace (Zlength bl - i - 1 + (i + 1)) with (Zlength bl) by (clear; omega).
  auto.
  +
- rewrite upd_Znth_unfold. autorewrite with sublist.
- rewrite upd_Znth_unfold. autorewrite with sublist.
+ rewrite upd_Znth_unfold by list_solve. autorewrite with sublist.
+ rewrite upd_Znth_unfold by list_solve. autorewrite with sublist.
  change (Z.succ 0) with 1.
  replace (j + 1 - i - 1 + (i + 1)) with (j+1) by (clear; omega).
  replace (Zlength bl - i - 1 + (i + 1)) with (Zlength bl) by (clear; omega).
@@ -668,7 +668,7 @@ apply semax_seq'
  destruct H.
  subst j.
  left.
- rewrite upd_Znth_unfold. autorewrite with sublist.
+ rewrite upd_Znth_unfold by list_solve. autorewrite with sublist.
  rewrite (sublist_split 0 i) by list_solve.
  rewrite Exists_app; right.
  rewrite sublist_one by list_solve.
@@ -730,7 +730,6 @@ subst N. rewrite !Zlength_cons in H2. clear - H2. rep_omega.
 }
 2:{
 Intros bl.
-forward.
 Exists bl.
 entailer!.
 unfold func_ptr'. apply andp_left2; auto.
@@ -961,14 +960,15 @@ omega.
     apply Forall_sublist; auto.
    pose (w1 := Build_qsort_witness _ t Hok ord _ Hdef_blj).
    forward_call (sh, base, compar, w1).
-   entailer!. autorewrite with sublist. auto.
-   simpl. autorewrite with sublist. cancel.
-   simpl.
-   change (@sizeof _ t) with (@sizeof (@cenv_cs CompSpecs) t).
-   split3; auto; try omega.
-   autorewrite with sublist. split; try rep_omega.
-   eapply Z.le_trans; try apply H1.
-   apply Z.mul_le_mono_nonneg_r; omega.
+     {entailer!.  simpl. autorewrite with sublist. auto. }
+     { simpl. autorewrite with sublist. cancel. }
+     { simpl.
+        change (@sizeof _ t) with (@sizeof (@cenv_cs CompSpecs) t).
+       split3; auto; try omega.
+       autorewrite with sublist. split; try rep_omega.
+       eapply Z.le_trans; try apply H1.
+       apply Z.mul_le_mono_nonneg_r; omega.
+     }
    simpl PROPx. simpl qsort_t. clear w1 Hdef_blj.
    Intros cl.  
    sep_apply (split2_data_at_Tarray_unfold sh t (N-(j+1)) (i-(j+1))).
@@ -1004,13 +1004,8 @@ omega.
   apply Zmult_le_compat_r.
   omega.
   omega.
-  simpl.
-  apply prop_right.
-  split3; auto.
-  normalize.
-  split; auto.
-  autorewrite with sublist.
-  f_equal. f_equal. f_equal. omega.
+  entailer!.
+  simpl. autorewrite with sublist. do 4 f_equal. omega.
   simpl.
   autorewrite with sublist.
   cancel.

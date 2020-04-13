@@ -9,9 +9,9 @@ Require Import Permutation.
 Definition quicksort_spec :=
  DECLARE _quicksort
   WITH base: val, N: Z, al: list val
-  PRE  [ _base_ptr OF tptr tdouble, _total_elems OF tint] 
+  PRE  [ tptr tdouble, tint] 
     PROP(N=Zlength al; N <=Z.min Int.max_signed (Ptrofs.max_signed / sizeof tdouble); Forall def_float al)
-    LOCAL(temp _base_ptr base; temp _total_elems (Vint (Int.repr N)))
+    PARAMS(base; Vint (Int.repr N)) GLOBALS ()
     SEP(data_at Ews (tarray tdouble N) al base)
   POST [ tvoid ]
     EX bl: list val,
@@ -22,7 +22,7 @@ Definition quicksort_spec :=
 Definition main_spec :=
  DECLARE _main
   WITH gv : globals
-  PRE  [] main_pre prog nil gv
+  PRE  [] main_pre prog tt gv
   POST [ tint ]  
      PROP() 
      LOCAL (temp ret_temp (Vint (Int.repr 0)))

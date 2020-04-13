@@ -39,5 +39,5 @@ verif_sqrt4.vo: verif_sqrt4.v sqrt4.vo
 
 
 clean:
-	rm -f *.vo *.o .*.aux *.glob
+	rm -f *.vo *.vo? *.o .*.aux *.glob
 

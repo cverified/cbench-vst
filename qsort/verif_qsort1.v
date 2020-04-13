@@ -16,14 +16,14 @@ Opaque N.
 Definition quicksort_spec :=
  DECLARE _quicksort
   WITH gv : globals, m: int, n: int, before: list val, al: list val, after: list val
-  PRE  [ _m OF tint, _n OF tint] 
+  PRE  [ tint, tint] 
     PROP(if zlt (Int.signed m) (Int.signed n)
             then   (Zlength before = Int.signed m 
                      /\ Zlength after = N-(Int.signed n+1)
                      /\ Zlength al = Int.signed n+1- Int.signed m)
             else al=nil;
             Forall def_float al)
-    LOCAL(temp _m (Vint m); temp _n (Vint n); gvars gv)
+    PARAMS(Vint m; Vint n) GLOBALS (gv)
     SEP(data_at Ews (tarray tdouble N) 
              (before ++ al ++ after) (gv _a))
   POST [ tvoid ]
@@ -36,7 +36,7 @@ Definition quicksort_spec :=
 Definition main_spec :=
  DECLARE _main
   WITH gv : globals
-  PRE  [] main_pre prog nil gv
+  PRE  [] main_pre prog tt gv
   POST [ tint ]  
      PROP() 
      LOCAL (temp ret_temp (Vint (Int.repr 0)))
@@ -70,7 +70,6 @@ subst al. constructor.
 }
 2:{
 Intros bl.
-forward.
 Exists bl.
 entailer!.
 }
@@ -398,7 +397,7 @@ forward_loop (EX i:Z,
       with (sublist 0 (i-m) bl ++ sublist (j-m) (j+1-m) bl
                ++ sublist (i+1-m) (j-m) bl 
                ++ sublist (i-m) (i+1-m) bl ++ sublist (j+1-m) (Zlength bl) bl).
-     2:{ rewrite  !upd_Znth_unfold.
+     2:{ rewrite  !upd_Znth_unfold by list_solve.
           autorewrite with sublist.
           rewrite (sublist_one (j-m) (j+1-m)) by omega.
           rewrite (sublist_one (i-m) (i+1-m)) by omega.

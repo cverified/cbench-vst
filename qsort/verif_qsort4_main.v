@@ -222,7 +222,8 @@ forward_for_simple_bound N6
           data_at Ers (tarray tschar 4)
            (map (Vint oo cast_int_int I8 Signed)
                [Int.repr 37; Int.repr 102; Int.repr 10; Int.repr 0])
-            (gv ___stringlit_1))).
+            (gv ___stringlit_1);
+           has_ext tt)).
 -
 rewrite <- N6_eq.
 auto.
@@ -247,11 +248,8 @@ replace (Z.to_nat (N6 - i))
  rewrite Zlength_upto by omega.
  rewrite Z.sub_diag.
  rewrite upd_Znth0.
- autorewrite with sublist.
- rewrite sublist_1_cons.
- rewrite sublist_same by list_solve.
  rewrite upto_another by omega.
-rewrite app_ass. f_equal. simpl. f_equal. f_equal. f_equal. f_equal. omega.
+ rewrite app_ass. f_equal. simpl. normalize.
 -
 (* after the for-loop *)
 autorewrite with sublist.
@@ -311,7 +309,12 @@ unfold Sfor.
 fold main_printf_loop.
 apply seq_assoc1.
 eapply semax_seq'.
+change (SEP (?R1; ?R2; ?R3)) with (@SEPx environ ([R1;R2]++[R3])).
+rewrite (app_nil_end [gvars gv]).
+eapply semax_frame_PQR.
+unfold closed_wrt_modvars;  auto 50 with closed.
 apply verif_main_printf_loop; auto.
+unfold app.
 forward.
 Qed.
 

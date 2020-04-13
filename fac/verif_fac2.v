@@ -8,7 +8,7 @@ Require Import fac_facts.
 Definition main_spec :=
  DECLARE _main
   WITH gv : globals
-  PRE  [] main_pre prog nil gv
+  PRE  [] main_pre prog tt gv
   POST [ tint ]  
      PROP() 
      LOCAL (temp ret_temp (Vint (Int.repr (fac 5))))
@@ -32,8 +32,8 @@ forward_loop (EX r:Z,
   LOCAL (temp _u (Vint (Int.repr (fac r))); 
               temp _r (Vint (Int.repr r)); 
               temp _n (Vint (Int.repr n)))
-  SEP())
-   break: (PROP () LOCAL (temp _u (Vint (Int.repr (fac n)))) SEP()). 
+  SEP(has_ext tt))
+   break: (PROP () LOCAL (temp _u (Vint (Int.repr (fac n)))) SEP(has_ext tt)). 
 - repeat step!.
 -
 Intros r.
@@ -49,12 +49,12 @@ forward_loop (EX s:Z,
               temp _s (Vint (Int.repr s));
               temp _r (Vint (Int.repr r)); 
               temp _n (Vint (Int.repr n)))
-  SEP())
+  SEP(has_ext tt))
    break: (PROP ()
               LOCAL (temp _u (Vint (Int.repr (fac (r+1))));
                          temp _r (Vint (Int.repr r)); 
                          temp _n (Vint (Int.repr n)))
-               SEP()).
+               SEP(has_ext tt)).
 +
 Exists 1; entailer!.
 +
@@ -103,7 +103,7 @@ Qed.
 
 Existing Instance NullExtension.Espec.
 
-Lemma prog_correct: semax_prog prog Vprog Gprog.
+Lemma prog_correct: semax_prog prog tt Vprog Gprog.
 Proof.
 prove_semax_prog.
 semax_func_cons body_main.

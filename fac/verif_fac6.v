@@ -113,11 +113,11 @@ Hint Resolve bignum_rep_valid_pointer : valid_pointer.
 Definition calc_fac_spec :=
  DECLARE _calc_fac
   WITH sh: share, a: val, L': Z, n: Z
-  PRE  [ _a OF (tptr tuint), _L OF tint, _n OF tulong ] 
+  PRE  [ (tptr tuint), tint, tulong ] 
      PROP(writable_share sh; 0 < L' <= Int.max_signed;
               0 <= n < M;
               fac n < M^L')
-     LOCAL(temp _a a; temp _L (Vint (Int.repr L')); temp _n (Vlong (Int64.repr n)))
+     PARAMS (a; Vint (Int.repr L'); Vlong (Int64.repr n)) GLOBALS()
      SEP (bignum_rep sh 0 L' 0 a)
   POST [ tint ]  
     EX L:Z,
@@ -128,7 +128,7 @@ Definition calc_fac_spec :=
 Definition main_spec :=
  DECLARE _main
   WITH gv : globals
-  PRE  [] main_pre prog nil gv
+  PRE  [] main_pre prog tt gv
   POST [ tint ]  
      PROP() 
      LOCAL (temp ret_temp (Vint (Int.repr 0)))

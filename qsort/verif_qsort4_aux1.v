@@ -3,6 +3,7 @@ Require Import qsort4a.
 Require Import spec_qsort4.
 Require Import float_lemmas.
 Require Import Permutation.
+Open Scope logic. 
 
 Lemma no_saturate_hack:
   forall sh t n al p,
@@ -472,7 +473,7 @@ unfold loop_j.
   entailer!.  
   clear Pcompar H16 H15 H12 H11 H9 PNcompar PNbase Pv_pivot0.
   clear HPv_pivot Pv_pivot Pv_tmp0 HPv_tmp Pv_tmp.
-  clear Delta Delta_specs Hbase sh SH Hok.
+  clear Delta_specs Hbase sh SH Hok.
   assert (j'<>0). {
     intro; subst.
     assert (i=0 \/ i=1) by omega. destruct H9.

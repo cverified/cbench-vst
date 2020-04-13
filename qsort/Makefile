@@ -47,5 +47,5 @@ spec_qsort4.vo: spec_qsort4.v qsort4a.vo float_lemmas.vo
 
 
 clean:
-	rm -f *.vo *.o .*.aux *.glob
+	rm -f *.vo *.vo? *.o .*.aux *.glob
 

@@ -8,9 +8,9 @@ Require Import fac_facts.
 Definition fac_spec :=
  DECLARE _fac
   WITH n: Z
-  PRE  [ _n OF tint ] 
+  PRE  [ tint ] 
      PROP(0 <= n <= 12)
-     LOCAL(temp _n (Vint (Int.repr n)))
+     PARAMS (Vint (Int.repr n)) GLOBALS()
      SEP ()
   POST [ tint ]  
      PROP() 
@@ -20,7 +20,7 @@ Definition fac_spec :=
 Definition main_spec :=
  DECLARE _main
   WITH gv : globals
-  PRE  [] main_pre prog nil gv
+  PRE  [] main_pre prog tt gv
   POST [ tint ]  
      PROP() 
      LOCAL (temp ret_temp (Vint (Int.repr (fac 5))))
@@ -36,6 +36,7 @@ forward_if (temp _t'1 (Vint (Int.repr (fac n)))).
 forward.
 entailer!.
 forward_call.
+normalize.
 omega.
 forward.
 entailer!.
@@ -67,7 +68,7 @@ Qed.
 
 Existing Instance NullExtension.Espec.
 
-Lemma prog_correct: semax_prog prog Vprog Gprog.
+Lemma prog_correct: semax_prog prog tt Vprog Gprog.
 Proof.
 prove_semax_prog.
 semax_func_cons body_fac.

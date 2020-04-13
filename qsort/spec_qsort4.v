@@ -38,11 +38,10 @@ Definition no_volatiles {cs: compspecs} (t: type) : Prop :=
 Definition memcpy_spec {cs: compspecs} :=
   DECLARE _memcpy 
   WITH wsh: share, rsh: share, d: val, s: val,  v : sigT reptype
-  PRE [ 1 OF tptr tvoid, 2 OF tptr tvoid, 3 OF size_t ]
+  PRE [ tptr tvoid, tptr tvoid, size_t ]
     PROP(writable_share wsh; readable_share rsh;
              no_volatiles (projT1 v)) 
-    LOCAL(temp 1 d; temp 2 s; 
-               temp 3 (Vptrofs (Ptrofs.repr (sizeof (projT1 v)))))
+    PARAMS(d; s; Vptrofs (Ptrofs.repr (sizeof (projT1 v)))) GLOBALS ()
     SEP(data_at_ wsh (projT1 v) d;
           data_at rsh (projT1 v) (projT2 v) s)
   POST [ tptr tvoid ]
@@ -70,9 +69,9 @@ Definition ord_lt {t} ord x y := @ord_le t ord x y /\ ~@ord_le t ord y x.
 
 Definition compare_spec (t: type) (ord: le_order (reptype t)) :=
   WITH shp: share, shq: share, p: val, q: val, x: reptype t, y: reptype t
-  PRE [ _p OF tptr tvoid, _q OF tptr tvoid ]
+  PRE [ tptr tvoid, tptr tvoid ]
     PROP (readable_share shp; readable_share shq; ord_def ord x; ord_def ord y)
-    LOCAL (temp _p p; temp _q q)
+    PARAMS (p; q) GLOBALS()
     SEP (data_at shp t x p; data_at shq t y q)
   POST [ tint ]
    EX c:Datatypes.comparison,
@@ -103,16 +102,17 @@ Record qsort_witness {cs: compspecs} := {
 Definition qsort_spec {cs: compspecs} :=
  DECLARE _qsort
   WITH sh: share, base: val, compar: val, wit: qsort_witness
-  PRE  [ _base OF tptr tvoid, _nmemb OF size_t, _size OF size_t, 
-           _compar OF compare_type ]
+  PRE  [ (*_base *) tptr tvoid, (*_nmemb *) size_t, 
+           (* _size *) size_t, (*  _compar *) compare_type ]
     PROP(writable_share sh;
              sizeof (qsort_t wit) <= 1024; 
              Zlength (qsort_al wit) <= Int.max_signed;
              Zlength (qsort_al wit) * sizeof (qsort_t wit) <= Int.max_signed)
-    LOCAL(temp _base base; 
-               temp _nmemb (Vint (Int.repr (Zlength (qsort_al wit))));
-               temp _size (Vint (Int.repr (sizeof (qsort_t wit)))); 
-               temp _compar compar)
+    PARAMS(base; 
+                 Vint (Int.repr (Zlength (qsort_al wit)));
+                 Vint (Int.repr (sizeof (qsort_t wit))); 
+                  compar)  
+    GLOBALS ()
     SEP(func_ptr' (compare_spec (qsort_t wit) (qsort_ord wit)) compar;
           data_at sh (tarray (qsort_t wit) (Zlength (qsort_al wit))) (qsort_al wit) base)
   POST [ tvoid ]
@@ -125,7 +125,7 @@ Definition qsort_spec {cs: compspecs} :=
 Definition main_spec :=
  DECLARE _main
   WITH gv : globals
-  PRE  [] main_pre prog nil gv
+  PRE  [] main_pre prog tt gv
   POST [ tint ]  
      PROP() 
      LOCAL (temp ret_temp (Vint (Int.repr 0)))

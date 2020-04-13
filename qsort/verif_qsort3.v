@@ -121,7 +121,7 @@ unfold fst, snd.
 entailer!.
 +
 clear H31 H30 H29 H28 H27 H26 H25 H24 H23 H22 H21 H20 H19.
-clear Delta Delta_specs FC H1 H11 H13 base.
+clear Delta_specs FC H1 H11 H13 base.
 clear H0 Espec.
 split.
 eapply Permutation_trans; [apply H10|].
@@ -195,7 +195,7 @@ unfold fst, snd.
 entailer!.
 +
 clear H31 H30 H29 H28 H27 H26 H25 H24 H23 H22 H21 H20 H19.
-clear Delta Delta_specs FC H1 H11 H13 base.
+clear Delta_specs FC H1 H11 H13 base.
 clear H0 Espec.
 split.
 eapply Permutation_trans; [apply H10|].
