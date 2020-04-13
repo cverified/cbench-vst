@@ -46,9 +46,7 @@ Lemma body_main: semax_body Vprog Gprog f_main main_spec.
 Proof.
   start_function.
   sep_apply (has_ext_ITREE(E := event)).
-  sep_apply init_stdio; Intros reentp inp outp inp' outp'; simpl in inp', outp'.
-  change (reptype (tptr (Tstruct ___sFILE64 noattr))) with val in *.
-  repeat match goal with H : JMeq _ _ |- _ => apply JMeq_eq in H; subst end.
+  make_stdio.
   forward_loop (PROP () LOCAL (gvars gv) SEP (reent_struct reentp;
    field_at Ews (Tstruct reent noattr) [StructField f_stdin] inp reentp;
    field_at Ews (Tstruct reent noattr) [StructField f_stdout] outp reentp;

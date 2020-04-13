@@ -16,7 +16,7 @@ _CoqProject: Makefile CONFIGURE
 
 %.vo: %.v
 	@echo COQC $*.v
-	@coqc $(VSTFLAGS) $*.v
+	$(COQBIN)coqc $(VSTFLAGS) $*.v
 
 cat1.v: cat1.c
 	$(CLIGHTGEN) -normalize $<

@@ -10,10 +10,7 @@ Notation "' p <- t1 ;; t2" :=
   (ITree.bind t1 (fun x_ => match x_ with p => t2 end))
 (at level 100, t1 at next level, p pattern, right associativity) : itree_scope.
 
-(* these should be in ITrees *)
-Instance Reflexive_sutt {E R} : RelationClasses.Reflexive (@sutt E R R eq).
-Proof. intro; apply eutt_sutt; reflexivity. Qed.
-
+(* nondet constructions *)
 Lemma or_case1 : forall {E R} `{nondetE -< E} a b, sutt eq a (or(R := R) a b).
 Proof.
   intros; unfold or.
