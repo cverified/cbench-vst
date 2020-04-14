@@ -1,6 +1,6 @@
 Require Import VST.floyd.proofauto.
-Require Import fio_specs.
-Require Import cat2.
+Require Import Top.fio_specs.
+Require Import Top.cat2.
 
 Instance CompSpecs : compspecs. make_compspecs prog. Defined.
 Definition Vprog : varspecs. mk_varspecs prog. Defined.
@@ -17,13 +17,13 @@ Notation buf_size := 131072%nat.
 Notation buf_size_Z := 131072%Z.
 
 Definition cat_loop : IO_itree(E := event) :=
-   ITree.aloop (fun _ => inl (c <- read_list stdin buf_size;; write_list stdout c)) tt.
+   ITree.iter (fun _ => c <- read_list stdin buf_size;; write_list stdout c;; Ret (inl tt)) tt.
 
 Definition main_spec :=
  DECLARE _main
   WITH gv : globals
-  PRE  [] main_pre_ext prog cat_loop nil gv
-  POST [ tint ] main_post prog nil gv.
+  PRE  [] main_pre prog cat_loop gv
+  POST [ tint ] main_post prog gv.
 
 Definition Gprog : funspecs := ltac:(with_library prog [get_reent_spec; fwrite_spec; fread_spec;
   main_spec]).
@@ -31,12 +31,13 @@ Definition Gprog : funspecs := ltac:(with_library prog [get_reent_spec; fwrite_s
 Lemma cat_loop_eq : cat_loop ≈ (c <- read_list stdin buf_size;; write_list stdout c;; cat_loop).
 Proof.
   intros.
-  unfold cat_loop; rewrite unfold_aloop.
-  unfold ITree._aloop.
-  rewrite tau_eutt, bind_bind.
+  unfold cat_loop; rewrite unfold_iter.
+  unfold ITree._iter.
+  rewrite bind_bind.
   apply eqit_bind; try reflexivity.
-  intro; apply eqit_bind; try reflexivity.
-  intros []; reflexivity.
+  intro; rewrite bind_bind; apply eqit_bind; try reflexivity.
+  intros [].
+  rewrite bind_ret_l, tau_eutt; reflexivity.
 Qed.
 
 Lemma buf_size_eq : Z.to_nat buf_size_Z = buf_size.
@@ -77,7 +78,7 @@ Proof.
     entailer!.
     { forward.
       entailer!.
-      assert (Zlength bytes = 0) as ?%Zlength_nil_inv; [|subst; simpl; rewrite bind_ret; auto].
+      assert (Zlength bytes = 0) as ?%Zlength_nil_inv; [|subst; simpl; rewrite bind_ret_l; auto].
       rewrite Zlength_app, Zlength_map, repeat_list_repeat, Zlength_list_repeat' in H1.
       assert (0 <= 1 * 131072 - Zlength bytes) by omega.
       rewrite Int.unsigned_repr in *; rep_omega. }
@@ -89,7 +90,7 @@ Definition ext_link := ext_link_prog prog.
 Instance Espec : OracleKind := IO_Espec ext_link.
 
 Lemma prog_correct:
-  semax_prog_ext prog cat_loop Vprog Gprog.
+  semax_prog prog cat_loop Vprog Gprog.
 Proof.
 (*Time prove_semax_prog. (* giant struct makes this run forever *)
 semax_func_cons_ext.

@@ -1,6 +1,6 @@
 Require Import VST.floyd.proofauto.
-Require Import io_specs_cap.
-Require Import cat1.
+Require Import Top.io_specs_cap.
+Require Import Top.cat1.
 
 Instance CompSpecs : compspecs. make_compspecs prog. Defined.
 Definition Vprog : varspecs. mk_varspecs prog. Defined.
@@ -11,13 +11,13 @@ Definition putchar_spec := DECLARE _putchar putchar_cap_spec(E := event).
 Definition getchar_spec := DECLARE _getchar getchar_spec(E := event).
 
 Definition cat_loop : IO_itree :=
-   ITree.aloop (fun _ => inl (c <- read stdin;; write_cap stdout c)) tt.
+   ITree.iter (fun _ => c <- read stdin;; write_cap stdout c; Ret (inl tt)) tt.
 
 Definition main_spec :=
  DECLARE _main
   WITH gv : globals
-  PRE  [] main_pre_ext prog cat_loop nil gv
-  POST [ tint ] main_post prog nil gv.
+  PRE  [] main_pre prog cat_loop gv
+  POST [ tint ] main_post prog gv.
 
 Definition Gprog : funspecs := ltac:(with_library prog [putchar_spec; getchar_spec;
   main_spec]).
@@ -64,7 +64,7 @@ Definition ext_link := ext_link_prog prog.
 Instance Espec : OracleKind := IO_Espec(E := event) ext_link.
 
 Lemma prog_correct:
-  semax_prog_ext prog cat_loop Vprog Gprog.
+  semax_prog prog cat_loop Vprog Gprog.
 Proof.
 prove_semax_prog.
 semax_func_cons_ext.
