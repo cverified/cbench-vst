@@ -6,7 +6,7 @@ BUILD INSTRUCTIONS:  see in each subdirectory.
 POINTS CLAIMED:
 
 |            | [VST](https://vst.cs.princeton.edu) |
-|------------|----:|
+|:-----------|----:|:---
 | **Total**  |  47 |
 | `fac1.c`   |   4 | (Appel)
 | `fac2.c`   |   4 | (Appel)
