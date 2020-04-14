@@ -1,5 +1,5 @@
 These are verifications by [Andrew Appel](https://www.cs.princeton.edu/~appel/) and [William Mansky](https://www.cs.uic.edu/~mansky/) of programs from the [cbench](https://github.com/cverified/cbench) benchmark
-using [VST](https://vst.cs.princeton.edu).
+using [VST](https://vst.cs.princeton.edu).  Functional model of sqrt1 program proved correct by [Yves Bertot](https://www-sop.inria.fr/members/Yves.Bertot/).
 
 BUILD INSTRUCTIONS:  see in each subdirectory.
 
@@ -7,19 +7,19 @@ POINTS CLAIMED:
 
 |            | [VST](https://vst.cs.princeton.edu) |
 |------------|----:|
-| **Total**  |  41 |
-| `fac1.c`   |   4 |
-| `fac2.c`   |   4 |
-| `fac3.c`   |   4 |
-| `fac4.c`   |   4 |
-| `fac6.c`   |   4 |
-| `qsort1.c` |   4 |  [see note]
-| `qsort3.c` |   4 |
-| `qsort4.c` |   3 |  [see note]
-| `cat1.c`   |   4 |  [see note]
-| `malloc1.c`|   4 |
-| `sqrt1.c`  |   2 |  (or maybe 3 points, see note)
-
+| **Total**  |  47 |
+| `fac1.c`   |   4 | (Appel)
+| `fac2.c`   |   4 | (Appel)
+| `fac3.c`   |   4 | (Appel)
+| `fac4.c`   |   4 | (Appel)
+| `fac6.c`   |   4 | (Appel)
+| `qsort1.c` |   4 | (Appel) [see note]
+| `qsort3.c` |   4 | (Appel)
+| `qsort4.c` |   3 | (Appel) [see note]
+| `cat1.c`   |   4 | (Mansky) [see note]
+| `cat2.c`   |   4 | (Mansky)
+| `malloc1.c`|   4 | (Appel)
+| `sqrt1.c`  |   4 | (Appel & Bertot) [see note]
 
 Notes:
 
@@ -34,5 +34,5 @@ Notes:
 
 `cat1.c` has a bug: it calls putchar() without checking the return code, and therefore its output can be lacking arbitrary missing subsequence of the intended output.  We worked around this bug by proving it to this weaker specification.
 
-`sqrt1.c` uses `long double` in an inessential way; see https://github.com/cverified/cbench/issues/3  for details.  If that were not the case, I would get 3 points instead of 2.  If someone could fill in the proofs in sqrt/model_sqrt1.v, then we would get an additional point for functional correctness.
+`sqrt1.c` verification is just for newton_sqrt(), not for main().  Still need to link the C-to-functional-model proof to the correctness-of-functional-model proof, but this should not be difficult.
 

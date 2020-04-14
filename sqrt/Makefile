@@ -18,9 +18,6 @@ _CoqProject: Makefile CONFIGURE
 	@echo COQC $*.v
 	@coqc $(VSTFLAGS) $*.v
 
-from_g.v : sqrt1.g
-	gappa -Bcoq sqrt1.g > from_g.v
-
 sqrt1.v: sqrt1.c
 	$(CLIGHTGEN) -normalize $<
 
