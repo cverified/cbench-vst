@@ -5,21 +5,21 @@ BUILD INSTRUCTIONS:  see in each subdirectory.
 
 POINTS CLAIMED:
 
-|            | [VST](https://vst.cs.princeton.edu) |
-|:-----------|----:|:---
-| **Total**  |  47 |
-| `fac1.c`   |   4 | (Appel)
-| `fac2.c`   |   4 | (Appel)
-| `fac3.c`   |   4 | (Appel)
-| `fac4.c`   |   4 | (Appel)
-| `fac6.c`   |   4 | (Appel)
-| `qsort1.c` |   4 | (Appel) [see note]
-| `qsort3.c` |   4 | (Appel)
-| `qsort4.c` |   3 | (Appel) [see note]
-| `cat1.c`   |   4 | (Mansky) [see note]
-| `cat2.c`   |   4 | (Mansky)
-| `malloc1.c`|   4 | (Appel)
-| `sqrt1.c`  |   4 | (Appel & Bertot) [see note]
+|            | [VST](https://vst.cs.princeton.edu) | |
+|:-----------|----:|:--------|
+| **Total**  |  47 |         |
+| `fac1.c`   |   4 | (Appel) |
+| `fac2.c`   |   4 | (Appel) |
+| `fac3.c`   |   4 | (Appel) |
+| `fac4.c`   |   4 | (Appel) |
+| `fac6.c`   |   4 | (Appel) |
+| `qsort1.c` |   4 | (Appel) [see note] |
+| `qsort3.c` |   4 | (Appel) |
+| `qsort4.c` |   3 | (Appel) [see note] |
+| `cat1.c`   |   4 | (Mansky) [see note] |
+| `cat2.c`   |   4 | (Mansky) |
+| `malloc1.c`|   4 | (Appel) |
+| `sqrt1.c`  |   4 | (Appel & Bertot) [see note] |
 
 Notes:
 
