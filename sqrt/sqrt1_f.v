@@ -1852,7 +1852,12 @@ Lemma fsqrt_correct_aux0:
  forall x, 
   1 <= Binary.B2R 24 128 x < Rdefinitions.Rinv 2 * Binary.B2R 24 128 predf32max ->
   Binary.Bcompare 24 128 x (Binary.B754_zero 24 128 false) = Some Gt.
-Admitted.
+Proof.
+intros x [xge1 _].
+rewrite Bcompare_correct; auto.
+apply f_equal; simpl; apply Rcompare_Gt; lra.
+destruct x; auto; simpl in xge1; lra.
+Qed.
 
 Lemma fsqrt_correct_aux1:
  forall x, 
