@@ -35,8 +35,6 @@ from_g.v: sqrt1.g
 
 sqrt1_f.vo: sqrt1_f.v from_g.vo
 
-model_sqrt1.vo: model_sqrt1.v
-
 verif_sqrt1.vo: verif_sqrt1.v sqrt1.vo sqrt1_f.vo
 verif_sqrt2.vo: verif_sqrt2.v sqrt2.vo
 verif_sqrt3.vo: verif_sqrt3.v sqrt3.vo

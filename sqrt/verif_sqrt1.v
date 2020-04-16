@@ -5,80 +5,6 @@ Definition Vprog : varspecs. mk_varspecs prog. Defined.
 
 Require Import sqrt1_f.
 
-Lemma Float32_cmp_eq: forall x y, Float32.cmp Clt x y = 
-  match Binary.Bcompare 24 128 x y with Some Lt => true | _ => false end.
-Proof.
-intros.
-Transparent Float32.cmp.
-reflexivity.
-Opaque Float32.cmp.
-Qed.
-
-Lemma Float32_add_eq: Float32.add = float_add Float32.binop_nan .
-Proof.
-Transparent Float32.add.
-unfold Float32.add, float_add.
-Opaque Float32.add.
-extensionality x y.
-auto.
-Qed.
-
-Lemma Float32_div_eq: Float32.div = float_div Float32.binop_nan .
-Proof.
-Transparent Float32.div.
-unfold Float32.div, float_div.
-Opaque Float32.div.
-extensionality x y.
-auto.
-Qed.
-
-Lemma Float32_of_int_2_eq: Float32.of_int (Int.repr 2) = float2.
-Proof.
-Transparent Float32.of_int.
-unfold Float32.of_int, float2.
-Opaque Float32.of_int.
-change (Int.signed (Int.repr 2)) with 2%Z.
-unfold IEEE754_extra.BofZ.
-simpl.
-apply f_equal.
-apply proof_irr.
-Qed.
-
-Definition fsqrt (x: float32) : float32 :=
-  if Float32.cmp Cle x (Float32.of_int (Int.repr 0)) 
-  then (Float32.of_int (Int.repr 0)) 
-  else
-  let y := if Float32.cmp Cge x (Float32.of_int (Int.repr 1))
-               then x else Float32.of_int (Int.repr 1)  in
-  main_loop Float32.binop_nan (x,y).
-
-Require Import Reals.
-Open Scope R_scope.
-
-Lemma fsqrt_correct:
- forall x, 
-  1 <= Binary.B2R 24 128 x < Rdefinitions.Rinv 2 * Binary.B2R 24 128 predf32max ->
-  Rbasic_fun.Rabs (Binary.B2R 24 128 (fsqrt x) - R_sqrt.sqrt (Binary.B2R 24 128 x)) <=
-       5 / (2 ^ 23) * R_sqrt.sqrt (Binary.B2R 24 128 x).
-Proof.
-intros.
-unfold fsqrt.
-change (Float32.of_int (Int.repr 0)) with (Binary.B754_zero 24 128 false).
-change (Float32.of_int (Int.repr 1)) with (Binary.Bone 24 128 (eq_refl _) (eq_refl _)).
-Transparent Float32.cmp.
-unfold Float32.cmp.
-Opaque Float32.cmp.
-unfold Float32.compare.
-unfold cmp_of_comparison.
-rewrite fsqrt_correct_aux0 by auto.
-destruct (fsqrt_correct_aux1 x H).
-rewrite H0 by auto.
-apply main_loop_correct_1_max; auto.
-rewrite H0 by auto.
-apply main_loop_correct_1_max; auto.
-Qed.
-Close Scope R_scope.
-
 Definition sqrt_newton_spec :=
    DECLARE _sqrt_newton
    WITH x: float32
@@ -154,3 +80,44 @@ f_equal; auto.
 -
 forward.
 Qed.
+
+Require Import Reals.
+Open Scope R_scope.
+Definition sqrt_newton_spec2 :=
+   DECLARE _sqrt_newton
+   WITH x: float32
+   PRE [ tfloat ]
+       PROP ( 1 <= float32_to_real x < Rdefinitions.Rinv 2 * float32_to_real predf32max)
+       PARAMS (Vsingle x) GLOBALS()
+       SEP ()
+    POST [ tfloat ]
+       PROP (Rabs (float32_to_real (fsqrt x) - R_sqrt.sqrt (float32_to_real x)) <=
+                             5 / (2 ^ 23) * R_sqrt.sqrt (float32_to_real x))
+       LOCAL (temp ret_temp (Vsingle (fsqrt x)))
+       SEP ().
+Close Scope R_scope.
+
+Lemma sub_sqrt: funspec_sub (snd sqrt_newton_spec) (snd sqrt_newton_spec2).
+Proof.
+apply NDsubsume_subsume.
+split; auto.
+unfold snd.
+hnf; intros.
+split; auto. intros x [? ?]. Exists x emp.
+simpl in x.
+normalize.
+match goal with |- context [PROPx (?A::_)] => set (P:=A) end.
+set (C := (Rdiv 5  (pow 2 23))).
+unfold_for_go_lower; normalize. simpl; entailer!; intros.
+entailer!.
+apply fsqrt_correct; auto.
+Qed.
+
+Lemma body_sqrt_newton2:  semax_body Vprog Gprog f_sqrt_newton sqrt_newton_spec2.
+Proof.
+eapply semax_body_funspec_sub.
+apply body_sqrt_newton.
+apply sub_sqrt.
+repeat constructor; intro H; simpl in H; decompose [or] H; try discriminate; auto.
+Qed.
+

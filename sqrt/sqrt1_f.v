@@ -1876,3 +1876,83 @@ apply f_equal; apply Rcompare_Eq.
 rewrite Bone_correct; symmetry; assumption.
 destruct x; simpl in xeq1; auto; lra.
 Qed.
+
+Require Import compcert.lib.Floats.
+Require Import compcert.lib.Axioms.
+Import Integers.
+
+Definition float32_to_real := Binary.B2R 24 128.
+
+Lemma Float32_cmp_eq: forall x y, Float32.cmp Clt x y = 
+  match Binary.Bcompare 24 128 x y with Some Lt => true | _ => false end.
+Proof.
+intros.
+Transparent Float32.cmp.
+reflexivity.
+Opaque Float32.cmp.
+Qed.
+
+Lemma Float32_add_eq: Float32.add = float_add Float32.binop_nan .
+Proof.
+Transparent Float32.add.
+unfold Float32.add, float_add.
+Opaque Float32.add.
+do 2 (apply extensionality; intro); auto.
+Qed.
+
+Lemma Float32_div_eq: Float32.div = float_div Float32.binop_nan .
+Proof.
+Transparent Float32.div.
+unfold Float32.div, float_div.
+Opaque Float32.div.
+do 2 (apply extensionality; intro); auto.
+Qed.
+
+Lemma Float32_of_int_2_eq: Float32.of_int (Int.repr 2) = float2.
+Proof.
+Transparent Float32.of_int.
+unfold Float32.of_int, float2.
+Opaque Float32.of_int.
+change (Int.signed (Int.repr 2)) with 2%Z.
+unfold IEEE754_extra.BofZ.
+simpl.
+apply f_equal.
+apply proof_irr.
+Qed.
+
+Definition fsqrt (x: float32) : float32 :=
+  if Float32.cmp Cle x (Float32.of_int (Int.repr 0)) 
+  then (Float32.of_int (Int.repr 0)) 
+  else
+  let y := if Float32.cmp Cge x (Float32.of_int (Int.repr 1))
+               then x else Float32.of_int (Int.repr 1)  in
+  main_loop Float32.binop_nan (x,y).
+
+Open Scope R_scope.
+
+
+Lemma fsqrt_correct:
+ forall x, 
+  1 <= float32_to_real x < Rdefinitions.Rinv 2 * float32_to_real predf32max ->
+  Rbasic_fun.Rabs (float32_to_real (fsqrt x) - R_sqrt.sqrt (float32_to_real x)) <=
+       5 / (2 ^ 23) * R_sqrt.sqrt (float32_to_real x).
+Proof.
+intros.
+unfold fsqrt.
+change (Float32.of_int (Int.repr 0)) with (Binary.B754_zero 24 128 false).
+change (Float32.of_int (Int.repr 1)) with (Binary.Bone 24 128 (eq_refl _) (eq_refl _)).
+Transparent Float32.cmp.
+unfold Float32.cmp.
+Opaque Float32.cmp.
+unfold Float32.compare.
+unfold cmp_of_comparison.
+rewrite fsqrt_correct_aux0 by auto.
+destruct (fsqrt_correct_aux1 x H).
+rewrite H0 by auto.
+apply main_loop_correct_1_max; auto.
+rewrite H0 by auto.
+apply main_loop_correct_1_max; auto.
+Qed.
+Close Scope R_scope.
+
+
