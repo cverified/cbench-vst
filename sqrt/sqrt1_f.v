@@ -1864,4 +1864,15 @@ Lemma fsqrt_correct_aux1:
   1 <= Binary.B2R 24 128 x < Rdefinitions.Rinv 2 * Binary.B2R 24 128 predf32max ->
   Binary.Bcompare 24 128 x (Binary.Bone 24 128 (eq_refl _) (eq_refl _)) = Some Gt \/
   Binary.Bcompare 24 128 x (Binary.Bone 24 128 (eq_refl _) (eq_refl _)) = Some Eq.
-Admitted.
+intros x [[xgt1 | xeq1] _].
+  left.
+  rewrite Bcompare_correct;[ |  | auto].
+  apply f_equal; apply Rcompare_Gt.
+  rewrite Bone_correct; assumption.
+  destruct x; simpl in xgt1; auto; lra.
+right.
+rewrite Bcompare_correct;[ |  | auto].
+apply f_equal; apply Rcompare_Eq.
+rewrite Bone_correct; symmetry; assumption.
+destruct x; simpl in xeq1; auto; lra.
+Qed.
