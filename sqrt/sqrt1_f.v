@@ -1862,5 +1862,6 @@ Qed.
 Lemma fsqrt_correct_aux1:
  forall x, 
   1 <= Binary.B2R 24 128 x < Rdefinitions.Rinv 2 * Binary.B2R 24 128 predf32max ->
-  Binary.Bcompare 24 128 x (Binary.Bone 24 128 (eq_refl _) (eq_refl _)) = Some Gt.
+  Binary.Bcompare 24 128 x (Binary.Bone 24 128 (eq_refl _) (eq_refl _)) = Some Gt \/
+  Binary.Bcompare 24 128 x (Binary.Bone 24 128 (eq_refl _) (eq_refl _)) = Some Eq.
 Admitted.

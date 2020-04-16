@@ -52,7 +52,6 @@ Definition fsqrt (x: float32) : float32 :=
                then x else Float32.of_int (Int.repr 1)  in
   main_loop Float32.binop_nan (x,y).
 
-
 Require Import Reals.
 Open Scope R_scope.
 
@@ -72,7 +71,10 @@ Opaque Float32.cmp.
 unfold Float32.compare.
 unfold cmp_of_comparison.
 rewrite fsqrt_correct_aux0 by auto.
-rewrite fsqrt_correct_aux1 by auto.
+destruct (fsqrt_correct_aux1 x H).
+rewrite H0 by auto.
+apply main_loop_correct_1_max; auto.
+rewrite H0 by auto.
 apply main_loop_correct_1_max; auto.
 Qed.
 Close Scope R_scope.
