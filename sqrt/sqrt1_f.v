@@ -364,15 +364,14 @@ Definition main_loop_measure (p : float32 * float32) : nat :=
 
 Definition float2 := B754_finite 24 128 false (2 ^ 23) (-22) eq_refl.
 
-Definition dummy_nan (x y : float32) :=
-  exist (fun e => is_nan _ _ e = true) (B754_nan 24 128 false 1 eq_refl)
-        eq_refl.
+Section NAN.
+Variable the_nan : float32 -> float32 -> {x0 : float32 | is_nan 24 128 x0 = true}.
 
 Definition float_add (x y : float32) : float32 :=
-  Bplus 24 128 eq_refl eq_refl dummy_nan mode_NE x y.
+  Bplus 24 128 eq_refl eq_refl the_nan mode_NE x y.
 
 Definition float_div (x y : float32) :=
-  Bdiv 24 128 eq_refl eq_refl dummy_nan mode_NE x y.
+  Bdiv 24 128 eq_refl eq_refl the_nan mode_NE x y.
 
 Definition body_exp (x y : float32) :=
   float_div (float_add y (float_div x y)) float2.
@@ -383,9 +382,10 @@ Function main_loop (p : float32 * float32) {measure main_loop_measure} :
    float32 :=
   match p with
   | (x, y) =>
-    match Bcompare 24 128 (body_exp x y) y with
-    | Some Lt => main_loop (x, body_exp x y)
-    | _ => body_exp x y
+   let z := body_exp x y in 
+    match Bcompare 24 128 z y with
+    | Some Lt => main_loop (x, z)
+    | _ => z
     end
   end.
 Proof.
@@ -717,7 +717,7 @@ assert (tmp := body_exp_bounds _ _ intx' inty').
 assert (tm2 := body_exp_sum_bounds _ _ intx' inty').
 assert (tm3 := body_exp_div_x_y_bounds _ _ (proj1 intx') (proj1 inty')).
 unfold body_exp_R in tmp, tm2, tm3.
-assert (tm4 := Bdiv_correct 24 128 eq_refl eq_refl dummy_nan mode_NE x y yn0).
+assert (tm4 := Bdiv_correct 24 128 eq_refl eq_refl the_nan mode_NE x y yn0).
 assert (divlt : Rabs (round' (B2R' x / B2R' y)) < bpow radix2 128).
   rewrite Rabs_pos_eq;[ | lra].
   assert (tmp5:= conj boundpredf32max boundf32max).
@@ -728,7 +728,7 @@ rewrite Rlt_bool_true in tm4;[ | exact divlt].
 destruct tm4 as [vdivxy [findivxy signdivxy]].
 clear divlt.
 unfold float_add.
-set (divxy := Bdiv 24 128 eq_refl eq_refl dummy_nan mode_NE x y).
+set (divxy := Bdiv 24 128 eq_refl eq_refl the_nan mode_NE x y).
 fold divxy in signdivxy, findivxy, vdivxy.
 fold (B2R' divxy) in vdivxy.
 set (divxy' := B2R' divxy); fold divxy' in vdivxy.
@@ -740,7 +740,7 @@ assert (pluslt : Rabs (round' (B2R' y + divxy')) < bpow radix2 128).
   fold (B2R' x); fold (B2R' y); fold (round' (B2R' x / B2R' y)).
   rewrite Rabs_pos_eq by lra.
   now assert (tmp5:= conj boundpredf32max boundf32max); lra.
-assert (tm6 := Bplus_correct 24 128 eq_refl eq_refl dummy_nan mode_NE y
+assert (tm6 := Bplus_correct 24 128 eq_refl eq_refl the_nan mode_NE y
                      divxy finy findivxy').
 rewrite Rlt_bool_true in tm6;[ | exact pluslt].
 fold (B2R' divxy) in tm6; fold divxy' in tm6; fold (B2R' y) in tm6.
@@ -749,16 +749,16 @@ fold (round' (B2R' y + divxy')) in tm6.
 destruct tm6 as [vsum [finsum signsum]].
 assert (fin2 : is_finite 24 128 float2 = true) by reflexivity.
 assert (b2n0 : B2R' float2 <> 0%R) by now compute; lra.
-assert (tm4 := Bdiv_correct 24 128 eq_refl eq_refl dummy_nan mode_NE
-                   (Bplus 24 128 eq_refl eq_refl dummy_nan mode_NE y
-          (Bdiv 24 128 eq_refl eq_refl dummy_nan mode_NE x y))
+assert (tm4 := Bdiv_correct 24 128 eq_refl eq_refl the_nan mode_NE
+                   (Bplus 24 128 eq_refl eq_refl the_nan mode_NE y
+          (Bdiv 24 128 eq_refl eq_refl the_nan mode_NE x y))
                    _ b2n0).
-  set (bexp :=   Bdiv 24 128 eq_refl eq_refl dummy_nan mode_NE
-              (Bplus 24 128 eq_refl eq_refl dummy_nan mode_NE y
-                 (Bdiv 24 128 eq_refl eq_refl dummy_nan mode_NE x y))
+  set (bexp :=   Bdiv 24 128 eq_refl eq_refl the_nan mode_NE
+              (Bplus 24 128 eq_refl eq_refl the_nan mode_NE y
+                 (Bdiv 24 128 eq_refl eq_refl the_nan mode_NE x y))
               float2).
 fold bexp in tm4.
-set (sum := (Bplus 24 128 eq_refl eq_refl dummy_nan mode_NE y
+set (sum := (Bplus 24 128 eq_refl eq_refl the_nan mode_NE y
                        divxy)).
 fold divxy sum in vsum, finsum, signsum, tm4.
 assert (explt : Rabs (round' (B2R' sum / B2R' float2)) < bpow radix2 128).
@@ -1817,9 +1817,10 @@ Lemma main_loop_1_max :
   final x (main_loop (x, x)).
 generalize invariant_initial_1_max.
 apply main_loop_ind.
-  now intros p x' y pxy test IH v; apply IH, invariant_spec_1_max.
-intros p x' y pxy test vtest cndtest iv. 
+  now intros p x' y pxy z test IH v; apply IH, invariant_spec_1_max.
+intros p x' y pxy z test vtest cndtest iv. 
 apply invariant_final_1_max; auto.
+subst z.
 destruct iv as [cnd1 cnd2]; rewrite <- cnd1; simpl; rewrite vtest.
 destruct test as [c |] eqn: tq; try discriminate.
 destruct c; try discriminate; contradiction.
@@ -1840,3 +1841,21 @@ replace e with (5 * ulp1 * s); cycle 1.
 now apply main_loop_1_max.
 Qed.
 
+End NAN.
+
+Definition dummy_nan (x y : float32) :=
+  exist (fun e => is_nan _ _ e = true) (B754_nan 24 128 false 1 eq_refl)
+        eq_refl.
+
+Open Scope R_scope.
+Lemma fsqrt_correct_aux0:
+ forall x, 
+  1 <= Binary.B2R 24 128 x < Rdefinitions.Rinv 2 * Binary.B2R 24 128 predf32max ->
+  Binary.Bcompare 24 128 x (Binary.B754_zero 24 128 false) = Some Gt.
+Admitted.
+
+Lemma fsqrt_correct_aux1:
+ forall x, 
+  1 <= Binary.B2R 24 128 x < Rdefinitions.Rinv 2 * Binary.B2R 24 128 predf32max ->
+  Binary.Bcompare 24 128 x (Binary.Bone 24 128 (eq_refl _) (eq_refl _)) = Some Gt.
+Admitted.

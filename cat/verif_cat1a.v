@@ -75,10 +75,12 @@ Lemma prog_correct:
 Proof.
 prove_semax_prog.
 semax_func_cons_ext.
-{ simpl; Intro i.
+{ set (make_ext_rval _ _ _).
+  simpl; Intro i.
   apply typecheck_return_value; auto. }
 semax_func_cons_ext.
-{ simpl; Intro i'.
+{ set (make_ext_rval _ _ _).
+  simpl; Intro i'.
   apply typecheck_return_value; auto. }
 semax_func_cons body_main.
 Qed.
