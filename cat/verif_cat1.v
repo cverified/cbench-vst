@@ -56,7 +56,7 @@ Proof.
       forward_call_io (Byte.repr (Int.signed c), cat_loop).
       { entailer!.
         unfold Vubyte.
-        rewrite Byte.unsigned_repr, Int.repr_signed by omega; auto. }
+        rewrite Byte.unsigned_repr, Int.repr_signed by lia; auto. }
       { apply or_case1. }
       Intros r.
       entailer!.
@@ -66,7 +66,7 @@ Proof.
       forward.
       rewrite cat_loop_eq; entailer!.
       { subst.
-        rewrite neg_repr, Int.signed_repr by rep_omega; auto. }
+        rewrite neg_repr, Int.signed_repr by rep_lia; auto. }
   - forward.
 Qed.
 
@@ -79,10 +79,10 @@ Lemma prog_correct:
 Proof.
 prove_semax_prog.
 semax_func_cons_ext.
-{ set (x := make_ext_rval _ _ _). simpl. Intro j.
-  apply typecheck_return_value; auto. }
+{ simpl; Intro j.
+  apply typecheck_return_value with (t := Tint16signed); auto. }
 semax_func_cons_ext.
-{ set (x := make_ext_rval _ _ _). simpl. Intro j.
-  apply typecheck_return_value; auto; apply I. }
+{ simpl; Intro j.
+  apply typecheck_return_value with (t := Tint16signed); auto; apply I. }
 semax_func_cons body_main.
 Qed.

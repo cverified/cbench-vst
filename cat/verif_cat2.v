@@ -80,8 +80,8 @@ Proof.
       entailer!.
       assert (Zlength bytes = 0) as ?%Zlength_nil_inv; [|subst; simpl; rewrite bind_ret_l; auto].
       rewrite Zlength_app, Zlength_map, repeat_list_repeat, Zlength_list_repeat' in H1.
-      assert (0 <= 1 * 131072 - Zlength bytes) by omega.
-      rewrite Int.unsigned_repr in *; rep_omega. }
+      assert (0 <= 1 * 131072 - Zlength bytes) by lia.
+      rewrite Int.unsigned_repr in *; rep_lia. }
   - forward.
 Qed.
 
@@ -95,10 +95,10 @@ Proof.
 (*Time prove_semax_prog. (* giant struct makes this run forever *)
 semax_func_cons_ext.
 { simpl; Intro i.
-  apply typecheck_return_value; auto. }
+  apply typecheck_return_value with (t := Tint16signed); auto. }
 semax_func_cons_ext.
 { simpl; Intro i'.
-  apply typecheck_return_value; auto. }
+  apply typecheck_return_value with (t := Tint16signed); auto. }
 semax_func_cons body_main.
 Qed.*)
 Admitted.
