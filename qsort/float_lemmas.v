@@ -81,10 +81,9 @@ Lemma is_float_middle:
        val_lemmas.is_float (Znth i (before ++ bl ++ after)).
 Proof.
 intros.
-rewrite app_Znth2 by rep_omega.
-rewrite app_Znth1 by (autorewrite with sublist; rep_omega).
-eapply Forall_Znth; eauto.
-rep_omega.
+rewrite app_Znth2 by rep_lia.
+rewrite app_Znth1 by (autorewrite with sublist; rep_lia).
+eapply Forall_Znth; eauto; try lia.
 eapply Forall_impl; try eassumption.
 intros. destruct a; try contradiction; simpl; auto.
 Qed.
@@ -219,7 +218,7 @@ apply nat_of_P_gt_Gt_compare_morphism in H1.
 apply nat_of_P_gt_Gt_compare_morphism in H2.
 rewrite nat_of_P_gt_Gt_compare_complement_morphism.
 auto.
-omega.
+lia.
 -
 apply Z.compare_eq_iff in H1.
 subst e1.
@@ -245,7 +244,7 @@ apply nat_of_P_lt_Lt_compare_morphism in H1.
 apply nat_of_P_lt_Lt_compare_morphism in H2.
 rewrite nat_of_P_lt_Lt_compare_complement_morphism.
 auto.
-omega.
+lia.
 -
 apply Z.compare_eq_iff in H1.
 subst e1.

@@ -22,7 +22,7 @@ Proof.
 start_function.
 forward.
 assert (fac 5 <= Int.max_signed) by (compute; congruence).
-assert (0 < 5 <= 12) by rep_omega.
+assert (0 < 5 <= 12) by rep_lia.
 forget 5 as n.
 forward.
 forward_loop (EX i:Z,
@@ -34,18 +34,18 @@ forward_loop (EX i:Z,
 -
 Intros i. forward_if (i <= n). forward. entailer!.
 forward. entailer!.
-assert (n=i-1) by omega. subst. auto.
+assert (n=i-1) by lia. subst. auto.
 forward. entailer!.
-rewrite !Int.signed_repr; try rep_omega.
+rewrite !Int.signed_repr; try rep_lia.
 replace (fac (i-1) * i)%Z with (fac i).
-apply fac_in_range; omega.
-rewrite fac_equation. rewrite if_true by rep_omega.
+apply fac_in_range; lia.
+rewrite fac_equation. rewrite if_true by rep_lia.
 rewrite Z.mul_comm. auto.
-apply fac_in_range; omega.
+apply fac_in_range; lia.
 forward.
 Exists (i+1).
 entailer!.
-rewrite fac_equation. rewrite if_true by omega.
+rewrite fac_equation. rewrite if_true by lia.
 f_equal; f_equal.
 rewrite Z.add_simpl_r.
 rewrite Z.mul_comm. auto.

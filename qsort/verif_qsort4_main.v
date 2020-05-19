@@ -119,15 +119,15 @@ Lemma Zlength_upto: forall i k,
   0 <= i -> Zlength (upto (Z.to_nat i) k) = i.
 Proof.
 intros.
-rewrite <- (Z2Nat.id i) at 2 by omega.
-rewrite <- (Z2Nat.id i) in H by omega.
+rewrite <- (Z2Nat.id i) at 2 by lia.
+rewrite <- (Z2Nat.id i) in H by lia.
 revert k; induction (Z.to_nat i); intros.
 simpl. reflexivity.
 unfold upto; fold upto.
 rewrite Zlength_cons.
 rewrite Nat2Z.inj_succ.
 rewrite IHn; auto.
-omega.
+lia.
 Qed.
 
 Lemma upto_another:
@@ -136,9 +136,9 @@ Lemma upto_another:
    upto (Z.to_nat i) k ++ [Vfloat (Float.of_int (Int.repr (i+k)))].
 Proof.
 intros.
-replace (i+1) with (Z.succ i) by omega.
-rewrite Z2Nat.inj_succ by omega.
-rewrite <- (Z2Nat.id i) at 3 by omega.
+replace (i+1) with (Z.succ i) by lia.
+rewrite Z2Nat.inj_succ by lia.
+rewrite <- (Z2Nat.id i) at 3 by lia.
 clear.
 revert k; induction (Z.to_nat i); intros.
 simpl.
@@ -154,7 +154,7 @@ f_equal.
 f_equal.
 f_equal.
 rewrite Nat2Z.inj_succ.
-omega.
+lia.
 Qed.
 
 Opaque upto.
@@ -239,16 +239,16 @@ apply derives_refl'.
 f_equal.
 replace (Z.to_nat (N6 - i))
   with (S (Z.to_nat (N6-(i+1)))).
-2:{ clear - H. replace (N6-i) with (Z.succ (N6-(i+1))) by omega.
-     rewrite Z2Nat.inj_succ by omega. auto.
+2:{ clear - H. replace (N6-i) with (Z.succ (N6-(i+1))) by lia.
+     rewrite Z2Nat.inj_succ by lia. auto.
 }
  unfold list_repeat; fold @list_repeat.
  rewrite upd_Znth_app2.
-2:{  rewrite Zlength_upto by omega. autorewrite with sublist. omega. }
- rewrite Zlength_upto by omega.
+2:{  rewrite Zlength_upto by lia. autorewrite with sublist. lia. }
+ rewrite Zlength_upto by lia.
  rewrite Z.sub_diag.
  rewrite upd_Znth0.
- rewrite upto_another by omega.
+ rewrite upto_another by lia.
  rewrite app_ass. f_equal. simpl. normalize.
 -
 (* after the for-loop *)
@@ -280,7 +280,7 @@ assert (Hdef: Forall (ord_def double_le_order) al). {
 }
 pose (w := Build_qsort_witness _ tdouble H_ok 
                     double_le_order al Hdef).
-assert (Zlength al = N6) by (subst al; rewrite Zlength_upto; rep_omega).
+assert (Zlength al = N6) by (subst al; rewrite Zlength_upto; rep_lia).
 forward_call (Ews, gv _a, gv _compar_double, w);
    simpl qsort_t;
    simpl qsort_ord;
@@ -299,7 +299,7 @@ split3; auto.
 simpl sizeof.
 computable.
 simpl sizeof.
-split; try rep_omega.
+split; try rep_lia.
 +
 clear w H_ok Hdef.
 rewrite H.

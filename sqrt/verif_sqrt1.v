@@ -87,7 +87,7 @@ Definition sqrt_newton_spec2 :=
    DECLARE _sqrt_newton
    WITH x: float32
    PRE [ tfloat ]
-       PROP ( 1 <= float32_to_real x < Rdefinitions.Rinv 2 * float32_to_real predf32max)
+       PROP ( 1 <= float32_to_real x < (1/2) * float32_to_real predf32max)
        PARAMS (Vsingle x) GLOBALS()
        SEP ()
     POST [ tfloat ]
@@ -111,8 +111,12 @@ set (C := (Rdiv 5  (pow 2 23))).
 unfold_for_go_lower; normalize. simpl; entailer!; intros.
 entailer!.
 apply fsqrt_correct; auto.
+replace (Rdefinitions.Rinv 2) with (Rdiv 1 2); auto.
+unfold Rdiv.
+rewrite Rmult_1_l; auto.
 Qed.
 
+Print float.
 Lemma body_sqrt_newton2:  semax_body Vprog Gprog f_sqrt_newton sqrt_newton_spec2.
 Proof.
 eapply semax_body_funspec_sub.

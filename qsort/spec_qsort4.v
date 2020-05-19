@@ -172,7 +172,7 @@ Definition compar_double_spec :=
 
 Definition N6: Z := proj1_sig (opaque_constant 666666).
 Definition N6_eq: N6 = 666666  := proj2_sig (opaque_constant _).
-Hint Rewrite N6_eq : rep_omega.
+Hint Rewrite N6_eq : rep_lia.
 
 Require Import float_lemmas.
 

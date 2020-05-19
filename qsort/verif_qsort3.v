@@ -61,8 +61,8 @@ pose_dnth_base hi.
 pose proof (Permutation_Zlength H6).
 forward.
 forward.
-rewrite dbase_add by (auto; rep_omega).
-rewrite dbase_sub by (auto; rep_omega).
+rewrite dbase_add by (auto; rep_lia).
+rewrite dbase_sub by (auto; rep_lia).
 apply f_cmp_swap in H4; simpl in H4.
 eapply semax_seq'.
 apply forward_quicksort_do_loop; auto.
@@ -80,33 +80,33 @@ apply andp_right; apply denote_tc_samebase_dnth; auto.
 -
 clear H17.  (* we don't actually care! *)
 forward_call (dnth base left, hi-left+1, sublist left (hi+1) bl).
-rewrite (sum_sub_pp_base N) by (try assumption; omega).
+rewrite (sum_sub_pp_base N) by (try assumption; lia).
 apply andp_right.
 apply prop_right; prove_it_now.
 apply denote_tc_samebase_dnth; auto.
 apply prop_right; simpl.
-rewrite (sum_sub_pp_base N) by (try assumption; omega).
+rewrite (sum_sub_pp_base N) by (try assumption; lia).
 simpl. f_equal. f_equal. normalize.
 {
 erewrite (split3_data_at_Tarray Ews tdouble (Zlength al) left (hi+1) bl bl);
  try reflexivity; 
  change (@reptype CompSpecs tdouble) with val in *;
-  try rep_omega.
+  try rep_lia.
 2: compute; auto.
 2: autorewrite with sublist; auto.
-sep_apply data_at_dnth; try omega.
+sep_apply data_at_dnth; try lia.
 set (s := Ptrofs.max_signed / 8) in *; compute in s; subst s.
-rep_omega.
-sep_apply data_at_dnth; try omega.
+rep_lia.
+sep_apply data_at_dnth; try lia.
 set (s := Ptrofs.max_signed / 8) in *; compute in s; subst s.
-rep_omega.
+rep_lia.
 unfold tarray.
-replace (hi-left+1) with (hi+1-left) by omega.
+replace (hi-left+1) with (hi+1-left) by lia.
 cancel.
 }
 set (M := Z.min _ _); compute in M; subst M.
 autorewrite with sublist.
-split3; try omega.
+split3; try lia.
 apply Forall_sublist; auto.
 Intros bl'.
 assert (Hlen_bl' := Permutation_Zlength H17);
@@ -114,7 +114,7 @@ assert (Hlen_bl' := Permutation_Zlength H17);
 forward.
 replace base with (dnth base 0) at 1
  by (make_Vptr base; unfold dnth; simpl; normalize).
-rewrite dbase_add by (auto; rep_omega). rewrite Z.add_0_l.
+rewrite dbase_add by (auto; rep_lia). rewrite Z.add_0_l.
 Exists (lo, right,
        (sublist 0 left bl ++ bl' ++ sublist (hi+1) N bl)).
 unfold fst, snd.
@@ -136,51 +136,51 @@ clear al H H10 Hlen.
 eapply justify_quicksort_call1; eassumption.
 +
 erewrite (split3_data_at_Tarray Ews tdouble N left (hi+1));
- try reflexivity; try omega.
+ try reflexivity; try lia.
 2: compute; auto.
-3:{ rewrite (sublist_same 0 N). reflexivity. omega. list_solve. }
+3:{ rewrite (sublist_same 0 N). reflexivity. lia. list_solve. }
 2: list_solve.
 autorewrite with sublist.
-replace (hi-left+1) with (hi+1-left) by (clear; omega).
+replace (hi-left+1) with (hi+1-left) by (clear; lia).
 fold N.
 fold (tarray tdouble N).
-rewrite <- !dnth_base_field_address0 by (auto; omega).
+rewrite <- !dnth_base_field_address0 by (auto; lia).
 replace  (hi + 1 - left - Zlength bl' + (hi + 1))
-  with (hi+1) by omega.
-replace (N - left - Zlength bl' + (hi + 1)) with N by omega.
+  with (hi+1) by lia.
+replace (N - left - Zlength bl' + (hi + 1)) with N by lia.
 cancel.
 autorewrite with sublist.
 cancel.
 -
 clear H17.  (* we don't actually care! *)
 forward_call (dnth base lo, right-lo+1, sublist lo (right+1) bl).
-rewrite (sum_sub_pp_base N) by (try assumption; omega).
+rewrite (sum_sub_pp_base N) by (try assumption; lia).
 apply andp_right.
 apply prop_right; prove_it_now.
 apply denote_tc_samebase_dnth; auto.
 apply prop_right; simpl.
-rewrite (sum_sub_pp_base N) by (try assumption; omega).
+rewrite (sum_sub_pp_base N) by (try assumption; lia).
 simpl. f_equal. f_equal. normalize.
 {
 erewrite (split3_data_at_Tarray Ews tdouble (Zlength al) lo (right+1) bl bl);
  try reflexivity; 
  change (@reptype CompSpecs tdouble) with val in *;
-  try rep_omega.
+  try rep_lia.
 2: compute; auto.
 2: autorewrite with sublist; auto.
-sep_apply data_at_dnth; try omega.
+sep_apply data_at_dnth; try lia.
 set (s := Ptrofs.max_signed / 8) in *; compute in s; subst s.
-rep_omega.
-sep_apply data_at_dnth; try omega.
+rep_lia.
+sep_apply data_at_dnth; try lia.
 set (s := Ptrofs.max_signed / 8) in *; compute in s; subst s.
-rep_omega.
+rep_lia.
 unfold tarray.
-replace (right-lo+1) with (right+1-lo) by omega.
+replace (right-lo+1) with (right+1-lo) by lia.
 cancel.
 }
 set (M := Z.min _ _); compute in M; subst M.
 autorewrite with sublist.
-split3; try omega.
+split3; try lia.
 apply Forall_sublist; auto.
 Intros bl'.
 assert (Hlen_bl' := Permutation_Zlength H17);
@@ -188,7 +188,7 @@ assert (Hlen_bl' := Permutation_Zlength H17);
 forward.
 replace base with (dnth base 0) at 1
  by (make_Vptr base; unfold dnth; simpl; normalize).
-rewrite dbase_add by (auto; rep_omega). rewrite Z.add_0_l.
+rewrite dbase_add by (auto; rep_lia). rewrite Z.add_0_l.
 Exists (left, hi,
        (sublist 0 lo bl ++ bl' ++ sublist (right+1) N bl)).
 unfold fst, snd.
@@ -210,18 +210,18 @@ clear al H H10 Hlen.
 eapply justify_quicksort_call2; eassumption.
 +
 erewrite (split3_data_at_Tarray Ews tdouble N lo (right+1));
- try reflexivity; try omega.
+ try reflexivity; try lia.
 2: compute; auto.
-3:{ rewrite (sublist_same 0 N). reflexivity. omega. list_solve. }
+3:{ rewrite (sublist_same 0 N). reflexivity. lia. list_solve. }
 2: list_solve.
 autorewrite with sublist.
-replace (right-lo+1) with (right+1-lo) by (clear; omega).
+replace (right-lo+1) with (right+1-lo) by (clear; lia).
 fold N.
 fold (tarray tdouble N).
-rewrite <- !dnth_base_field_address0 by (auto; omega).
+rewrite <- !dnth_base_field_address0 by (auto; lia).
 replace  (right + 1 - lo - Zlength bl' + (right + 1))
-  with (right+1) by omega.
-replace (N - lo - Zlength bl' + (right + 1)) with N by omega.
+  with (right+1) by lia.
+replace (N - lo - Zlength bl' + (right + 1)) with N by lia.
 cancel.
 autorewrite with sublist.
 cancel.
@@ -255,23 +255,23 @@ intros.
     normalize.
     unfold Ptrofs.divs. normalize.
     rewrite <- Z.mul_sub_distr_l.
-    rewrite (Int.signed_repr hi) by rep_omega.
-    rewrite (Int.signed_repr lo) by rep_omega.
-    rewrite (Ptrofs.signed_repr 8) by rep_omega.
-    rewrite (Ptrofs.signed_repr) by rep_omega.
-    rewrite Z.mul_comm, Z.quot_mul by omega.
+    rewrite (Int.signed_repr hi) by rep_lia.
+    rewrite (Int.signed_repr lo) by rep_lia.
+    rewrite (Ptrofs.signed_repr 8) by rep_lia.
+    rewrite (Ptrofs.signed_repr) by rep_lia.
+    rewrite Z.mul_comm, Z.quot_mul by lia.
     rewrite Int.signed_repr. f_equal.
-    rewrite (Int.signed_repr (hi-lo)) by rep_omega.
-    rewrite Z.shiftr_div_pow2 by omega. change (2^1) with 2.
+    rewrite (Int.signed_repr (hi-lo)) by rep_lia.
+    rewrite Z.shiftr_div_pow2 by lia. change (2^1) with 2.
     rewrite Int.signed_repr. auto.
     split.
-    assert (0 <= (hi-lo)/2); [|rep_omega].
-    apply Z.div_pos; rep_omega.
-    apply Z.div_le_upper_bound; rep_omega.
+    assert (0 <= (hi-lo)/2); [|rep_lia].
+    apply Z.div_pos; rep_lia.
+    apply Z.div_le_upper_bound; rep_lia.
     split.
-    assert (0 <= (hi-lo)/2); [|rep_omega].
-    apply Z.div_pos; rep_omega.
-    pose proof (mid_in_range lo hi); rep_omega.
+    assert (0 <= (hi-lo)/2); [|rep_lia].
+    apply Z.div_pos; rep_lia.
+    pose proof (mid_in_range lo hi); rep_lia.
 Qed.
 
 Lemma body_quicksort_while:
@@ -325,15 +325,15 @@ forward.
 entailer!.
 auto.
 rewrite (calculate_midpoint N) by assumption.
-pose proof (mid_in_range lo hi). spec H11; [omega|].
+pose proof (mid_in_range lo hi). spec H11; [lia|].
 forget (lo+(hi-lo)/2) as mid.
 pose_dnth_base mid.
 assert (Hlen := Permutation_Zlength H4).
 forward.
-apply tc_val_tdouble_Znth; auto; omega.
+apply tc_val_tdouble_Znth; auto; lia.
 pose_dnth_base lo.
 forward.
-apply tc_val_tdouble_Znth; auto; omega.
+apply tc_val_tdouble_Znth; auto; lia.
 forward_if (EX bl: list val, 
    PROP (f_cmp Cle (Znth lo bl) (Znth mid bl); Permutation al bl;
    sorted (f_cmp Cle) (sublist 0 lo bl);
@@ -349,37 +349,37 @@ forward_loop Pre continue:Post.(RA_normal) end;
   [solve [auto] | | forward; apply ENTAIL_refl ].
 apply typed_true_cmp in H14.
 assert (lo<mid). {
- destruct (zeq lo mid); try omega.
+ destruct (zeq lo mid); try lia.
  clear - H14 e. subst lo. apply f_lt_irrefl in H14. contradiction.
 }
 forward.
 forward.
 forward.
 forward.
-rewrite !def_float_f2f by (apply Forall_Znth; auto; omega).
+rewrite !def_float_f2f by (apply Forall_Znth; auto; lia).
 change (upd_Znth lo _ _) with (swap_in_list lo mid bl).
 Exists (swap_in_list lo mid bl).
 entailer!.
 clear H22 H21 H20 H19 H18.
 autorewrite with sublist.
 split.
-rewrite Znth_swap_in_list1 by omega.
-rewrite Znth_swap_in_list2 by omega.
+rewrite Znth_swap_in_list1 by lia.
+rewrite Znth_swap_in_list2 by lia.
 rewrite f_cmp_le_lt_eq. auto.
 split.
-eapply Permutation_trans; [eassumption| apply Permutation_swap2; omega].
-rewrite !sublist_swap_in_list by omega.
+eapply Permutation_trans; [eassumption| apply Permutation_swap2; lia].
+rewrite !sublist_swap_in_list by lia.
 split3; auto.
 split; intro.
 +
-rewrite Znth_swap_in_list_other by omega.
+rewrite Znth_swap_in_list_other by lia.
 eapply Forall_perm; [ | apply (H7 H18)].
-rewrite sublist_swap_in_list' by omega.
+rewrite sublist_swap_in_list' by lia.
 apply Permutation_swap2; try list_solve.
 +
-rewrite Znth_swap_in_list_other by omega.
+rewrite Znth_swap_in_list_other by lia.
 eapply Forall_perm; [ | apply (H8 H18)].
-rewrite sublist_swap_in_list' by omega.
+rewrite sublist_swap_in_list' by lia.
 apply Permutation_swap2; try list_solve.
 -
 forward.
@@ -388,8 +388,8 @@ entailer!.
 apply typed_false_cmp in H14.
 simpl in H14.
 apply f_cmp_swap in H14. auto.
-apply Forall_Znth; auto; omega.
-apply Forall_Znth; auto; omega.
+apply Forall_Znth; auto; lia.
+apply Forall_Znth; auto; lia.
 -
 clear dependent bl.
 Intros bl.
@@ -397,9 +397,9 @@ assert (Hdef_bl: Forall def_float bl) by (apply Forall_perm with al; auto).
 pose proof (Permutation_Zlength H5).
 pose_dnth_base hi.
 forward.
-apply tc_val_tdouble_Znth; auto; omega.
+apply tc_val_tdouble_Znth; auto; lia.
 forward.
-apply tc_val_tdouble_Znth; auto; omega.
+apply tc_val_tdouble_Znth; auto; lia.
 forward_if (EX bl: list val, 
    PROP (f_cmp Cle (Znth lo bl) (Znth mid bl); 
              f_cmp Cle (Znth mid bl) (Znth hi bl); 
@@ -434,36 +434,36 @@ forward.
 forward.
 forward.
 forward.
-rewrite !def_float_f2f by (apply Forall_Znth; auto; omega).
+rewrite !def_float_f2f by (apply Forall_Znth; auto; lia).
 Exists (swap_in_list hi mid bl).
 entailer!.
 clear H24 H23 H22 H21 H20 H19 H18.
 split3.
-rewrite Znth_swap_in_list1 by omega.
-rewrite Znth_swap_in_list2 by omega.
+rewrite Znth_swap_in_list1 by lia.
+rewrite Znth_swap_in_list2 by lia.
 rewrite f_cmp_le_lt_eq. auto.
-rewrite Znth_swap_in_list1 by omega.
-rewrite Znth_swap_in_list2 by omega.
+rewrite Znth_swap_in_list1 by lia.
+rewrite Znth_swap_in_list2 by lia.
 destruct (zeq lo mid).
 subst.
-rewrite Znth_swap_in_list2 by omega.
+rewrite Znth_swap_in_list2 by lia.
 left.
-apply f_le_refl; auto. apply Forall_Znth; auto; omega.
-rewrite Znth_swap_in_list_other by omega.
+apply f_le_refl; auto. apply Forall_Znth; auto; lia.
+rewrite Znth_swap_in_list_other by lia.
 auto.
 split3; [ | | split]; auto.
 eapply Permutation_trans; [eassumption| ].
-apply Permutation_swap2; omega.
-rewrite sublist_swap_in_list by omega; auto.
-rewrite sublist_swap_in_list by omega; auto.
+apply Permutation_swap2; lia.
+rewrite sublist_swap_in_list by lia; auto.
+rewrite sublist_swap_in_list by lia; auto.
 split; intro.
-rewrite Znth_swap_in_list_other by omega.
+rewrite Znth_swap_in_list_other by lia.
 eapply Forall_perm; try apply (H8 H18).
-rewrite sublist_swap_in_list' by omega.
+rewrite sublist_swap_in_list' by lia.
 apply Permutation_swap2; try list_solve.
-rewrite Znth_swap_in_list_other by omega.
+rewrite Znth_swap_in_list_other by lia.
 eapply Forall_perm; try apply (H14 H18).
-rewrite sublist_swap_in_list' by omega.
+rewrite sublist_swap_in_list' by lia.
 apply Permutation_swap2; try list_solve.
 *
 clear dependent bl.
@@ -474,9 +474,9 @@ assert (Hdef_bl: Forall def_float bl) by (apply Forall_perm with al; auto).
 pose proof (Permutation_Zlength H5).
 abbreviate_semax.
 forward.
-apply tc_val_tdouble_Znth; auto; omega.
+apply tc_val_tdouble_Znth; auto; lia.
 forward.
-apply tc_val_tdouble_Znth; auto; omega.
+apply tc_val_tdouble_Znth; auto; lia.
 forward_if.
 --
 apply typed_true_cmp in H17.
@@ -487,36 +487,36 @@ forward.
 forward.
 forward.
 forward.
-rewrite !def_float_f2f by (apply Forall_Znth; auto; omega).
+rewrite !def_float_f2f by (apply Forall_Znth; auto; lia).
 Exists (swap_in_list lo mid bl).
 entailer!.
 clear H24 H23 H22 H21 H20 H18 H19.
 assert (lo<mid). {
- destruct (zeq lo mid); try omega.
+ destruct (zeq lo mid); try lia.
  clear - H17 e. subst lo. apply f_lt_irrefl in H17. contradiction.
 }
-rewrite Znth_swap_in_list1 by omega.
-rewrite Znth_swap_in_list2 by omega.
-rewrite Znth_swap_in_list_other by omega.
+rewrite Znth_swap_in_list1 by lia.
+rewrite Znth_swap_in_list2 by lia.
+rewrite Znth_swap_in_list_other by lia.
 split3; auto.
 rewrite f_cmp_le_lt_eq. auto.
 destruct H4'; auto.
 eapply f_cmp_le_trans; try eassumption.
 split3; [ | | split]; auto.
 eapply Permutation_trans; [eassumption| ].
-apply Permutation_swap2; try omega.
-rewrite sublist_swap_in_list by omega; auto.
-rewrite sublist_swap_in_list by omega; auto.
+apply Permutation_swap2; try lia.
+rewrite sublist_swap_in_list by lia; auto.
+rewrite sublist_swap_in_list by lia; auto.
 split; intro.
 ++
-rewrite Znth_swap_in_list_other by omega.
+rewrite Znth_swap_in_list_other by lia.
 eapply Forall_perm; try apply (H14 H19).
-rewrite sublist_swap_in_list' by omega.
+rewrite sublist_swap_in_list' by lia.
 apply Permutation_swap2; try list_solve.
 ++
-rewrite Znth_swap_in_list_other by omega.
+rewrite Znth_swap_in_list_other by lia.
 eapply Forall_perm; try apply (H15 H19).
-rewrite sublist_swap_in_list' by omega.
+rewrite sublist_swap_in_list' by lia.
 apply Permutation_swap2; try list_solve.
 --
 forward.
@@ -525,8 +525,8 @@ entailer!.
 apply typed_false_cmp in H17.
 simpl in H17.
 apply f_cmp_swap in H17. auto.
-apply Forall_Znth; auto; omega.
-apply Forall_Znth; auto; omega.
+apply Forall_Znth; auto; lia.
+apply Forall_Znth; auto; lia.
 +
 forward.
 Exists bl.
@@ -534,12 +534,12 @@ entailer!.
 apply typed_false_cmp in H17.
 simpl in H17.
 apply f_cmp_swap in H17. auto.
-apply Forall_Znth; auto; omega.
-apply Forall_Znth; auto; omega.
+apply Forall_Znth; auto; lia.
+apply Forall_Znth; auto; lia.
 +
 clear dependent bl.
 Intros bl.
-apply body_quicksort_while_part2; auto; omega.
+apply body_quicksort_while_part2; auto; lia.
 Qed.
 
 Lemma body_quicksort:  semax_body Vprog Gprog f_quicksort quicksort_spec.
@@ -552,9 +552,9 @@ forward_if.
 forward.
 Exists al.
 entailer!.
-destruct al; autorewrite with sublist in H2; try rep_omega.
+destruct al; autorewrite with sublist in H2; try rep_lia.
 constructor.
-assert (0 < N <= Int.max_signed) by rep_omega.
+assert (0 < N <= Int.max_signed) by rep_lia.
 clear H0 H2.
 assert_PROP (isptr base) by entailer!.
 forward.
@@ -572,7 +572,7 @@ replace  (force_val
   normalize.
   rewrite Ptrofs.add_assoc. f_equal.
   change (Ptrofs.neg (Ptrofs.repr 8)) with (Ptrofs.repr (-8)).
-  normalize. f_equal. omega.
+  normalize. f_equal. lia.
 }
 deadvars!.
 subst N.
@@ -599,8 +599,8 @@ unfold dnth. clear - H0. make_Vptr base. simpl. f_equal.
   rewrite ptrofs_of_ints_unfold. normalize.
 -
 entailer!.
-assert (0 <= lo <= Zlength al) by omega.
-assert (0 <= hi <= Zlength al) by omega.
+assert (0 <= lo <= Zlength al) by lia.
+assert (0 <= hi <= Zlength al) by lia.
 auto with valid_pointer.
 -
 pose_dnth_base lo. rename H10 into Hlo.
@@ -608,7 +608,7 @@ pose_dnth_base hi. rename H10 into Hhi.
 rewrite <- (force_sem_cmp_pp Clt) in HRE
   by (apply isptr_dnth; auto).
 eapply typed_true_pp with (N:=N) in HRE; 
-  eauto; try split; try assumption; try omega; simpl in HRE.
+  eauto; try split; try assumption; try lia; simpl in HRE.
 rename HRE into H10.
 change Delta with (func_tycontext f_quicksort Vprog Gprog nil).
 change (Ssequence _ _) with quicksort_while_body.
@@ -616,8 +616,8 @@ make_sequential.
 subst POSTCONDITION; unfold abbreviate.
 autorewrite with ret_assert.
 apply body_quicksort_while; auto.
-split. omega.
-apply Z.min_glb; auto. omega.
+split. lia.
+apply Z.min_glb; auto. lia.
 -
 forward.
 assert_PROP (lo >= hi). {
@@ -636,13 +636,13 @@ normalize in g.
 destruct H12 as [? [? [? [? ?]]]].
 red in H4.
 simpl  sizeof in H4.
-rewrite Z.max_r in H4 by rep_omega.
-rewrite !Ptrofs.unsigned_repr in g by rep_omega.
-omega.
+rewrite Z.max_r in H4 by rep_lia.
+rewrite !Ptrofs.unsigned_repr in g by rep_lia.
+lia.
 } clear HRE.
 Exists bl.
 entailer!.
-assert (lo=hi \/ lo=hi+1) by omega.
+assert (lo=hi \/ lo=hi+1) by lia.
 assert (Zlength al = Zlength bl) 
   by (rewrite !Zlength_correct; f_equal; apply Permutation_length; auto).
 rewrite H17 in *. 
@@ -650,18 +650,18 @@ assert (Hdef_bl: Forall def_float bl). {eapply Forall_perm; try eassumption. }
 clear - H16 H7 H8 H5 H6 H H2 Hdef_bl.
 destruct H16; subst.
 +
-assert (hi=0 \/ 0<hi) by omega.
+assert (hi=0 \/ 0<hi) by lia.
 destruct H0.
  *
 subst.
 autorewrite with sublist in *.
 destruct (zlt 1 (Zlength bl)).
 specialize (H8 l).
-rewrite sublist_one in H8 by omega.
+rewrite sublist_one in H8 by lia.
 inv H8.
-rewrite <- (sublist_same 0 (Zlength bl) bl) by omega.
-rewrite (sublist_split _ 1) by omega.
-rewrite sublist_one by omega.
+rewrite <- (sublist_same 0 (Zlength bl) bl) by lia.
+rewrite (sublist_split _ 1) by lia.
+rewrite sublist_one by lia.
 apply sorted_app with (Znth 1 bl); auto.
 apply f_cmp_le_trans.
 constructor.
@@ -674,13 +674,13 @@ constructor.
  inv Hdef_bl. clear H1.
  rewrite Zlength_cons in *. change (v::bl) with ([v]++bl) in *.
  autorewrite with sublist in *.
- assert (0 < Zlength bl) by omega. clear l.
+ assert (0 < Zlength bl) by lia. clear l.
  revert H H2; induction H6; intros. 
  constructor. repeat constructor. inv H2.  apply f_le_refl; auto.
  change (Znth 0 (x::y::l)) with x. inv H2.
  constructor.  apply f_le_refl; auto.
  spec IHsorted.
- rewrite Zlength_cons. rep_omega.
+ rewrite Zlength_cons. rep_lia.
  spec IHsorted; auto.
  change (Znth 0 (y::l)) with y in IHsorted.
  clear - H IHsorted.
@@ -693,22 +693,22 @@ constructor.
 destruct bl.
 constructor.
 rewrite !Zlength_cons in g.
-rep_omega.
+rep_lia.
  *
 specialize (H7 H0).
 destruct (zlt (hi+1) (Zlength bl)).
-2:{ assert (hi=Zlength bl \/ hi+1 = Zlength bl) by omega.
+2:{ assert (hi=Zlength bl \/ hi+1 = Zlength bl) by lia.
     destruct H1. subst. autorewrite with sublist in *. auto.
     autorewrite with sublist in *.
     clear g H6 H2 H H8.
-    rewrite sublist_one in H7 by omega. inv H7. clear H4.
-    rewrite (sublist_split 0 (hi-1)) in H5 by omega.
-    rewrite (sublist_one (hi-1)) in H5 by omega.
-    rewrite <- (sublist_same 0 (hi+1)) by omega.
-    rewrite (sublist_split 0 (hi-1)) by omega.
-    rewrite (sublist_split (hi-1) hi) by omega.
-    rewrite (sublist_one (hi-1)) by omega.
-    rewrite (sublist_one hi) by omega.
+    rewrite sublist_one in H7 by lia. inv H7. clear H4.
+    rewrite (sublist_split 0 (hi-1)) in H5 by lia.
+    rewrite (sublist_one (hi-1)) in H5 by lia.
+    rewrite <- (sublist_same 0 (hi+1)) by lia.
+    rewrite (sublist_split 0 (hi-1)) by lia.
+    rewrite (sublist_split (hi-1) hi) by lia.
+    rewrite (sublist_one (hi-1)) by lia.
+    rewrite (sublist_one hi) by lia.
     clear - H5 H3.
     induction (sublist 0 (hi-1) bl). constructor; auto. constructor; auto.
     inv H5. destruct l; inv H1. destruct l; inv H0.
@@ -716,8 +716,8 @@ destruct (zlt (hi+1) (Zlength bl)).
     simpl in *. spec IHl; auto. constructor; auto.
 }
 specialize (H8 l).
-rewrite <- (sublist_same 0 (Zlength bl) bl) by omega.
-rewrite (sublist_split 0 (hi-1)) by omega.
+rewrite <- (sublist_same 0 (Zlength bl) bl) by lia.
+rewrite (sublist_split 0 (hi-1)) by lia.
 apply sorted_app with (Znth (hi-1) bl); auto.
 apply f_cmp_le_trans.
 {
@@ -734,34 +734,34 @@ constructor.
 constructor; auto.
 }
 {
-rewrite (sublist_split (hi-1) hi) by rep_omega.
-rewrite sublist_one by omega.
-rewrite (sublist_split hi (hi+1)) by rep_omega.
-rewrite sublist_one by omega.
+rewrite (sublist_split (hi-1) hi) by rep_lia.
+rewrite sublist_one by lia.
+rewrite (sublist_split hi (hi+1)) by rep_lia.
+rewrite sublist_one by lia.
 simpl.
 constructor.
-rewrite (sublist_split hi (hi+1)) in H7 by rep_omega.
-rewrite sublist_one in H7 by rep_omega.
+rewrite (sublist_split hi (hi+1)) in H7 by rep_lia.
+rewrite sublist_one in H7 by rep_lia.
 inv H7.
 auto.
-rewrite (sublist_split 0 (hi-1)) in H8 by omega.
+rewrite (sublist_split 0 (hi-1)) in H8 by lia.
 rewrite Forall_app in H8. destruct H8.
-rewrite (sublist_split _ hi) in H3 by omega.
+rewrite (sublist_split _ hi) in H3 by lia.
 rewrite Forall_app in H3. destruct H3.
-rewrite sublist_one in H4 by omega.
+rewrite sublist_one in H4 by lia.
 inv H4. clear H11.
 apply f_cmp_swap in H10. simpl in H10.
-rewrite (sublist_split _ (hi+2)) in H6|-* by omega.
-rewrite sublist_one in * by omega.
+rewrite (sublist_split _ (hi+2)) in H6|-* by lia.
+rewrite sublist_one in * by lia.
 clear - H10 H6.
 simpl in *.
 constructor; auto.
 }
-rewrite (sublist_split 0 (hi-1)) in H8 by omega.
+rewrite (sublist_split 0 (hi-1)) in H8 by lia.
 {
 clear - H5 H0 l Hdef_bl.
-rewrite (sublist_split 0 (hi-1)) in H5 by omega.
-rewrite (sublist_one (hi-1)) in H5 by omega.
+rewrite (sublist_split 0 (hi-1)) in H5 by lia.
+rewrite (sublist_one (hi-1)) in H5 by lia.
 clear - H5.
 induction (sublist 0 (hi - 1) bl). constructor.
 inv H5. destruct l; inv H1.
@@ -771,34 +771,34 @@ constructor; auto.
 spec IHl; auto. inv IHl; auto.
 apply f_cmp_le_trans with v; auto.
 }
-rewrite (sublist_split _ hi) by omega.
+rewrite (sublist_split _ hi) by lia.
 rewrite Forall_app. split; auto.
-rewrite sublist_one by omega. repeat constructor.
+rewrite sublist_one by lia. repeat constructor.
 apply f_le_refl.
-apply Forall_Znth; auto. omega.
+apply Forall_Znth; auto. lia.
 +
-spec H7; [ omega|].
+spec H7; [ lia|].
 rewrite Z.add_simpl_r in H7.
 destruct (zlt (hi+1) (Zlength bl)).
 specialize (H8 l).
-rewrite <- (sublist_same 0 (Zlength bl) bl) by omega.
-rewrite (sublist_split 0 (hi+1)) by omega.
+rewrite <- (sublist_same 0 (Zlength bl) bl) by lia.
+rewrite (sublist_split 0 (hi+1)) by lia.
 apply sorted_app with (Znth (hi+1) bl); auto.
 apply f_cmp_le_trans.
 eapply Forall_impl; try apply H8.
 clear; intros; apply (f_cmp_swap _ _ _ H).
 {
 clear - H6 l H2 Hdef_bl.
-rewrite (sublist_split (hi+1) (hi+2)) in H6|-* by omega.
-rewrite sublist_one in H6|-* by omega.
+rewrite (sublist_split (hi+1) (hi+2)) in H6|-* by lia.
+rewrite sublist_one in H6|-* by lia.
 induction (sublist (hi + 2) (Zlength bl) bl).
 constructor; auto.
 apply f_le_refl.
-apply Forall_Znth; try omega.
+apply Forall_Znth; try lia.
 apply Hdef_bl.
 constructor.
 apply f_le_refl.
-apply Forall_Znth; auto. omega.
+apply Forall_Znth; auto. lia.
 inv H6.
 spec IHl0.
 destruct l0; inv H4; constructor; auto.
@@ -806,7 +806,7 @@ eapply f_cmp_le_trans; eassumption.
 constructor; auto.
 inv IHl0; auto.
 }
-assert (hi+1=Zlength bl) by omega.
+assert (hi+1=Zlength bl) by lia.
 autorewrite with sublist in *.
 auto.
 Qed.

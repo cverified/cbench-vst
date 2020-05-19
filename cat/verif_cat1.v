@@ -56,7 +56,7 @@ Proof.
       forward_call_io (Byte.repr (Int.signed c), cat_loop).
       { entailer!.
         unfold Vubyte.
-        rewrite Byte.unsigned_repr, Int.repr_signed by omega; auto. }
+        rewrite Byte.unsigned_repr, Int.repr_signed by lia; auto. }
       { apply or_case1. }
       Intros r.
       entailer!.
@@ -66,7 +66,7 @@ Proof.
       forward.
       rewrite cat_loop_eq; entailer!.
       { subst.
-        rewrite neg_repr, Int.signed_repr by rep_omega; auto. }
+        rewrite neg_repr, Int.signed_repr by rep_lia; auto. }
   - forward.
 Qed.
 

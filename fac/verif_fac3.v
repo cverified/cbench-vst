@@ -47,45 +47,45 @@ rewrite Int.signed_repr.
 2:{
 pose proof (fac_in_range n H).
 split.
-rep_omega.
-assert (f <= fac n); [ | rep_omega].
+rep_lia.
+assert (f <= fac n); [ | rep_lia].
 rewrite <- (Z.mul_1_l f).
 rewrite <- H2.
-apply Z.mul_le_mono_nonneg_r; try rep_omega.
+apply Z.mul_le_mono_nonneg_r; try rep_lia.
 change 1 with (fac 1).
-apply fac_mono. omega.
+apply fac_mono. lia.
 }
-rewrite Int.signed_repr by rep_omega.
+rewrite Int.signed_repr by rep_lia.
 pose proof (fac_in_range n H).
 split.
-apply Z.le_trans with 0. rep_omega.
-apply Z.mul_nonneg_nonneg; omega.
+apply Z.le_trans with 0. rep_lia.
+apply Z.mul_nonneg_nonneg; lia.
 apply Z.le_trans with (f * fac i)%Z.
-apply Z.mul_le_mono_nonneg_l; try rep_omega.
-rewrite fac_equation. rewrite if_true by omega.
-apply Z.le_trans with (i * 1)%Z. omega.
-apply Z.mul_le_mono_nonneg_l; try rep_omega.
+apply Z.mul_le_mono_nonneg_l; try rep_lia.
+rewrite fac_equation. rewrite if_true by lia.
+apply Z.le_trans with (i * 1)%Z. lia.
+apply Z.mul_le_mono_nonneg_l; try rep_lia.
 change (fac 0 <= fac (i-1)).
-apply fac_mono. omega.
-rewrite Z.mul_comm. rewrite H2. omega.
+apply fac_mono. lia.
+rewrite Z.mul_comm. rewrite H2. lia.
 }
 
 Exists (i-1, f*i)%Z.
 entailer!.
-split. omega.
+split. lia.
 split.
 apply Z.le_trans with (f * 1)%Z.
-omega.
-apply Z.mul_le_mono_nonneg_l; try rep_omega.
-rewrite fac_equation in H2. rewrite if_true in H2 by omega.
+lia.
+apply Z.mul_le_mono_nonneg_l; try rep_lia.
+rewrite fac_equation in H2. rewrite if_true in H2 by lia.
 rewrite <- H2.
 rewrite (Z.mul_comm i).
 rewrite (Z.mul_comm f).
 rewrite Z.mul_assoc.
 auto.
 rewrite <- (Int.repr_signed (Int.repr i)) in HRE.
-apply repr_inj_signed in HRE; try rep_omega.
-rewrite Int.signed_repr in HRE by rep_omega. subst.
+apply repr_inj_signed in HRE; try rep_lia.
+rewrite Int.signed_repr in HRE by rep_lia. subst.
 change (fac 0) with 1 in H2.
 rewrite Z.mul_1_l in H2.
 subst.
@@ -96,7 +96,7 @@ Lemma body_main:  semax_body Vprog Gprog f_main main_spec.
 Proof.
 start_function.
 forward_call.
-omega.
+lia.
 forward.
 Qed.
 

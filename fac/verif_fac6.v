@@ -10,7 +10,7 @@ Definition M: Z := 1000000000.
 
 Lemma M_eq: M = 1000000000.
 Proof. reflexivity. Qed.
-Hint Rewrite M_eq : rep_omega.
+Hint Rewrite M_eq : rep_lia.
 Opaque M.
 
 Fixpoint digits_eval (al: list Z) (i: Z) : Z :=
@@ -43,23 +43,23 @@ assert
   (forall i, 0 < i -> 
     (i | digits_eval al i) /\ 
     0 <= digits_eval al i < i*(M^Zlength al)).
-2: specialize (H 1); rewrite Z.mul_1_l in H; apply H; omega.
+2: specialize (H 1); rewrite Z.mul_1_l in H; apply H; lia.
 induction al; intros;
 simpl.
 split.
 apply Z.divide_0_r.
-omega.
+lia.
 inv H0.
 specialize (IHal H4 (M*i)%Z).
 spec IHal.
-apply Z.mul_pos_pos; omega.
+apply Z.mul_pos_pos; lia.
 assert (0 <= a*i < M*i). {
   split.
-  apply Z.mul_nonneg_nonneg; omega.
-  apply Z.mul_lt_mono_pos_r; omega.
+  apply Z.mul_nonneg_nonneg; lia.
+  apply Z.mul_lt_mono_pos_r; lia.
 }
 rewrite Zlength_cons.
-rewrite Z.pow_succ_r by rep_omega.
+rewrite Z.pow_succ_r by rep_lia.
 rewrite Z.mul_assoc.
 rewrite (Z.mul_comm i M).
 destruct IHal.
@@ -72,11 +72,11 @@ exists (x*M)%Z.
 rewrite H1.
 rewrite Z.mul_assoc.
 auto.
-split. omega.
+split. lia.
 forget (digits_eval al (M*i)) as b.
 forget (M * i)%Z as m.
 assert (0 < M ^ Zlength al).
-apply Z.pow_pos_nonneg; rep_omega.
+apply Z.pow_pos_nonneg; rep_lia.
 forget (M ^ Zlength al) as c.
 forget (a * i)%Z as d.
 clear - H1 H2 H0 H5.
@@ -84,13 +84,13 @@ destruct H1 as [e ?].
 subst b.
 destruct H2.
 rewrite (Z.mul_comm m c) in *.
-apply Zmult_lt_reg_r in H1; try omega.
-assert (e + 1 <= c) by omega.
-apply Zmult_le_0_reg_r in H; try omega.
+apply Zmult_lt_reg_r in H1; try lia.
+assert (e + 1 <= c) by lia.
+apply Zmult_le_0_reg_r in H; try lia.
 assert ((e + 1) * m <= c * m).
-apply Z.mul_le_mono_nonneg; try omega.
+apply Z.mul_le_mono_nonneg; try lia.
 rewrite Z.mul_add_distr_r, Z.mul_1_l in H3.
-omega.
+lia.
 Qed.
 
 Hint Resolve bignum_rep_local_facts : saturate_local.
@@ -104,8 +104,8 @@ Proof.
  unfold bignum_rep.
  intros; normalize.
  apply data_at_valid_ptr; auto.
- simpl. rewrite Z.max_r by omega.
- omega.
+ simpl. rewrite Z.max_r by lia.
+ lia.
 Qed.
 
 Hint Resolve bignum_rep_valid_pointer : valid_pointer.
@@ -139,22 +139,22 @@ Definition Gprog := [calc_fac_spec].
 Lemma digits_eval_nonneg:
   forall al c, 0 < c -> Forall (fun x : Z => 0 <= x < M) al -> 0 <= digits_eval al c.
 Proof.
-induction al; simpl; intros. omega.
+induction al; simpl; intros. lia.
 inv H0.
 specialize (IHal (M*c)%Z).
 spec IHal.
-apply Z.mul_pos_pos; omega.
+apply Z.mul_pos_pos; lia.
 specialize (IHal H4).
 assert (0 <= a*c).
-apply Z.mul_nonneg_nonneg; omega.
-omega.
+apply Z.mul_nonneg_nonneg; lia.
+lia.
 Qed.
 
 Lemma digits_eval_mult:
  forall al b c, (digits_eval al (b*c) = b * digits_eval al c)%Z.
 Proof.
 induction al; intros.
-simpl. omega.
+simpl. lia.
 simpl.
 rewrite !IHal.
 rewrite Z.mul_add_distr_l.
@@ -171,27 +171,27 @@ Lemma digits_eval_bound:
 Proof.
 intros al Hal.
 induction Hal as [ | a al ].
-simpl. omega.
+simpl. lia.
 unfold digits_eval; fold digits_eval.
 rewrite digits_eval_mult.
 rewrite Zlength_cons.
-rewrite Z.pow_succ_r by rep_omega.
+rewrite Z.pow_succ_r by rep_lia.
 rewrite Z.mul_1_r.
 pose proof (digits_eval_nonneg al 1).
-spec H0; [omega|].
+spec H0; [lia|].
 specialize (H0 Hal).
 clear Hal.
 forget (digits_eval al 1) as e.
 forget (M ^ Zlength al) as N.
 assert (0 <= e < N) by auto.
 clear - H H1.
-replace N with (1 + (N-1)) by omega.
+replace N with (1 + (N-1)) by lia.
 rewrite Z.mul_add_distr_l.
 apply Z.add_lt_le_mono.
-omega.
+lia.
 apply Z.mul_le_mono_nonneg_l.
-omega.
-omega.
+lia.
+lia.
 Qed.
 
 Lemma digits_eval_app:
@@ -201,7 +201,7 @@ Proof.
  induction al; simpl; intros.
   rewrite Z.mul_1_l, Z.add_0_l; auto.
   rewrite IHal.
-  rewrite Zlength_cons. rewrite Z.pow_succ_r by rep_omega.
+  rewrite Zlength_cons. rewrite Z.pow_succ_r by rep_lia.
   rewrite Z.add_assoc. f_equal. f_equal.
   rewrite Z.mul_comm. rewrite <- !Z.mul_assoc.
   f_equal. apply Z.mul_comm. 
@@ -216,7 +216,7 @@ intros.
 unfold Int64.divu.
 normalize.
 Qed.
-Hint Rewrite divu64_repr using rep_omega : norm.
+Hint Rewrite divu64_repr using rep_lia : norm.
 
 Lemma typed_false_tulong_e:
   forall v, typed_false tulong v -> v = Vlong Int64.zero.
@@ -234,8 +234,8 @@ Lemma repr64_inj_signed:
     Int64.repr i = Int64.repr j -> i=j.
 Proof.
 intros.
-rewrite <- (Int64.signed_repr i) by rep_omega.
-rewrite <- (Int64.signed_repr j) by rep_omega.
+rewrite <- (Int64.signed_repr i) by rep_lia.
+rewrite <- (Int64.signed_repr j) by rep_lia.
 congruence.
 Qed.
 
@@ -246,8 +246,8 @@ Lemma repr64_inj_unsigned:
     Int64.repr i = Int64.repr j -> i=j.
 Proof.
 intros.
-rewrite <- (Int64.unsigned_repr i) by rep_omega.
-rewrite <- (Int64.unsigned_repr j) by rep_omega.
+rewrite <- (Int64.unsigned_repr i) by rep_lia.
+rewrite <- (Int64.unsigned_repr j) by rep_lia.
 congruence.
 Qed.
 
@@ -267,10 +267,10 @@ forward_for_simple_bound L'
                 list_repeat (Z.to_nat (L'-i)) Vundef) a)).
   {entailer!.
    destruct al.
-   2: elimtype False; clear - H3; rewrite Zlength_cons in H3; rep_omega.
+   2: elimtype False; clear - H3; rewrite Zlength_cons in H3; rep_lia.
    simpl.
-   replace L' with (1 + (L'-1)) at 2 by omega.
-   rewrite <- list_repeat_app' by omega.
+   replace L' with (1 + (L'-1)) at 2 by lia.
+   rewrite <- list_repeat_app' by lia.
    simpl list_repeat.
    autorewrite with sublist.
    rewrite upd_Znth0.
@@ -279,19 +279,19 @@ forward_for_simple_bound L'
   }
   forward. {
    entailer!.
-   replace (L'-i) with (1 + (L'-i-1)) by omega.
-   rewrite <- list_repeat_app' by omega.
+   replace (L'-i) with (1 + (L'-i-1)) by lia.
+   rewrite <- list_repeat_app' by lia.
    autorewrite with sublist.
    simpl list_repeat.
-   replace (i - Z.succ (i-1)) with 0 by omega.
+   replace (i - Z.succ (i-1)) with 0 by lia.
    rewrite upd_Znth0.
    autorewrite with sublist.
    rewrite <- app_comm_cons.
    rewrite <- app_ass.
    change ([Vint (Int.repr 0)]) with (list_repeat (Z.to_nat 1) (Vint (Int.repr 0))).
-   rewrite list_repeat_app' by omega.
-   replace (L' - (i+1)) with (L' - i - 1) by omega.
-   replace (i - 1 + 1) with i by omega.
+   rewrite list_repeat_app' by lia.
+   replace (L' - (i+1)) with (L' - i - 1) by lia.
+   replace (i - 1 + 1) with i by lia.
    cancel.
    }
   forward.
@@ -309,14 +309,14 @@ forward_for_simple_bound L'
           (map Vint (map Int.repr (al ++ list_repeat (Z.to_nat (L'-Zlength al)) 0))) a)).
 -
   Exists [1] n0.
-  entailer!. split. repeat constructor; computable. change (Zlength [1]) with 1. omega.
+  entailer!. split. repeat constructor; computable. change (Zlength [1]) with 1. lia.
 -
    entailer!.
 -
   rename H4 into Hal. rename H5 into Hal'.
   forward.
   forward.
-  assert (0 < n <= n0). { clear - H2 HRE. destruct (zeq n 0); try omega. subst. inv HRE. }
+  assert (0 < n <= n0). { clear - H2 HRE. destruct (zeq n 0); try lia. subst. inv HRE. }
   clear HRE H2 H1.
   set (alx := al ++  list_repeat (Z.to_nat (L' - Zlength al)) 0).
   assert (digits_eval al 1 = digits_eval alx 1). {
@@ -325,8 +325,8 @@ forward_for_simple_bound L'
      forget 1 as c.
      forget (Z.to_nat (L' - Zlength al)) as n.
      rewrite digits_eval_app. forget (M ^ Zlength al * c)%Z as d.
-     replace (digits_eval (list_repeat n 0) d) with 0%Z; [omega|].
-     revert d; induction n; simpl; intros; auto.  rewrite <- IHn. omega.
+     replace (digits_eval (list_repeat n 0) d) with 0%Z; [lia|].
+     revert d; induction n; simpl; intros; auto.  rewrite <- IHn. lia.
   }
   rewrite H1 in H3.
   assert_PROP (Zlength alx = L') 
@@ -336,15 +336,15 @@ forward_for_simple_bound L'
    clear. autorewrite with sublist. apply Forall_list_repeat. auto.
   }
   assert (0 <= Zlength al <= L'). { 
-     split. rep_omega.
+     split. rep_lia.
      clear - H2.
      subst alx.
-     destruct (zlt L' (Zlength al)); [ | omega].
-     rewrite Z_to_nat_neg in H2 by omega. autorewrite with sublist in H2. omega.
+     destruct (zlt L' (Zlength al)); [ | lia].
+     rewrite Z_to_nat_neg in H2 by lia. autorewrite with sublist in H2. lia.
   }
   forget (Zlength al) as L.
   assert (Halx: Forall (fun x : Z => 0 <= x < M) alx). {
-    subst alx. apply Forall_app. split. auto. apply Forall_list_repeat. rep_omega.
+    subst alx. apply Forall_app. split. auto. apply Forall_list_repeat. rep_lia.
  }
   clearbody alx; clear al H1 Hal. rename alx into al. rename Halx into Hal. subst L'.
   forward_loop (EX al': list Z, EX c:Z, EX L:Z,
@@ -400,10 +400,10 @@ forward_for_simple_bound L'
    {forward. entailer!. rewrite if_false by auto. if_tac. subst. reflexivity.
      rewrite Int64.eq_false; auto.
      clear - H12 H7. contradict H12.
-     rewrite <- (Int64.unsigned_repr c) by rep_omega. rewrite H12; reflexivity.
+     rewrite <- (Int64.unsigned_repr c) by rep_lia. rewrite H12; reflexivity.
    }
    forward_if (Zlength al' < L \/ 0<c).
-    {forward. entailer!. if_tac in H8'; auto. if_tac in H8; subst; auto. contradiction. right; omega. 
+    {forward. entailer!. if_tac in H8'; auto. if_tac in H8; subst; auto. contradiction. right; lia. 
     }
     {forward.
      Exists al' c L. entailer!.
@@ -412,41 +412,41 @@ forward_for_simple_bound L'
     drop_LOCALs [_t'1].
     Intros.
     assert (Zlength al' < Zlength al). {
-       destruct H8. omega.
-       destruct (zeq (Zlength al') (Zlength al)); [ | omega].
+       destruct H8. lia.
+       destruct (zeq (Zlength al') (Zlength al)); [ | lia].
        rewrite e in H1. autorewrite with sublist in H1.
        simpl in H1. 
        elimtype False.
        rewrite Z.mul_0_r, Z.add_0_r in H1.
        rewrite <- H3 in HL'.
-       assert (0 < c < M) by omega.
+       assert (0 < c < M) by lia.
        clear - HL' H4 H1 H5 H6 e H9 Hal'.
-       rewrite fac_equation in HL'. rewrite if_true in HL' by omega.
+       rewrite fac_equation in HL'. rewrite if_true in HL' by lia.
        rewrite Z.mul_assoc in HL'. rewrite (Z.mul_comm n) in H1; rewrite <- H1 in HL'.
        clear - HL' H4 Hal' H9.
        pose proof (digits_eval_nonneg al' 1).
-       spec H; [omega|].
+       spec H; [lia|].
        specialize (H Hal').
-       pose proof (fac_mono 0 (n-1)). spec H0;[omega|].
+       pose proof (fac_mono 0 (n-1)). spec H0;[lia|].
        change (fac 0) with 1 in H0.
        forget (digits_eval al' 1) as e. forget (fac (n-1)) as f.
        assert (0 < M ^ Zlength al).
-       apply Z.pow_pos_nonneg; rep_omega.
+       apply Z.pow_pos_nonneg; rep_lia.
        forget (M ^ Zlength al) as d.
        destruct H9 as [? _].
        clear - HL' H2 H H0 H1.
        rewrite Z.mul_add_distr_r in HL'.
       assert (0 <= e*f).
-      apply Z.mul_nonneg_nonneg; omega.
-      assert (c * d * f < d); try omega.
+      apply Z.mul_nonneg_nonneg; lia.
+      assert (c * d * f < d); try lia.
       clear dependent e.
       rewrite Z.mul_comm in H4.
       rewrite Z.mul_assoc in H4.
       assert (1 <= f*c). change 1 with (1*1)%Z.
-      apply Z.mul_le_mono_nonneg; omega.
+      apply Z.mul_le_mono_nonneg; lia.
       revert H4.
       assert (f*c*d >= 1*d); [|rewrite Z.mul_1_l in *; auto].
-      apply Zmult_ge_compat_r; omega.
+      apply Zmult_ge_compat_r; lia.
  }
  forward.
  entailer!.
@@ -462,85 +462,85 @@ forward_for_simple_bound L'
 2:{ autorewrite with sublist. 
     clear - H6 Hal H9.
     pattern (Znth (Zlength al') al).
-    apply Forall_Znth. rep_omega.
+    apply Forall_Znth; try rep_lia.
     eapply Forall_impl; try eassumption.
-    intros. simpl in H. rep_omega.
+    intros. simpl in H. rep_lia.
 }
- rewrite app_Znth2 by omega. rewrite Z.sub_diag.
+ rewrite app_Znth2 by lia. rewrite Z.sub_diag.
  autorewrite with sublist.
  rewrite !map_app.
- rewrite upd_Znth_app2 by (autorewrite with sublist; omega).
+ rewrite upd_Znth_app2 by (autorewrite with sublist; lia).
  assert (0 <= Znth (Zlength al') al < M). {
-   pattern ( Znth (Zlength al') al). apply Forall_Znth. rep_omega. auto.
+   pattern ( Znth (Zlength al') al). apply Forall_Znth; try rep_lia. auto.
  }
  assert (0 <= n * Znth (Zlength al') al + c < M*M). {
   clear - H10 H7 H4 H0.
   assert (0 <= n * Znth (Zlength al') al).
-  apply Z.mul_nonneg_nonneg; omega.
-  split. omega.
+  apply Z.mul_nonneg_nonneg; lia.
+  split. lia.
   change (M*M)%Z with ((M-1)*M + M)%Z.
-  assert (n * Znth (Zlength al') al <= (M-1)*M); [ | omega].
-  apply Z.mul_le_mono_nonneg; rep_omega.
+  assert (n * Znth (Zlength al') al <= (M-1)*M); [ | lia].
+  apply Z.mul_le_mono_nonneg; rep_lia.
  }
  autorewrite with sublist norm.
- rewrite <- Zmod_eq by omega.
+ rewrite <- Zmod_eq by lia.
  rewrite Int64.unsigned_repr.
 2:{ pose proof (Z.mod_pos_bound(n * Znth (Zlength al') al + c) M).
-    spec H12; [rep_omega|]. rep_omega.
+    spec H12; [rep_lia|]. rep_lia.
  }
  rewrite !upd_Znth_map.
  Exists (al' ++ [(n * Znth (Zlength al') al + c) mod M]).
  Exists ((n * Znth (Zlength al') al + c) / M).
  Exists L.
  entailer!.
- split3; [ | | split3]; autorewrite with sublist; auto; try omega.
+ split3; [ | | split3]; autorewrite with sublist; auto; try lia.
  *
   change (Z.succ 0) with 1.
   clear - H11 H10 H9 H8 Hal' H7 H6 H5 H2 H1 Hal H4 H3 H0 H.
   rewrite <- H1; clear H1.
-  rewrite (sublist_split (Zlength al') (Zlength al' + 1) (Zlength al)) by rep_omega.
-  rewrite (sublist_len_1 (Zlength al')) by rep_omega.
+  rewrite (sublist_split (Zlength al') (Zlength al' + 1) (Zlength al)) by rep_lia.
+  rewrite (sublist_len_1 (Zlength al')) by rep_lia.
   simpl.
   rewrite Z.mul_add_distr_l.
   rewrite !Z.add_assoc.
-  rewrite <- Z.pow_succ_r by rep_omega. unfold Z.succ.
+  rewrite <- Z.pow_succ_r by rep_lia. unfold Z.succ.
   f_equal.
   rewrite digits_eval_app.
   rewrite <- !Z.add_assoc. f_equal.
   simpl. rewrite Z.add_0_r. rewrite Z.mul_1_r.
   set (d := Znth (Zlength al') al).
-  rewrite Zmod_eq by rep_omega.
+  rewrite Zmod_eq by rep_lia.
   rewrite Z.mul_sub_distr_r.
   fold (Z.succ (Zlength al')).
-  rewrite Z.pow_succ_r by rep_omega.
+  rewrite Z.pow_succ_r by rep_lia.
   rewrite Z.mul_assoc.
   rewrite Z.sub_add.
   rewrite Z.mul_add_distr_r.
-  rewrite Z.mul_assoc. omega.
+  rewrite Z.mul_assoc. lia.
  *
   clear - H11.
-  split. apply Z.div_pos; rep_omega.
+  split. apply Z.div_pos; rep_lia.
   forget (n * Znth (Zlength al') al + c) as d.
-  apply Z.div_lt_upper_bound; try rep_omega.
+  apply Z.div_lt_upper_bound; try rep_lia.
  *
   apply Forall_app; split; auto. constructor; [ | constructor].
   pose proof (Z.mod_pos_bound(n * Znth (Zlength al') al + c) M).
-  spec H15; [rep_omega|]. rep_omega.
+  spec H15; [rep_lia|]. rep_lia.
  *
   rewrite <- !map_app. apply derives_refl'. f_equal. f_equal. f_equal.
   rewrite app_ass. f_equal.
   autorewrite with sublist.
-  rewrite (sublist_split (Zlength al') (Zlength al' + 1) (Zlength al)) by rep_omega.
+  rewrite (sublist_split (Zlength al') (Zlength al' + 1) (Zlength al)) by rep_lia.
   autorewrite with sublist. f_equal.
-  rewrite sublist_len_1 by rep_omega.   rewrite upd_Znth0.
+  rewrite sublist_len_1 by rep_lia.   rewrite upd_Znth0.
    autorewrite with sublist. auto.
 +
  Intros al' c L0.
  forward_if (temp _l (Vint (Int.repr (Z.max  (Zlength al') L0)))).
  forward.
- entailer!. rewrite Z.max_l by omega. auto.
+ entailer!. rewrite Z.max_l by lia. auto.
  forward.
- entailer!. rewrite Z.max_r by omega. auto.
+ entailer!. rewrite Z.max_r by lia. auto.
  forward.
  subst c.
  autorewrite with norm.
@@ -550,28 +550,28 @@ forward_for_simple_bound L'
  entailer!.
  *
  rewrite (fac_equation n) in H3.
- rewrite if_true in H3 by omega.
+ rewrite if_true in H3 by lia.
  rewrite Z.mul_assoc in H3.
  rewrite <- (Z.mul_comm n) in H3.
  rewrite <- H3. clear H3.
  f_equal.
  rewrite <- H1. clear H1.
- rewrite (sublist_split L0 (Zlength al')) in H11 by rep_omega.
+ rewrite (sublist_split L0 (Zlength al')) in H11 by rep_lia.
  apply Forall_app in H11. destruct H11 as [_ H11].
  clear - H11 H2.
  forget (sublist (Zlength al') (Zlength al) al) as dl.
  forget (M ^ Zlength al') as N.
- replace (digits_eval dl N) with 0. omega.
+ replace (digits_eval dl N) with 0. lia.
  clear - H11. revert N; induction H11; intros; simpl. auto.
- rewrite <- IHForall. subst. omega.
+ rewrite <- IHForall. subst. lia.
  *
  replace (list_repeat (Z.to_nat (Zlength al - Zlength al')) 0)
    with (sublist (Zlength al') (Zlength al) al); auto.
  clear - H8 H11 H7 H2.
  forget (Zlength al') as i.
- rewrite (sublist_split L0 i) in H11 by rep_omega.
+ rewrite (sublist_split L0 i) in H11 by rep_lia.
  apply Forall_app in H11. destruct H11 as [_ ?].
- assert (0 <= i <= Zlength al) by omega.
+ assert (0 <= i <= Zlength al) by lia.
  clear - H H0.
  assert (Zlength (sublist i (Zlength al) al) = Zlength al - i).
   autorewrite with sublist. auto.
@@ -580,13 +580,13 @@ forward_for_simple_bound L'
  forget (sublist i (Zlength al) al) as bl.
  induction H; intros. simpl; auto. rewrite Zlength_cons.
  unfold Z.succ. rewrite Z.add_comm.
- rewrite <- list_repeat_app' by rep_omega.
+ rewrite <- list_repeat_app' by rep_lia.
  simpl. f_equal; auto.
 -
  assert (n=0). {clear - H2 HRE H0.
 apply typed_false_tulong_e in HRE.
 assert (Int64.repr n = Int64.zero) by congruence.
-apply repr64_inj_unsigned in H; rep_omega.
+apply repr64_inj_unsigned in H; rep_lia.
 }
   subst n.
   change (fac 0) with 1 in H3. rewrite Z.mul_1_r in H3.

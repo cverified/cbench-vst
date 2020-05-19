@@ -75,7 +75,7 @@ Proof.
 intros.
 eapply derives_trans.
 2: apply (split2_data_at_Tarray_fold sh t n n1 v v' v1 v2 p); auto.
-assert (n2 = (n-n1)) by omega.
+assert (n2 = (n-n1)) by lia.
 subst n2.
 auto.
 Qed.
@@ -210,47 +210,46 @@ forward_loop (EX i:Z,
    rename H into H'.
    Intros i.
    forward_call (sh, Tsh, offset_val (i*sizeof t) base, v_pivot, Znth i bl, pivot).
-   change (@sizeof _ t) with (sizeof t).
-   rewrite Int.signed_repr by rep_omega.
   split.
-  assert (0 <= i*sizeof t); [ | rep_omega].
-  apply Z.mul_nonneg_nonneg; rep_omega.
+  assert (0 <= i*sizeof t); [ | rep_lia].
+  apply Z.mul_nonneg_nonneg; rep_lia.
   eapply Z.le_trans; try apply H1.
   apply Zmult_le_compat_r.
-  omega.
-  omega.
+  lia.
+  lia.
   {
   simpl.
   unfold tarray. 
   sep_apply (split2_data_at_Tarray_unfold sh t N i).
-  omega.
+  lia.
   sep_apply (split2_data_at_Tarray_unfold sh t (N-i) 1).
-  omega.
+  lia.
   autorewrite with sublist.
-  rewrite (sublist_one i (1+i)) by omega.
+  rewrite (sublist_one i (1+i)) by lia.
   fold (tarray t 1).
   erewrite data_at_singleton_array_eq by reflexivity.
-  rewrite field_adr_ofs by (auto; omega).
+  rewrite field_adr_ofs by (auto; lia).
   cancel.
   }
  split3; auto.
  split; auto.
- eapply Forall_Znth; eauto. omega.
+ eapply Forall_Znth; eauto. lia.
  Intros vret.
  rewrite <- (data_at_singleton_array_eq sh t (Znth i bl) [Znth i bl]) by reflexivity.
- rewrite <- (field_adr_ofs i t N) by (auto; omega).
+ rewrite <- (field_adr_ofs i t N) by (auto; lia).
  change (tarray t 1) with (Tarray t 1 noattr).
  sep_apply (split2_data_at_Tarray_fold' sh t (N-i) 1 (N-i-1)
    (sublist 0 (N-i) (sublist i N bl)) (sublist i N bl)
     [Znth i bl] (sublist (1 + i) N bl)
    (field_address0 (Tarray t N noattr) [ArraySubsc i] base));
-   auto; try omega.
-  list_solve.
+   auto; try lia.
+  (* Time  list_solve. (* 272 seconds.  *) *)
+  Zlength_solve.  (* 0.1 seconds *)
   rewrite sublist_one; autorewrite with sublist; auto.
-  clear; omega.
-  omega.
+  clear; lia.
+  lia.
   autorewrite with sublist. auto.
-  sep_apply (split2_data_at_Tarray_fold' sh t N i (N-i) bl bl); try omega; auto.
+  sep_apply (split2_data_at_Tarray_fold' sh t N i (N-i) bl bl); try lia; auto.
   autorewrite with sublist. auto.
   autorewrite with sublist; auto.  
   destruct vret.
@@ -269,20 +268,20 @@ forward_loop (EX i:Z,
   assert (i<>j+1). {
     intro; subst.
     assert (ord_le ord pivot (Znth 0 (sublist (j+1) N bl))).
-      eapply Forall_Znth; auto; autorewrite with sublist; omega.
+      eapply Forall_Znth; auto; autorewrite with sublist; lia.
     autorewrite with sublist in H12.
     clear - H5 H12.
     destruct H5. contradiction.
   }
-  split3; try omega.
-  assert (i<>N-1); [ | omega].
+  split3; try lia.
+  assert (i<>N-1); [ | lia].
   intro. subst i.
   clear - H8b H5. destruct H5. contradiction.
-  split. rewrite (sublist_split 0 i) by omega. rewrite Forall_app; split; auto.
-  rewrite sublist_one by omega. repeat constructor.
+  split. rewrite (sublist_split 0 i) by lia. rewrite Forall_app; split; auto.
+  rewrite sublist_one by lia. repeat constructor.
   clear - H5. destruct H5. red. auto.
   destruct H4.
-  left. rewrite (sublist_split 0 i) by omega. rewrite Exists_app.
+  left. rewrite (sublist_split 0 i) by lia. rewrite Exists_app.
   left; auto.
   right; auto.
  + (* Gt *)
@@ -408,46 +407,45 @@ unfold loop_j.
    Intros j'.
    forward_call (sh, Tsh, offset_val (j'*sizeof t) base, v_pivot, Znth j' bl, pivot).
    change (@sizeof _ t) with (sizeof t).
-   rewrite Int.signed_repr by rep_omega.
   split.
-  assert (0 <= j'*sizeof t); [ | rep_omega].
-  apply Z.mul_nonneg_nonneg; rep_omega.
+  assert (0 <= j'*sizeof t); [ | rep_lia].
+  apply Z.mul_nonneg_nonneg; rep_lia.
   eapply Z.le_trans; try apply H1.
   apply Zmult_le_compat_r.
-  omega.
-  omega.
+  lia.
+  lia.
   {
   simpl.
   unfold tarray. 
   sep_apply (split2_data_at_Tarray_unfold sh t N j').
-  omega.
+  lia.
   sep_apply (split2_data_at_Tarray_unfold sh t (N-j') 1).
-  omega.
+  lia.
   autorewrite with sublist.
-  rewrite (sublist_one j' (1+j')) by omega.
+  rewrite (sublist_one j' (1+j')) by lia.
   fold (tarray t 1).
   erewrite data_at_singleton_array_eq by reflexivity.
-  rewrite field_adr_ofs by (auto; omega).
+  rewrite field_adr_ofs by (auto; lia).
   cancel.
   }
  split3; auto.
  split; auto.
- eapply Forall_Znth; auto. omega.
+ eapply Forall_Znth; auto. lia.
  Intros vret.
  rewrite <- (data_at_singleton_array_eq sh t (Znth j' bl) [Znth j' bl]) by reflexivity.
- rewrite <- (field_adr_ofs j' t N) by (auto; omega).
+ rewrite <- (field_adr_ofs j' t N) by (auto; lia).
  change (tarray t 1) with (Tarray t 1 noattr).
  sep_apply (split2_data_at_Tarray_fold' sh t (N-j') 1 (N-j'-1)
    (sublist 0 (N-j') (sublist j' N bl)) (sublist j' N bl)
     [Znth j' bl] (sublist (1 + j') N bl)
    (field_address0 (Tarray t N noattr) [ArraySubsc j'] base));
-   auto; try omega.
-  list_solve.
+   auto; try lia.
+  Zlength_solve.  (* list_solve.  *)
   rewrite sublist_one; autorewrite with sublist; auto.
-  clear; omega.
-  omega.
+  clear; lia.
+  lia.
   autorewrite with sublist. auto.
-  sep_apply (split2_data_at_Tarray_fold' sh t N j' (N-j') bl bl); try omega; auto.
+  sep_apply (split2_data_at_Tarray_fold' sh t N j' (N-j') bl bl); try lia; auto.
   autorewrite with sublist. auto.
   autorewrite with sublist; auto.  
   destruct vret.
@@ -476,32 +474,32 @@ unfold loop_j.
   clear Delta_specs Hbase sh SH Hok.
   assert (j'<>0). {
     intro; subst.
-    assert (i=0 \/ i=1) by omega. destruct H9.
+    assert (i=0 \/ i=1) by lia. destruct H9.
     subst. 
     destruct H10. autorewrite with sublist in H9.
     inv H9. destruct H9. subst j.
     autorewrite with sublist in *.
     destruct H10.
     assert (ord_lt ord pivot (Znth (N-2) (sublist 1 N bl))).
-     apply Forall_Znth; auto. autorewrite with sublist; omega.
-    autorewrite with sublist in H11. replace (N-2+1) with (N-1) in H11 by omega.
+     apply Forall_Znth; auto. autorewrite with sublist; lia.
+    autorewrite with sublist in H11. replace (N-2+1) with (N-1) in H11 by lia.
     destruct H11. contradiction.
     subst i.
     clear H3 H4 Hpivot Hdef_bl H7 H2 H1 H FR1 Espec base compar.
-    rewrite sublist_one in H13 by omega. inv H13.
+    rewrite sublist_one in H13 by lia. inv H13.
     destruct H6; contradiction.
   }
   rewrite Z.sub_add.     
-  split3; try omega.
-  assert (j'<>i-1); [ | omega].
+  split3; try lia.
+  assert (j'<>i-1); [ | lia].
   intro; subst j'.
-  assert (0 < i <= j+1) by omega. clear H4 H2 H3 H9.
+  assert (0 < i <= j+1) by lia. clear H4 H2 H3 H9.
   rewrite Z.sub_add in H5.
   assert (ord_ge ord pivot (Znth (i-1) (sublist 0 i bl))).
-    apply Forall_Znth; auto. autorewrite with sublist; omega.
+    apply Forall_Znth; auto. autorewrite with sublist; lia.
   autorewrite with sublist in H2.
   destruct H6; contradiction.
-  rewrite (sublist_split j' (j'+1)) by omega. rewrite Forall_app; split; auto.
-  rewrite sublist_one by omega. constructor; [ | constructor].
+  rewrite (sublist_split j' (j'+1)) by lia. rewrite Forall_app; split; auto.
+  rewrite sublist_one by lia. constructor; [ | constructor].
   auto.
 Qed.

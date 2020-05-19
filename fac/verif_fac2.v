@@ -22,7 +22,7 @@ Proof.
 start_function.
 forward.
 assert (fac 5 <= Int.max_signed) by (compute; congruence).
-assert (0 < 5 <= 12) by rep_omega.
+assert (0 < 5 <= 12) by rep_lia.
 forget 5 as n.
 forward.
 forward.
@@ -40,7 +40,7 @@ Intros r.
 forward.
 forward_if (r < n). forward. entailer!.
 forward. entailer!.
-assert (r=n) by omega. subst. auto.
+assert (r=n) by lia. subst. auto.
 forward.
 forward_loop (EX s:Z,
   PROP (1 <= s <= r)
@@ -59,22 +59,22 @@ forward_loop (EX s:Z,
 Exists 1; entailer!.
 +
 pose proof (fac_mono 0 r).
-spec H3; [omega|]. change (fac 0) with 1 in H3.
+spec H3; [lia|]. change (fac 0) with 1 in H3.
 pose proof (fac_mono r (n-1)).
-spec H4; [omega|].
+spec H4; [lia|].
 assert (fac (n-1) <= fac 11).
-apply fac_mono. omega.
+apply fac_mono. lia.
 set (x := fac 11) in *. compute in x. subst x.
 Intros s.
-assert (0 <= s * fac r) by (apply Z.mul_nonneg_nonneg; omega).
+assert (0 <= s * fac r) by (apply Z.mul_nonneg_nonneg; lia).
 assert (s * fac r + fac r <= fac (r+1)). {
   rewrite (fac_equation (r+1)).
-  rewrite if_true by omega.
+  rewrite if_true by lia.
   rewrite Z.add_simpl_r.
-  replace (s * fac r + fac r) with ((s+1)*(fac r))%Z by (rewrite Z.mul_add_distr_r; omega).
-  apply Z.mul_le_mono_nonneg_r; omega.
+  replace (s * fac r + fac r) with ((s+1)*(fac r))%Z by (rewrite Z.mul_add_distr_r; lia).
+  apply Z.mul_le_mono_nonneg_r; lia.
 }
-assert (fac (r+1) <= fac n) by (apply fac_mono; omega).
+assert (fac (r+1) <= fac n) by (apply fac_mono; lia).
 forward.
 forward.
 forward.
@@ -83,10 +83,10 @@ forward.
 entailer!.
 forward.
 entailer!.
-assert (s=r) by omega.
+assert (s=r) by lia.
 subst s.
-replace (r * fac r + fac r) with ((r+1)*(fac r))%Z by (rewrite Z.mul_add_distr_r; omega).
-rewrite (fac_equation (r+1)). rewrite if_true by omega.
+replace (r * fac r + fac r) with ((r+1)*(fac r))%Z by (rewrite Z.mul_add_distr_r; lia).
+rewrite (fac_equation (r+1)). rewrite if_true by lia.
 rewrite Z.add_simpl_r.
 auto.
 Exists (s+1).

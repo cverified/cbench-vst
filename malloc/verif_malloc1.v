@@ -9,7 +9,7 @@ Definition malloc_token (sh: share) (t: type) (p: val) :=
 
 Definition HEAPSIZE := proj1_sig (opaque_constant 1000).
 Definition HEAPSIZE_eq : HEAPSIZE = 1000 := proj2_sig (opaque_constant _).
-Hint Rewrite HEAPSIZE_eq : rep_omega.
+Hint Rewrite HEAPSIZE_eq : rep_lia.
 
 Definition mem_mgr (gv: globals) :=
  EX r:Z,
@@ -104,10 +104,7 @@ forward.
 entailer!.
 f_equal.
 f_equal.
-change (@sizeof _ t) with (@sizeof cenv_cs t) in *.
-rewrite Int.signed_repr in H3 by rep_omega.
-f_equal.
-destruct (zle (sizeof t) 0); try omega.
+destruct (zle (sizeof t) 0); try lia.
 -
 forward.
 forward.
@@ -116,12 +113,10 @@ unfold denote_tc_samebase.
 entailer!.
 destruct (gv _heap); try contradiction; simpl.
 destruct (peq b b); auto. clear - n; congruence.
-change (@sizeof _ t) with (@sizeof cenv_cs t) in *.
-rewrite Int.signed_repr in H3 by rep_omega.
 rewrite <- HEAPSIZE_eq.
 entailer!.
-destruct (zle (sizeof t) 0); try omega.
-destruct (zle (sizeof t) (HEAPSIZE-r)); try omega.
+destruct (zle (sizeof t) 0); try lia.
+destruct (zle (sizeof t) (HEAPSIZE-r)); try lia.
 destruct (gv _heap); try contradiction; simpl.
 unfold sem_sub_pp, both_int; simpl.
 rewrite if_true by auto.
@@ -130,30 +125,28 @@ rewrite !(Ptrofs.add_commut i).
 rewrite (Ptrofs.sub_shifted).
 unfold Ptrofs.divs.
 normalize.
-rewrite (Ptrofs.signed_repr 1) by rep_omega.
+rewrite (Ptrofs.signed_repr 1) by rep_lia.
 rewrite Z.quot_1_r.
 unfold Int.lt.
 rewrite if_false. reflexivity.
-change (@sizeof _ t) with (@sizeof cenv_cs t) in *.
-rewrite (Int.signed_repr (sizeof _)) by rep_omega.
-rewrite Ptrofs.signed_repr by rep_omega.
-rewrite Int.signed_repr by rep_omega.
-omega.
+rewrite (Int.signed_repr (sizeof _)) by rep_lia.
+rewrite Ptrofs.signed_repr by rep_lia.
+rewrite Int.signed_repr by rep_lia.
+lia.
 destruct (gv _heap); try contradiction; simpl.
 unfold sem_sub_pp, both_int; simpl.
 rewrite if_true by auto.
 rewrite !(Ptrofs.add_commut i).
 rewrite (Ptrofs.sub_shifted).
 unfold Ptrofs.divs.
-rewrite (Ptrofs.signed_repr 1) by rep_omega.
+rewrite (Ptrofs.signed_repr 1) by rep_lia.
 rewrite Z.quot_1_r.
 unfold Int.lt.
 normalize.
-rewrite Ptrofs.signed_repr by rep_omega.
+rewrite Ptrofs.signed_repr by rep_lia.
 rewrite if_true. reflexivity.
-change (@sizeof _ t) with (@sizeof cenv_cs t) in *.
 normalize.
-omega.
+lia.
 -
 forward_if.
 forward.
@@ -165,7 +158,6 @@ forward.
 forward.
 forward.
 forward.
-change (@sizeof _ t) with (@sizeof cenv_cs t) in *.
 destruct (zle (sizeof t) 0); try discriminate H3.
 destruct (zle (sizeof t) (HEAPSIZE-r)); try discriminate H3.
 Exists (offset_val r (gv _heap)) (r+sizeof t).
@@ -182,7 +174,7 @@ erewrite (split2_data_at_Tarray Ews tuchar
                  (list_repeat (Z.to_nat (HEAPSIZE-r)) Vundef)
                  (list_repeat (Z.to_nat (HEAPSIZE-r)) Vundef)).
 5,6: reflexivity.
-2: omega.
+2: lia.
 2: list_solve.
 2: autorewrite with sublist; auto.
 autorewrite with sublist.
@@ -190,7 +182,7 @@ rewrite sepcon_comm.
 apply sepcon_derives.
 +
 replace (HEAPSIZE - r - sizeof t)
- with (HEAPSIZE - (r + sizeof t)) by omega.
+ with (HEAPSIZE - (r + sizeof t)) by lia.
 unfold data_at_, data_at, field_at_.
 simpl.
 apply derives_refl'.
@@ -201,8 +193,7 @@ rewrite if_true.
 normalize.
 eapply field_compatible0_cons_Tarray; auto.
 reflexivity.
-change (@sizeof _ t) with (@sizeof cenv_cs t) in *.
-rep_omega.
+rep_lia.
 +
 sep_apply (data_at_memory_block Ews (Tarray tuchar (sizeof t) noattr)
  (list_repeat (Z.to_nat (sizeof t)) Vundef) (offset_val r (gv _heap))).
@@ -210,8 +201,7 @@ rewrite <- memory_block_data_at_.
 apply derives_refl'.
 f_equal.
 simpl.
-change (@sizeof _ t) with (@sizeof cenv_cs t) in *.
- rewrite Z.max_r by rep_omega. normalize.
+ rewrite Z.max_r by rep_lia. normalize.
 clear H8 H6 H5.
 destruct (gv _heap); try contradiction.
 apply malloc_compatible_field_compatible; auto.
@@ -219,11 +209,11 @@ split.
 destruct HP_heap as [b' ?].
 symmetry in H5; inv H5.
 normalize.
-rewrite Ptrofs.unsigned_repr by rep_omega.
+rewrite Ptrofs.unsigned_repr by rep_lia.
 auto.
 destruct HP_heap as [b' ?].
 symmetry in H5; inv H5.
 normalize.
-rewrite Ptrofs.unsigned_repr by rep_omega.
-rep_omega.
+rewrite Ptrofs.unsigned_repr by rep_lia.
+rep_lia.
 Qed.

@@ -37,23 +37,23 @@ forward.
 entailer!.
 forward_call.
 normalize.
-omega.
+lia.
 forward.
 entailer!.
 rewrite Int.signed_repr.
 replace (n * (fac(n-1)))%Z with (fac n).
 apply fac_in_range; auto.
-rewrite (fac_equation n). rewrite if_true by omega. auto.
+rewrite (fac_equation n). rewrite if_true by lia. auto.
 pose proof (fac_mono 0 (n-1)).
-spec H1; [omega|].
+spec H1; [lia|].
 change (fac 0) with 1 in H1.
 split.
-rep_omega.
+rep_lia.
 apply Z.le_trans with (fac n).
-apply fac_mono; omega.
+apply fac_mono; lia.
 apply fac_in_range; auto.
 entailer!.
-rewrite (fac_equation n). rewrite if_true by omega.
+rewrite (fac_equation n). rewrite if_true by lia.
 auto.
 forward.
 Qed.
@@ -62,7 +62,7 @@ Lemma body_main:  semax_body Vprog Gprog f_main main_spec.
 Proof.
 start_function.
 forward_call.
-omega.
+lia.
 forward.
 Qed.
 
