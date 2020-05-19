@@ -69,8 +69,8 @@ Proof.
 prove_semax_prog.
 semax_func_cons_ext.
 { simpl; Intro j.
-  apply typecheck_return_value; auto. }
+  apply typecheck_return_value with (t := Tint16signed); auto. }
 semax_func_cons_ext.
-{ apply typecheck_return_value; auto; apply I. }
+{ apply typecheck_return_value with (t := Tint16signed); auto; apply I. }
 semax_func_cons body_main.
 Qed.

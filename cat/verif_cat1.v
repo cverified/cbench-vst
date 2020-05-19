@@ -79,10 +79,10 @@ Lemma prog_correct:
 Proof.
 prove_semax_prog.
 semax_func_cons_ext.
-{ set (x := make_ext_rval _ _ _). simpl. Intro j.
-  apply typecheck_return_value; auto. }
+{ simpl; Intro j.
+  apply typecheck_return_value with (t := Tint16signed); auto. }
 semax_func_cons_ext.
-{ set (x := make_ext_rval _ _ _). simpl. Intro j.
-  apply typecheck_return_value; auto; apply I. }
+{ simpl; Intro j.
+  apply typecheck_return_value with (t := Tint16signed); auto; apply I. }
 semax_func_cons body_main.
 Qed.

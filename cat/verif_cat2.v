@@ -95,10 +95,10 @@ Proof.
 (*Time prove_semax_prog. (* giant struct makes this run forever *)
 semax_func_cons_ext.
 { simpl; Intro i.
-  apply typecheck_return_value; auto. }
+  apply typecheck_return_value with (t := Tint16signed); auto. }
 semax_func_cons_ext.
 { simpl; Intro i'.
-  apply typecheck_return_value; auto. }
+  apply typecheck_return_value with (t := Tint16signed); auto. }
 semax_func_cons body_main.
 Qed.*)
 Admitted.
