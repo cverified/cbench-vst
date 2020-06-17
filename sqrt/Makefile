@@ -10,7 +10,7 @@ VST_DIRS= msl sepcomp veric floyd
 VSTFLAGS= -R $(VST_LOC)/compcert compcert $(foreach d, $(VST_DIRS), -Q $(VST_LOC)/$(d) VST.$(d)) -I . 
 
 
-target: _CoqProject verif_sqrt1.vo sqrt1_f.vo # verif_sqrt2.vo verif_sqrt3.vo verif_sqrt4.vo
+target: _CoqProject subsume_sqrt1.vo # verif_sqrt2.vo verif_sqrt3.vo verif_sqrt4.vo
 _CoqProject: Makefile CONFIGURE
 	@echo $(VSTFLAGS) > _CoqProject
 
@@ -33,9 +33,11 @@ sqrt4.v: sqrt4.c
 from_g.v: sqrt1.g
 	gappa -Bcoq sqrt1.g > from_g.v
 
-sqrt1_f.vo: sqrt1_f.v from_g.vo
+sqrt1_f.vo: sqrt1_f.v float_lemmas.vo
+sqrt1_f_correct.vo: sqrt1_f_correct.v sqrt1_f.vo from_g.vo
 
 verif_sqrt1.vo: verif_sqrt1.v sqrt1.vo sqrt1_f.vo
+subsume_sqrt1.vo: subsume_sqrt1.v verif_sqrt1.vo sqrt1_f_correct.vo
 verif_sqrt2.vo: verif_sqrt2.v sqrt2.vo
 verif_sqrt3.vo: verif_sqrt3.v sqrt3.vo
 verif_sqrt4.vo: verif_sqrt4.v sqrt4.vo
