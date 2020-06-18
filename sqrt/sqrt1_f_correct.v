@@ -1583,33 +1583,40 @@ Definition dummy_nan (x y : float32) :=
         eq_refl.
 
 Open Scope R_scope.
+
 Lemma fsqrt_correct_aux0:
  forall x, 
   1 <= Binary.B2R 24 128 x < Rdefinitions.Rinv 2 * Binary.B2R 24 128 predf32max ->
-  Binary.Bcompare 24 128 x (Binary.B754_zero 24 128 false) = Some Gt.
+  Float32.cmp Integers.Cle x (float32_of_Z 0) = false.
 Proof.
 intros x [xge1 _].
+change (float32_of_Z 0) with (Binary.B754_zero 24 128 false).
+  unfold Float32.cmp, cmp_of_comparison, Float32.compare.
 rewrite Bcompare_correct; auto.
-apply f_equal; simpl; apply Rcompare_Gt; lra.
+rewrite Rcompare_Gt; auto.
+change (0 < B2R 24 128 x). lra.
 destruct x; auto; simpl in xge1; lra.
 Qed.
 
 Lemma fsqrt_correct_aux1:
  forall x, 
   1 <= Binary.B2R 24 128 x < Rdefinitions.Rinv 2 * Binary.B2R 24 128 predf32max ->
-  Binary.Bcompare 24 128 x (Binary.Bone 24 128 (eq_refl _) (eq_refl _)) = Some Gt \/
-  Binary.Bcompare 24 128 x (Binary.Bone 24 128 (eq_refl _) (eq_refl _)) = Some Eq.
+  Float32.cmp Integers.Cge x (float32_of_Z 1) = true.
+Proof.
+change (float32_of_Z 1) with (Bone 24 128 eq_refl eq_refl).
 intros x [[xgt1 | xeq1] _].
-  left.
+-
+  unfold Float32.cmp, cmp_of_comparison, Float32.compare.
   rewrite Bcompare_correct;[ |  | auto].
-  apply f_equal; apply Rcompare_Gt.
+  rewrite Rcompare_Gt; auto.
   rewrite Bone_correct; assumption.
   destruct x; simpl in xgt1; auto; lra.
-right.
-rewrite Bcompare_correct;[ |  | auto].
-apply f_equal; apply Rcompare_Eq.
-rewrite Bone_correct; symmetry; assumption.
-destruct x; simpl in xeq1; auto; lra.
+-
+  unfold Float32.cmp, cmp_of_comparison, Float32.compare.
+  rewrite Bcompare_correct;[ |  | auto].
+  rewrite Rcompare_Eq; auto.
+  rewrite Bone_correct; symmetry; assumption.
+  destruct x; simpl in xeq1; auto; lra.
 Qed.
 
 Definition float32_to_real := Binary.B2R 24 128.
@@ -1624,20 +1631,8 @@ Lemma fsqrt_correct:
 Proof.
 intros.
 unfold fsqrt.
-change (float32_of_Z 0) with (Binary.B754_zero 24 128 false).
-change (float32_of_Z 1) with (Binary.Bone 24 128 (eq_refl _) (eq_refl _)).
-Transparent Float32.cmp.
-unfold Float32.cmp.
-Opaque Float32.cmp.
-unfold Float32.compare.
-unfold cmp_of_comparison.
 rewrite fsqrt_correct_aux0 by auto.
-destruct (fsqrt_correct_aux1 x H).
-change (float32_of_Z 1) with (Bone 24 128 eq_refl eq_refl).
-rewrite H0 by auto.
-apply main_loop_correct_1_max; auto.
-change (float32_of_Z 1) with (Bone 24 128 eq_refl eq_refl).
-rewrite H0 by auto.
+rewrite (fsqrt_correct_aux1 x H).
 apply main_loop_correct_1_max; auto.
 Qed.
 Close Scope R_scope.
