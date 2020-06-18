@@ -9,13 +9,9 @@ Definition sqrt_newton_spec :=
    DECLARE _sqrt_newton
    WITH x: float32
    PRE [ tfloat ]
-       PROP ()
-       PARAMS (Vsingle x) GLOBALS()
-       SEP ()
+       PROP () PARAMS (Vsingle x) SEP ()
     POST [ tfloat ]
-       PROP ()
-       LOCAL (temp ret_temp (Vsingle (fsqrt x)))
-       SEP ().
+       PROP () RETURN (Vsingle (fsqrt x)) SEP ().
 
 Definition Gprog : funspecs :=
          [sqrt_newton_spec].
@@ -23,24 +19,26 @@ Definition Gprog : funspecs :=
 Lemma body_sqrt_newton:  semax_body Vprog Gprog f_sqrt_newton sqrt_newton_spec.
 Proof.
 start_function.
-forward_if.
-forward.
-entailer!.
-simpl.
-unfold fsqrt.
-change (float32_of_Z ?A) with (Float32.of_int (Int.repr A)).
-rewrite H. auto.
+forward_if. (* if (x<=0) *)
+forward.  (*  return 0; *) {
+   entailer!.
+   unfold fsqrt.
+   change (float32_of_Z ?A) with (Float32.of_int (Int.repr A)).
+   rewrite H. auto.
+}
 pose (t := if Float32.cmp Cge x (Float32.of_int (Int.repr 1))
                     then x else Float32.of_int (Int.repr 1)).
-forward_if (temp _t'1 (Vsingle t)).
-forward.
-entailer!.
-subst t; rewrite H0; auto.
-forward.
-entailer!.
-subst t; rewrite H0; auto.
-forward.
-deadvars!.
+forward_if  (* if (x >= 1) *) 
+     (temp _t'1 (Vsingle t)).
+forward. (* t'1=x; *) {
+  entailer!.
+  subst t; rewrite H0; auto.
+}
+forward. (* t'1=1; *) {
+  entailer!.
+  subst t; rewrite H0; auto.
+}
+forward. (* y = t'1; *)
 forward_loop
    (EX y:float32, PROP(main_loop (x,y) = fsqrt x)
                  (LOCAL (temp _x (Vsingle x); temp _y (Vsingle y)) SEP()))
@@ -50,34 +48,35 @@ forward_loop
                                   temp _z (Vsingle z)) 
                      SEP()))
    break: (PROP()(LOCAL (temp _y (Vsingle (fsqrt x))) SEP())).
--
+-  (* Prove that precondition implies loop invariant *)
 Exists t.
 entailer!.
 unfold fsqrt.
 change (float32_of_Z ?A) with (Float32.of_int (Int.repr A)).
 rewrite H.
 fold t. auto.
--
+-  (* body of loop *)
 Intros y.
-forward.
-forward.
+forward. (* z=y; *)
+forward. (* y=(z+x/z)/2; *)
+    (* end of loop body; prove invariant is reestablished *)
 do 2 EExists; entailer!.
 rewrite main_loop_equation in H0.
 auto.
--
+-  (* ... while (y<z);  *)
 Intros y z.
-forward_if.
+forward_if.  (* if (y<z) *)
 +
-forward.
+forward.  (* skip; *)
 Exists y.
 entailer!.
 rewrite H1 in H0.
 auto.
 +
-forward.
+forward.  (* break; *)
 entailer!.
 rewrite H1 in H0.
 f_equal; auto.
 -
-forward.
+forward. (* return y; *)
 Qed.

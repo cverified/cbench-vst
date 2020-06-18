@@ -11,12 +11,12 @@ Definition sqrt_newton_spec2 :=
    WITH x: float32
    PRE [ tfloat ]
        PROP ( 1 <= float32_to_real x < (1/2) * float32_to_real predf32max)
-       PARAMS (Vsingle x) GLOBALS()
+       PARAMS (Vsingle x)
        SEP ()
     POST [ tfloat ]
        PROP (Rabs (float32_to_real (fsqrt x) - R_sqrt.sqrt (float32_to_real x)) <=
                              5 / (2 ^ 23) * R_sqrt.sqrt (float32_to_real x))
-       LOCAL (temp ret_temp (Vsingle (fsqrt x)))
+       RETURN (Vsingle (fsqrt x))
        SEP ().
 Close Scope R_scope.
 
