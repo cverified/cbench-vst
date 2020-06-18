@@ -13,45 +13,6 @@ Definition float2 := float32_of_Z 2.
 
 Definition body_exp x y := Float32.div (Float32.add y (Float32.div x y)) float2.
 
-Function main_loop' (p : float32 * float32) {measure main_loop_measure} :
-   float32 :=
-  match p with
-  | (x, y) =>
-   let z := body_exp x y in 
-    match Bcompare 24 128 z y with
-    | Some Lt => main_loop' (x, z)
-    | _ => z
-    end
-  end.
-Proof.
-intros p x y eqxy c cq H.
-apply float_to_nat_lt.
-simpl. unfold Float32.cmp, Float32.compare.  rewrite H; auto.
-Qed.
-
-Require compcert.lib.Axioms.
-
-Lemma main_loop_eq: main_loop = main_loop'.
-Proof.
-apply Axioms.extensionality; intro p.
-set (P p z := z = main_loop' p).
-change (P p (main_loop p)).
-apply main_loop_rec; intros.
--
-hnf in H|-*.
-rewrite H.
-symmetry.
-rewrite main_loop'_equation.
-fold z.
-unfold Float32.cmp, Float32.compare in e0.
-destruct (Bcompare _ _ _ _) as [ [ | | ] |]; try discriminate; auto.
--
-hnf.
-rewrite main_loop'_equation.
-unfold Float32.cmp, Float32.compare in e0.
-destruct (Bcompare _ _ _ _) as [ [ | | ] |]; try discriminate; auto.
-Qed.
-
 Definition round' x := 
    round radix2 (FLT_exp (-149) 24) (round_mode mode_NE) x.
 
@@ -915,7 +876,8 @@ Definition final (v : float32) := finalR (B2R' x) (B2R' v).
 Hypothesis intx : 1 <= B2R' x < / 2 * B2R' predf32max.
 
 Lemma invariant_test x' y :
-  invariant (x', y) -> Bcompare _ _ (body_exp x y) y <> Some Lt ->
+  invariant (x', y) ->
+  Float32.cmp Integers.Clt (body_exp x y) y = false ->
   ~ (B2R' (body_exp x y) < B2R' y).
 Proof.
 unfold invariant, invariantR; intros [xx' inty]; cbv[snd] in inty; clear x' xx'.
@@ -947,6 +909,7 @@ assert (B2R' y <= 2 ^ 126).
   lra.  
 assert (is_finite _ _ (body_exp x y) = true).
   apply body_exp_finite; lra.
+unfold Float32.cmp, Float32.compare.
 rewrite Bcompare_correct; auto;[ | apply positive_finite; lra].
 destruct (Rcompare _ _) eqn:vcmp.
     apply Rcompare_Eq_inv in vcmp; unfold B2R'; lra.
@@ -1094,7 +1057,8 @@ Qed.
 *)
 
 Lemma invariant_test_1_4 x' y :
-  invariant x (x', y) -> Bcompare _ _ (body_exp x y) y <> Some Lt ->
+  invariant x (x', y) -> 
+  Float32.cmp Integers.Clt (body_exp x y) y = false ->
   ~ (body_exp_R (B2R' x) (B2R' y) < B2R' y).
 Proof.
 unfold invariant, invariantR.
@@ -1138,7 +1102,7 @@ Qed.
 
 Lemma invariant_final :
   forall x' y, invariant x (x', y) ->
-     Bcompare 24 128 (body_exp x y) y <> Some Lt ->
+    Float32.cmp Integers.Clt (body_exp x y) y = false ->
      final x (body_exp x' y).
 Proof.
 unfold invariant, invariantR; intros x' y iv test.
@@ -1424,7 +1388,7 @@ Variable x : float32.
 Hypothesis intx : 1 <= B2R' x < / 2 * B2R' predf32max.
 
 Lemma invariant_spec_1_max  x' y :
-       Bcompare 24 128 (body_exp x' y) y = Some Lt ->
+       Float32.cmp Integers.Clt (body_exp x' y)  y = true ->
        invariant x (x', y) -> invariant x (x', body_exp x' y).
 Proof.
 unfold invariant, invariantR.
@@ -1490,7 +1454,7 @@ Qed.
 
 Lemma invariant_final_1_max x' y :
   invariant x (x', y) ->
-  Bcompare 24 128 (body_exp x y) y <> Some Lt ->
+  Float32.cmp Integers.Clt (body_exp x y) y = false ->
   final x (body_exp x' y).
 Proof.
 unfold invariant, invariantR.
@@ -1586,26 +1550,27 @@ lra.
 Qed.
 
 Lemma main_loop_1_max :
-  final x (main_loop' (x, x)).
+  final x (main_loop (x, x)).
 generalize invariant_initial_1_max.
-apply main_loop'_ind.
+apply main_loop_ind.
   now intros p x' y pxy z test IH v; apply IH, invariant_spec_1_max.
-intros p x' y pxy z test vtest cndtest iv. 
+intros p x' y pxy z vtest iv. 
 apply invariant_final_1_max; auto.
-subst z.
-destruct iv as [cnd1 cnd2]; rewrite <- cnd1; simpl; rewrite vtest.
-destruct test as [c |] eqn: tq; try discriminate.
-destruct c; try discriminate; contradiction.
+subst z. 
+unfold body_exp.
+destruct iv as [cnd1 cnd2]; rewrite <- cnd1; simpl.
+unfold Float32.cmp in vtest. unfold cmp_of_comparison in vtest.
+destruct (Float32.compare _ _) as [ [ | | ] | ] eqn:?H; try discriminate; auto.
 Qed.
 
 End interval_1_max.
 
 Lemma main_loop_correct_1_max x :
   1 <= B2R 24 128 x < /2 * B2R 24 128 predf32max ->
-  Rabs (B2R 24 128 (main_loop' (x, x)) - sqrt (B2R 24 128 x)) <=
+  Rabs (B2R 24 128 (main_loop (x, x)) - sqrt (B2R 24 128 x)) <=
        5 / (2 ^ 23) * sqrt (B2R 24 128 x).
 Proof.
-set (s := sqrt _); set (m := B2R _ _ (main_loop' _)); set (e := _ / _ * _).
+set (s := sqrt _); set (m := B2R _ _ (main_loop _)); set (e := _ / _ * _).
 intros intx; apply Rabs_le.
 enough (s - e <= m <= s + e) by lra.
 replace e with (5 * ulp1 * s); cycle 1.
@@ -1658,7 +1623,7 @@ Lemma fsqrt_correct:
        5 / (2 ^ 23) * R_sqrt.sqrt (float32_to_real x).
 Proof.
 intros.
-unfold fsqrt. rewrite main_loop_eq.
+unfold fsqrt.
 change (float32_of_Z 0) with (Binary.B754_zero 24 128 false).
 change (float32_of_Z 1) with (Binary.Bone 24 128 (eq_refl _) (eq_refl _)).
 Transparent Float32.cmp.
