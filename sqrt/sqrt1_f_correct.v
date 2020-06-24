@@ -169,9 +169,7 @@ rewrite sqrte; apply sqrt_lt_1_alt; split;[apply bpow_ge_0 | ].
 now apply Rlt_le_trans with (2 := xgmin); apply bpow_lt.
 Qed.
 
-Definition B2R' x := B2R ms es x.
-
-Open Scope Z_scope.
+Definition B2R' := B2R ms es.
 
 Open Scope R_scope.
 
@@ -2341,12 +2339,30 @@ Qed.
 Open Scope R_scope.
 
 Lemma fsqrt_aux2: 
-  forall x, {B2R' x < 1} + {1 <= B2R' x}.
-Admitted.
+  forall x, B2R' x < 1 \/ 1 <= B2R' x.
+Proof.
+intros.
+unfold B2R'.
+pose proof Bcompare_correct ms es x (Bone ms es eq_refl eq_refl).
+rewrite Bone_correct in H.
+destruct (Rcompare_spec (B2R ms es x) 1); auto.
+right; lra.
+right; lra.
+Qed.
 
 Lemma fsqrt_aux3:
-  forall x, B2R' x < 1 -> float_cmp Integers.Cge x (float_of_Z 1) = false.
-Admitted.
+  forall x, is_finite ms es x = true ->
+               B2R' x < 1 -> 
+               float_cmp Integers.Cge x (float_of_Z 1) = false.
+Proof.
+intros.
+unfold float_cmp, float_compare, Floats.cmp_of_comparison.
+change (float_of_Z 1) with (Bone ms es eq_refl eq_refl).
+rewrite Bcompare_correct; auto.
+rewrite Bone_correct.
+fold B2R'.
+destruct (Rcompare_spec (B2R' x) 1); auto; lra.
+Qed.
 
 Lemma fsqrt_correct:
  forall x, 
