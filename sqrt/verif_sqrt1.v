@@ -23,7 +23,8 @@ forward_if. (* if (x<=0) *)
 forward.  (*  return 0; *) {
    entailer!.
    unfold fsqrt.
-   change (float32_of_Z ?A) with (Float32.of_int (Int.repr A)).
+   change (float_of_Z ?A) with (Float32.of_int (Int.repr A)).
+   change float_cmp with Float32.cmp.
    rewrite H. auto.
 }
 pose (t := if Float32.cmp Cge x (Float32.of_int (Int.repr 1))
@@ -52,7 +53,8 @@ forward_loop
 Exists t.
 entailer!.
 unfold fsqrt.
-change (float32_of_Z ?A) with (Float32.of_int (Int.repr A)).
+change (float_of_Z ?A) with (Float32.of_int (Int.repr A)).
+change float_cmp with Float32.cmp.
 rewrite H.
 fold t. auto.
 -  (* body of loop *)
