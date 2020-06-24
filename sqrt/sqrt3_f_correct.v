@@ -27,7 +27,7 @@ Open Scope R_scope.
 Lemma sqrt_approx_correct:
  forall x, 
   Rbasic_fun.Rabs (float32_to_real (sqrt_approx_f x) - R_sqrt.sqrt (float32_to_real x)) <=
-       1 + (1/15) * R_sqrt.sqrt (float32_to_real x).
+       (1 + 1/15) * R_sqrt.sqrt (float32_to_real x).
 Proof.
 Admitted.
 Close Scope R_scope.
