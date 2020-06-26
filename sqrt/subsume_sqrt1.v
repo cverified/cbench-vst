@@ -10,12 +10,12 @@ Definition sqrt_newton_spec2 :=
    DECLARE _sqrt_newton
    WITH x: float32
    PRE [ tfloat ]
-       PROP ( B2R' f_min' <= B2R' x < (1/2) * B2R' predf_max)
+       PROP ( powerRZ 2 (-122) <= f2real x < powerRZ 2 125 )
        PARAMS (Vsingle x)
        SEP ()
     POST [ tfloat ]
-       PROP (Rabs (B2R' (fsqrt x) - R_sqrt.sqrt (B2R' x)) <=
-                             5 / (2 ^ 23) * R_sqrt.sqrt (B2R' x))
+       PROP (Rabs (f2real (fsqrt x) - sqrt (f2real x)) <=
+                       5 / (powerRZ 2 23) * sqrt (f2real x))
        RETURN (Vsingle (fsqrt x))
        SEP ().
 Close Scope R_scope.
@@ -30,13 +30,10 @@ split; auto. intros x [? ?]. Exists x emp.
 simpl in x.
 normalize.
 match goal with |- context [PROPx (?A::_)] => set (P:=A) end.
-set (C := (Rdiv 5  (pow 2 23))).
+set (C := Rdiv 5 _).
 unfold_for_go_lower; normalize. simpl; entailer!; intros.
 entailer!.
 apply (fsqrt_correct x); auto.
-replace (Rdefinitions.Rinv 2) with (Rdiv 1 2); auto.
-unfold Rdiv.
-rewrite Rmult_1_l; auto.
 Qed.
 
 Lemma body_sqrt_newton2:  semax_body Vprog Gprog f_sqrt_newton sqrt_newton_spec2.
