@@ -34,5 +34,5 @@ Notes:
 
 `cat1.c` has a bug: it calls putchar() without checking the return code, and therefore its output can be lacking arbitrary missing subsequence of the intended output.  We worked around this bug by proving it to this weaker specification.
 
-`sqrt1.c` verification is just for newton_sqrt(), not for main().  Still need to link the C-to-functional-model proof to the correctness-of-functional-model proof, but this should not be difficult.
+`sqrt1.c` verification is just for newton_sqrt(), not for main().
 
