@@ -15,7 +15,7 @@ Definition sqrt_newton_spec2 :=
        SEP ()
     POST [ tfloat ]
        PROP (Rabs (f2real (fsqrt x) - sqrt (f2real x)) <=
-                       5 / (powerRZ 2 23) * sqrt (f2real x))
+                       3 / (powerRZ 2 23) * sqrt (f2real x))
        RETURN (Vsingle (fsqrt x))
        SEP ().
 Close Scope R_scope.
@@ -30,7 +30,7 @@ split; auto. intros x [? ?]. Exists x emp.
 simpl in x.
 normalize.
 match goal with |- context [PROPx (?A::_)] => set (P:=A) end.
-set (C := Rdiv 5 _).
+set (C := Rdiv 3 _).
 unfold_for_go_lower; normalize. simpl; entailer!; intros.
 entailer!.
 apply (fsqrt_correct x); auto.
