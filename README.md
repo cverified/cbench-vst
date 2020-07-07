@@ -7,7 +7,7 @@ POINTS CLAIMED:
 
 |            | [VST](https://vst.cs.princeton.edu) | |
 |:-----------|----:|:--------|
-| **Total**  |  47 |         |
+| **Total**  |  50 |         |
 | `fac1.c`   |   4 | (Appel) |
 | `fac2.c`   |   4 | (Appel) |
 | `fac3.c`   |   4 | (Appel) |
@@ -20,6 +20,7 @@ POINTS CLAIMED:
 | `qsort3.c` |   4 | (Appel) |
 | `qsort4.c` |   3 | (Appel) [see note] |
 | `sqrt1.c`  |   4 | (Appel & Bertot) [see note] |
+| `sqrt3.c`  |   3 | (Appel) [see note] |
 
 Notes:
 
@@ -35,4 +36,6 @@ Notes:
 `cat1.c` has a bug: it calls putchar() without checking the return code, and therefore its output can be lacking arbitrary missing subsequence of the intended output.  We worked around this bug by proving it to this weaker specification.
 
 `sqrt1.c` verification is just for newton_sqrt(), not for main().
+
+`sqrt3.c` verification is for safety, not correctness.
 

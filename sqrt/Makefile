@@ -10,7 +10,7 @@ VST_DIRS= msl sepcomp veric floyd
 VSTFLAGS= -R $(VST_LOC)/compcert compcert $(foreach d, $(VST_DIRS), -Q $(VST_LOC)/$(d) VST.$(d)) -I . 
 
 
-target: _CoqProject subsume_sqrt1.vo # verif_sqrt2.vo verif_sqrt3.vo verif_sqrt4.vo
+target: _CoqProject subsume_sqrt1.vo verif_sqrt3.vo # verif_sqrt2.vo verif_sqrt4.vo
 _CoqProject: Makefile CONFIGURE
 	@echo $(VSTFLAGS) > _CoqProject
 

@@ -2363,7 +2363,7 @@ Qed.
 
 Lemma f_min'_eq: f2real f_min' = powerRZ 2 (6 - es).
 Proof.
-unfold f_min', f2real, B2R, F2R, Defs.Fnum, Defs.Fexp, SpecFloat.cond_Zopp.
+unfold f_min', f2real, B2R, F2R, Defs.Fnum, Defs.Fexp, cond_Zopp.
 rewrite Z2Pos.id by reflexivity.
 unfold ms'.
 rewrite (IZR_Zpower radix2) by (compute; congruence).
@@ -2374,7 +2374,7 @@ Qed.
 
 Lemma predf_max_eq:  f2real predf_max = powerRZ 2 (es-2).
 Proof.
-unfold predf_max, f2real, B2R, F2R, Defs.Fnum, Defs.Fexp, SpecFloat.cond_Zopp.
+unfold predf_max, f2real, B2R, F2R, Defs.Fnum, Defs.Fexp, cond_Zopp.
 rewrite Pos2Z.inj_pow.
 rewrite Z2Pos.id by reflexivity.
 rewrite (IZR_Zpower radix2) by (compute; congruence).
