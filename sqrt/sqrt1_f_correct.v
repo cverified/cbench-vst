@@ -114,9 +114,9 @@ Qed.
 Lemma from_g_proof (x y : R) :
   1 <= x <= 4 ->
   sqrt x - 32 * bpow r2 (- ms') <= y <= sqrt x + 3 ->
-  - (9) * bpow r2 (- (ms)) <= round' (round'(y + round' (x / y)) / 2) -
+  - (5) * bpow r2 (- (ms)) <= round' (round'(y + round' (x / y)) / 2) -
    (y + (x / y)) / 2 <=
-  9 * bpow r2 (- (ms)).
+  5 * bpow r2 (- (ms)).
 Proof.
 intros intx inty.
 set (b := sqrt x).
@@ -138,8 +138,8 @@ replace (float2R from_g.f1) with 1 by (compute; lra).
 replace (float2R from_g.f2) with 2 by (compute; lra).
 replace (float2R from_g.f3) with (- (32) * bpow r2 (- ms')) by (compute; lra).
 replace (float2R from_g.f4) with 3 by (compute; lra).
-replace (float2R from_g.f5) with (-9 * bpow r2 (- (ms))) by (compute; lra).
-replace (float2R from_g.f6) with (9 * bpow r2 (- (ms))) by (compute; lra).
+replace (float2R from_g.f5) with (-5 * bpow r2 (- (ms))) by (compute; lra).
+replace (float2R from_g.f6) with (5 * bpow r2 (- (ms))) by (compute; lra).
 change (Float1 2) with 2.
 change (round r2 f_exp (round_mode mode_NE)
      (round r2 f_exp (round_mode mode_NE)
@@ -234,8 +234,8 @@ Qed.
 
 Lemma converge_below_16 (x y : R) :
   1 <= x <= 4 -> sqrt x - 16 * ulp1 * sqrt x <= y <= sqrt x + 16 * ulp1 * sqrt x ->
-  -5 * ulp1 <= round' (round' (y + round' (x / y)) / 2) - sqrt x
-     <= 5 * ulp1.
+  -3 * ulp1 <= round' (round' (y + round' (x / y)) / 2) - sqrt x
+     <= 3 * ulp1.
 Proof.
 intros intx inty.
 destruct (sqrt_1_4 _ intx) as [sg1 sl2].
@@ -1282,7 +1282,7 @@ Definition invariant (p : float * float) :=
     fst p = x /\ invariantR (f2real x) (f2real (snd p)).
 
 Definition finalR x' y' := 
-  sqrt x' - 5 * ulp1 * sqrt x' <= y' <= sqrt x' + 5 * ulp1 * sqrt x'.
+  sqrt x' - 3 * ulp1 * sqrt x' <= y' <= sqrt x' + 3 * ulp1 * sqrt x'.
 
 Definition final (v : float) := finalR (f2real x) (f2real v).
 
@@ -1475,8 +1475,8 @@ destruct (Rle_dec y (sqrt x' + 16 * ulp1 * sqrt x')) as [yl16 | yg16].
   unfold finalR.
   assert (tmp := converge_below_16 _ _ intx' (conj (proj1 cnd2) yl16)).
   unfold body_exp_R.
-  split;[apply Rle_trans with (sqrt x' - 5 * ulp1);[nra | lra] |
-         apply Rle_trans with (sqrt x' + 5 * ulp1);[lra | nra]].
+  split;[apply Rle_trans with (sqrt x' - 3 * ulp1);[nra | lra] |
+         apply Rle_trans with (sqrt x' + 3 * ulp1);[lra | nra]].
 assert (inty : sqrt x' + 16 * ulp1 * sqrt x' <= y <= f2real predf_max).
   lra.
 assert (wi : 1 <= x' <= f2real predf_max).
@@ -2267,12 +2267,12 @@ Proof. compute; lra. Qed.
 Lemma main_loop_correct_min_1 x :
   f2real f_min' <= f2real x < 1 ->
   Rabs (f2real (main_loop (x, Binary.Bone ms es eq_refl eq_refl)) - sqrt (f2real x)) <=
-   5 / (2 ^ Z.to_nat ms') * sqrt (f2real x).
+   3 / (2 ^ Z.to_nat ms') * sqrt (f2real x).
 Proof.
 set (s := sqrt _); set (m := f2real (main_loop _)); set (e := _ / _ * _).
 intros intx; apply Rabs_le.
 enough (s - e <= m <= s + e) by lra.
-replace e with (5 * ulp1 * s); cycle 1.
+replace e with (3 * ulp1 * s); cycle 1.
   unfold e, ulp1, s; rewrite bpow_opp; compute; lra.
 now apply main_loop_min_1; rewrite <- f_min'_val.
 Qed.
@@ -2280,12 +2280,12 @@ Qed.
 Lemma main_loop_correct_1_max x :
   1 <= B2R ms es x < /2 * B2R ms es predf_max ->
   Rabs (B2R ms es (main_loop (x, x)) - sqrt (B2R ms es x)) <=
-       5 / (2 ^ Z.to_nat ms') * sqrt (B2R ms es x).
+       3 / (2 ^ Z.to_nat ms') * sqrt (B2R ms es x).
 Proof.
 set (s := sqrt _); set (m := B2R ms es (main_loop _)); set (e := _ / _ * _).
 intros intx; apply Rabs_le.
 enough (s - e <= m <= s + e) by lra.
-replace e with (5 * ulp1 * s); cycle 1.
+replace e with (3 * ulp1 * s); cycle 1.
    unfold e, ulp1, s; rewrite bpow_opp; compute; lra.
 now apply main_loop_1_max.
 Qed.
@@ -2388,7 +2388,7 @@ Lemma fsqrt_correct:
  forall x, 
   powerRZ 2 (6 - es) <= f2real x < powerRZ 2 (es-3) ->
   Rabs (f2real (fsqrt x) - sqrt (f2real x)) <=
-       5 / (powerRZ 2 (ms-1)) * sqrt (f2real x).
+       3 / (powerRZ 2 (ms-1)) * sqrt (f2real x).
 Proof.
 intros.
 rewrite <- f_min'_eq in H.
@@ -2421,5 +2421,3 @@ lra.
 Qed.
 
 Close Scope R_scope.
-
-
