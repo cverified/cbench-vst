@@ -1,22 +1,15 @@
-ifeq ($(ls CONFIGURE),"")
-  $(error Please create a CONFIGURE file defining VST_LOC and COMPCERT_LOC)
-else
-  include CONFIGURE
-endif
+# To build this, you must have installed:
+#  VST, CompCert, Flocq, Gappa
+# These should be in Coq's user-contrib, in the standard place
+# where the "Coq Platform" opam install will put them,
+# starting with Coq Platform release 8.12.0.
 
-CLIGHTGEN= $(COMPCERT_LOC)/clightgen
+CLIGHTGEN= clightgen
 
-VST_DIRS= msl sepcomp veric floyd
-VSTFLAGS= -R $(VST_LOC)/compcert compcert $(foreach d, $(VST_DIRS), -Q $(VST_LOC)/$(d) VST.$(d)) -I . 
-
-
-target: _CoqProject subsume_sqrt1.vo verif_sqrt3.vo # verif_sqrt2.vo verif_sqrt4.vo
-_CoqProject: Makefile CONFIGURE
-	@echo $(VSTFLAGS) > _CoqProject
+target: subsume_sqrt1.vo verif_sqrt3.vo # verif_sqrt2.vo verif_sqrt4.vo
 
 %.vo: %.v
-	@echo COQC $*.v
-	@coqc $(VSTFLAGS) $*.v
+	coqc $*.v
 
 sqrt1.v: sqrt1.c
 	$(CLIGHTGEN) -normalize $<

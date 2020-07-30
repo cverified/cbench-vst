@@ -30,7 +30,7 @@ split; auto. intros x [? ?]. Exists x emp.
 simpl in x.
 normalize.
 match goal with |- context [PROPx (?A::_)] => set (P:=A) end.
-set (C := Rdiv 3 _).
+set (C := Rdiv 3_).
 unfold_for_go_lower; normalize. simpl; entailer!; intros.
 entailer!.
 apply (fsqrt_correct x); auto.
