@@ -496,7 +496,7 @@ Lemma tc_val_tdouble_Znth:
   0 <= i < N -> 
   Forall def_float bl ->
   dnth base i = field_address (tarray tdouble N) [ArraySubsc i] base ->
-  ENTAIL Delta, PROPx P (LOCALx Q (SEP (data_at Ews (tarray tdouble N) bl base)))
+  ENTAIL Delta, PROPx P (LOCALx Q (SEPx [data_at Ews (tarray tdouble N) bl base]))
     |-- local (liftx (tc_val tdouble (Znth i bl))).
 Proof.
 intros.
@@ -592,7 +592,7 @@ Qed.
 Ltac pose_dnth_base i :=
  match goal with |- 
     semax _ (PROPx _ (LOCALx _ 
-      (SEP (data_at _ (tarray tdouble ?N) _ ?base)))) _ _ =>
+      (SEPx [data_at _ (tarray tdouble ?N) _ ?base]))) _ _ =>
 assert_PROP (dnth base i = field_address (tarray tdouble N) [ArraySubsc i] base)
      by (entailer!; apply dnth_base_field_address; auto; lia)
 end.

@@ -76,7 +76,7 @@ assert (Hlen := Permutation_Zlength H10).
 assert (Hdef_bl: Forall def_float bl) by (apply Forall_perm with al; auto).
 forward_if.
 -
-apply andp_right; apply denote_tc_samebase_dnth; auto.
+rewrite prop_and. apply andp_right; apply denote_tc_samebase_dnth; auto.
 -
 clear H17.  (* we don't actually care! *)
 forward_call (dnth base left, hi-left+1, sublist left (hi+1) bl).
@@ -323,7 +323,7 @@ simpl.
 abbreviate_semax.
 forward.
 entailer!.
-auto.
+apply denote_tc_samebase_dnth; auto.
 rewrite (calculate_midpoint N) by assumption.
 pose proof (mid_in_range lo hi). spec H11; [lia|].
 forget (lo+(hi-lo)/2) as mid.
