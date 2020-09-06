@@ -309,7 +309,7 @@ unfold Sfor.
 fold main_printf_loop.
 apply seq_assoc1.
 eapply semax_seq'.
-change (SEP (?R1; ?R2; ?R3)) with (@SEPx environ ([R1;R2]++[R3])).
+change (SEPx [?R1; ?R2; ?R3]) with (@SEPx environ ([R1;R2]++[R3])).
 rewrite (app_nil_end [gvars gv]).
 eapply semax_frame_PQR.
 unfold closed_wrt_modvars;  auto 50 with closed.
