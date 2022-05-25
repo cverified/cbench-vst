@@ -1,10 +1,11 @@
-From Flocq Require Core Binary.
+From Flocq3 Require Core Binary.
 Import Defs Raux FLT Generic_fmt Binary Ulp.
 Require Import Psatz.
 Require Import Recdef.
 
 
 Require compcert.lib.Floats.
+Import Binary ZArith Rdefinitions.
 
 (* INSTRUCTIONS FOR CHOOSING BETWEEN 32-bit and 64-bit FLOATS:
   In the module FloatParams, the number 32 appears twice.
@@ -53,10 +54,10 @@ Definition index_infty_mag := (2 * index_zero_mag + 1)%Z.
 
 Definition float_to_nat (z: float) : nat :=
   match z with
-   | B754_zero _ => 2 ^ Z.to_nat index_zero_mag
-   | B754_infinity sign => if sign then 0 else 2 ^ Z.to_nat index_infty_mag
-   | B754_nan _ _ _ => O
-   | B754_finite sign m e _ =>
+   | B754_zero _ _ _ => 2 ^ Z.to_nat index_zero_mag
+   | B754_infinity _ _ sign => if sign then 0 else 2 ^ Z.to_nat index_infty_mag
+   | B754_nan _ _ _ _ _ => O
+   | B754_finite _ _ sign m e _ =>
      if sign then
         2 ^ Z.to_nat index_zero_mag
         - Pos.to_nat m * 2 ^ Z.to_nat(e - fmin)
@@ -99,7 +100,6 @@ apply Zle_lt_or_eq in y0; destruct y0 as [ygt0 | yeq0].
     rewrite IH; try lia.
   replace (Z.to_nat 1) with 1%nat by reflexivity.
   rewrite Nat.pow_1_r; reflexivity.
-now apply Z.pow_nonneg.
 rewrite <- yeq0; reflexivity.
 Qed.
 
@@ -116,7 +116,6 @@ replace (2 ^ Z.to_nat k)%nat with (Z.to_nat (2 ^ k)) by ( apply Zto_nat_pow; lia
   rewrite <- Z2Nat.inj_lt; try lia.
   apply (Digits.Zpower_gt_Zdigits radix2 k (Z.pos m)).
   lia.
-now apply Z.pow_nonneg.
 Qed.
 
 Lemma lower_bound_mantissa_digits m :

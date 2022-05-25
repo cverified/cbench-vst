@@ -1,4 +1,4 @@
-From Flocq Require Core Binary.
+From Flocq3 Require Core Binary.
 Import Raux.
 Require Import Psatz.
 Require Import Recdef.

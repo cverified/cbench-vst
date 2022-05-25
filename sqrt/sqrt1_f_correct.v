@@ -1,13 +1,15 @@
-From Flocq Require Core Binary.
+From Flocq3 Require Core Binary.
 From Coquelicot Require Import Coquelicot.
-Require Import Reals Gappa.Gappa_library Psatz.
-Import Defs Raux FLT Generic_fmt Gappa_definitions Binary Ulp.
+Require Import Reals Psatz.
+From GappaFlocq3 Require Import Gappa_library Gappa_definitions.
+
+Import Defs Raux FLT Generic_fmt Binary Ulp.
 Require Import FunInd Recdef.
+
 
 Require Import float_lemmas.
 Require Import sqrt1_f.
 Require from_g.  (* This file is generated from sqrt1.g *)
-
 
 Definition float2 := float_of_Z 2.
 
@@ -928,6 +930,7 @@ assert (boundsum : round' (y + round' (x / y)) <= 2 * y).
   unfold fmin, halfes, halfms, es, ms in maglb |- *; lia.
 assert (0 < x / y).
   apply Rmult_lt_0_compat;[lra | apply Rinv_0_lt_compat; lra].
+assert (VE := @FLT_exp_valid fmin ms (eq_refl _)).
 assert (0 <= round' (x / y)).
   rewrite <- (round_0 r2 f_exp (round_mode mode_NE)).
   apply round_le; try typeclasses eauto; lra.
@@ -1354,6 +1357,7 @@ Lemma body_exp_decrease4 x y :
   sqrt x - 16 * ulp1 * sqrt x <= body_exp_R x y < y.
 Proof.
 intros intx inty.
+assert (VE := @FLT_exp_valid fmin ms (eq_refl _)).
 assert (dlt1 : x / y < 1).
   apply Rdiv_lt_swap_lr;[| rewrite Rmult_1_l]; lra.
 assert (rdle1 : round' (x / y) <= 1).
