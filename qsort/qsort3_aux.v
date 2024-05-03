@@ -177,53 +177,35 @@ Qed.
 
 Lemma dnth_base_field_address:
  forall base i N, 
+    N <=Z.min Int.max_signed (Ptrofs.max_signed / sizeof tdouble) ->
     field_compatible (tarray tdouble N) [] base ->
     0 <= i < N ->
     dnth base i = field_address (tarray tdouble N) [ArraySubsc i] base.
 Proof.
-intros.
+intros ? ? ? MIN **.
 make_Vptr base. 
 unfold field_address, dnth.
 rewrite if_true.
 simpl.
 normalize.
-f_equal. f_equal.
-f_equal.
-f_equal.
-destruct H as [_ [_ [? _]]].
-red in H.
-simpl sizeof in H.
-rewrite Z.max_r in H by lia.
-apply Int.signed_repr.
-rep_lia.
 destruct H as [? [? [? [? ?]]]].
 split3; auto.
-split3; auto.
-hnf.
-split; auto.
+simpl; auto.
 Qed.
 
 Lemma dnth_base_field_address0:
  forall base i N, 
+    N <=Z.min Int.max_signed (Ptrofs.max_signed / sizeof tdouble) ->
     field_compatible (tarray tdouble N) [] base ->
     0 <= i <= N ->
     dnth base i = field_address0 (tarray tdouble N) [ArraySubsc i] base.
 Proof.
-intros.
+intros ? ? ? MIN **.
 make_Vptr base. 
 unfold field_address0, dnth.
 rewrite if_true.
 simpl.
 normalize.
-f_equal. f_equal.
-f_equal.
-f_equal.
-destruct H as [_ [_ [? _]]].
-red in H.
-simpl sizeof in H.
-rewrite Z.max_r in H by lia.
-apply Int.signed_repr.
-rep_lia.
 destruct H as [? [? [? [? ?]]]].
 split3; auto.
 split3; auto.
@@ -273,7 +255,7 @@ Lemma sum_sub_pp_base:
   isptr base ->
   0 <= i < N ->
   0 <= j < N ->
-  force_val (sem_sub_pp tdouble (dnth base j) (dnth base i)) = Vint (Int.repr (j-i)).
+  force_val (sem_sub_pp tdouble (dnth base j) (dnth base i)) = Vlong (Int64.repr (j-i)).
 Proof.
 intros.
 make_Vptr base.
@@ -287,7 +269,6 @@ normalize.
 unfold Ptrofs.divs.
 normalize.
 rewrite <- Z.mul_sub_distr_l.
-rewrite !Ptrofs.signed_repr by rep_lia.
 f_equal.
 rewrite Z.mul_comm, Z.quot_mul by lia.
 auto.
@@ -496,7 +477,7 @@ Lemma tc_val_tdouble_Znth:
   0 <= i < N -> 
   Forall def_float bl ->
   dnth base i = field_address (tarray tdouble N) [ArraySubsc i] base ->
-  ENTAIL Delta, PROPx P (LOCALx Q (SEP (data_at Ews (tarray tdouble N) bl base)))
+  ENTAIL Delta, PROPx P (LOCALx Q (SEPx (data_at Ews (tarray tdouble N) bl base :: nil )))
     |-- local (liftx (tc_val tdouble (Znth i bl))).
 Proof.
 intros.
@@ -504,7 +485,7 @@ go_lowerx.
 clear H4 H5.
 apply prop_right.
 change (@reptype CompSpecs tdouble) with val in *.
-apply Forall_Znth with (i0:=i) in H1; auto.
+apply Forall_Znth with (i:=i) in H1; auto.
 destruct (Znth i bl); inv H1; simpl; auto.
 lia.
 Qed.
@@ -544,9 +525,7 @@ rewrite <- (Ptrofs.repr_unsigned i0) in H4.
 unfold Ptrofs.cmpu in H4.
 unfold Ptrofs.eq, Ptrofs.ltu in H4.
 normalize in H4.
-destruct op; simpl; if_tac in H4; inv H4;
-rewrite !Ptrofs.unsigned_repr in H3 by rep_lia;
-lia.
+destruct op; simpl; if_tac in H4; inv H4; lia.
 Qed.
 
 Lemma typed_false_pp:
@@ -584,21 +563,19 @@ rewrite <- (Ptrofs.repr_unsigned i0) in H4.
 unfold Ptrofs.cmpu in H4.
 unfold Ptrofs.eq, Ptrofs.ltu in H4.
 normalize in H4.
-destruct op; simpl; if_tac in H4; inv H4;
-rewrite !Ptrofs.unsigned_repr in H3 by rep_lia;
-lia.
+destruct op; simpl; if_tac in H4; inv H4; lia.
 Qed.
 
 Ltac pose_dnth_base i :=
  match goal with |- 
     semax _ (PROPx _ (LOCALx _ 
-      (SEP (data_at _ (tarray tdouble ?N) _ ?base)))) _ _ =>
+      (SEPx (data_at _ (tarray tdouble ?N) _ ?base :: nil)))) _ _ =>
 assert_PROP (dnth base i = field_address (tarray tdouble N) [ArraySubsc i] base)
-     by (entailer!; apply dnth_base_field_address; auto; lia)
+     by (entailer!; apply dnth_base_field_address; auto; simpl; rep_lia)
 end.
 
 Lemma Znth_swap_in_list1 {A}{INH: Inhabitant A}:
-  forall i j bl, 
+  forall i j (bl: list A), 
   0 <= i < Zlength bl ->
   0 <= j < Zlength bl ->
   Znth i (swap_in_list i j bl) = Znth j bl.
@@ -609,7 +586,7 @@ rewrite upd_Znth_same by list_solve. auto.
 Qed.
 
 Lemma Znth_swap_in_list2 {A}{INH: Inhabitant A}:
-  forall i j bl, 
+  forall i j (bl: list A), 
   0 <= i < Zlength bl ->
   0 <= j < Zlength bl ->
   Znth j (swap_in_list i j bl) = Znth i bl.
@@ -624,7 +601,7 @@ rewrite upd_Znth_same by list_solve. auto.
 Qed.
 
 Lemma Znth_swap_in_list_other {A}{INH: Inhabitant A}:
-  forall i j k bl, 
+  forall i j k (bl: list A), 
   0 <= i < Zlength bl ->
   0 <= j < Zlength bl ->
   0 <= k < Zlength bl ->
@@ -639,7 +616,7 @@ auto.
 Qed.
 
 Lemma sublist_swap_in_list {A}{INH: Inhabitant A}:
-  forall lo hi i j bl, 
+  forall lo hi i j (bl: list A), 
   0 <= lo <= hi -> 
   hi <= Zlength bl ->
   0 <= i < Zlength bl -> 
@@ -675,7 +652,7 @@ f_equal; lia.
 Qed.
 
 Lemma sublist_swap_in_list' {A}{INH: Inhabitant A}:
- forall lo hi i j bl, 
+ forall lo hi i j (bl: list A), 
   i < hi ->
   j < hi ->
   0 <= lo <= i ->
@@ -756,7 +733,7 @@ Qed.
 
 Lemma data_at_dnth:
  forall sh n bl base i n',
-  0 <= n ->  n+i <= n' <= (Ptrofs.max_signed / 8) ->
+  0 <= n ->  n+i <= n' <= Z.min Int.max_signed (Ptrofs.max_signed / 8) ->
   0 <= i  ->
   data_at sh (tarray tdouble n) bl (field_address0 (tarray tdouble n') [ArraySubsc i] base) |--
   data_at sh (tarray tdouble n) bl (dnth base i).

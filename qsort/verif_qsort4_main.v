@@ -106,8 +106,6 @@ Intros c; forward; Exists c.
 entailer!.
 Qed.
 
-Search (int->float).
-
 Fixpoint upto (n: nat) (k: Z) : list val :=
  match n with
  | O => nil
@@ -176,12 +174,35 @@ Definition main_printf_loop :=
                       (Etempvar _i tint) (tptr tdouble)) tdouble))
                 (Scall None
                   (Evar _printf (Tfunction (Tcons (tptr tschar) Tnil) tint
+                                  {|cc_vararg:=(Some 1); cc_unproto:=false; cc_structret:=false|}))
+                  ((Evar ___stringlit_1 (tarray tschar 4)) ::
+                   (Etempvar _t'1 tdouble) :: nil))))
+            (Sset _i
+              (Ebinop Oadd (Etempvar _i tint) (Econst_int (Int.repr 1) tint)
+                tint)))).
+(*
+        (Ssequence
+          (Sset _i (Econst_int (Int.repr 0) tint))
+          (Sloop
+            (Ssequence
+              (Sifthenelse (Ebinop Olt (Etempvar _i tint)
+                             (Econst_int (Int.repr 666666) tint) tint)
+                Sskip
+                Sbreak)
+              (Ssequence
+                (Sset _t'1
+                  (Ederef
+                    (Ebinop Oadd (Evar _a (tarray tdouble 666666))
+                      (Etempvar _i tint) (tptr tdouble)) tdouble))
+                (Scall None
+                  (Evar _printf (Tfunction (Tcons (tptr tschar) Tnil) tint
                                   {|cc_vararg:=true; cc_unproto:=false; cc_structret:=false|}))
                   ((Evar ___stringlit_1 (tarray tschar 4)) ::
                    (Etempvar _t'1 tdouble) :: nil))))
             (Sset _i
               (Ebinop Oadd (Etempvar _i tint) (Econst_int (Int.repr 1) tint)
                 tint)))).
+*)
 
 Lemma verif_main_printf_loop:
  forall (Espec : OracleKind)
@@ -209,7 +230,7 @@ Admitted.  (* I claim that it is all right to Admit this lemma because
  the technical report, "A benchmark for C program verification",
  in the table on page 3, lists a blank (not an X)
  in row "qsort" column "I/O".  Therefore we don't have to verify
- the input/output in this benchmark.   *)
+ the input/output in this benchmark.   This was confirmed by Freek Wiedijk.  *)
 
 Lemma body_main:  semax_body Vprog Gprog f_main main_spec.
 Proof.
@@ -218,7 +239,7 @@ forward_for_simple_bound N6
   (EX i:Z,
    PROP() LOCAL (gvars gv) 
    SEP (data_at Ews (tarray tdouble N6) 
-            (upto (Z.to_nat i) 0 ++ list_repeat (Z.to_nat (N6-i)) Vundef) (gv _a);
+            (upto (Z.to_nat i) 0 ++ repeat Vundef (Z.to_nat (N6-i))) (gv _a);
           data_at Ers (tarray tschar 4)
            (map (Vint oo cast_int_int I8 Signed)
                [Int.repr 37; Int.repr 102; Int.repr 10; Int.repr 0])
@@ -242,14 +263,14 @@ replace (Z.to_nat (N6 - i))
 2:{ clear - H. replace (N6-i) with (Z.succ (N6-(i+1))) by lia.
      rewrite Z2Nat.inj_succ by lia. auto.
 }
- unfold list_repeat; fold @list_repeat.
+ unfold repeat; fold @repeat.
  rewrite upd_Znth_app2.
 2:{  rewrite Zlength_upto by lia. autorewrite with sublist. lia. }
  rewrite Zlength_upto by lia.
  rewrite Z.sub_diag.
  rewrite upd_Znth0.
  rewrite upto_another by lia.
- rewrite app_ass. f_equal. simpl. normalize.
+ rewrite <- app_assoc. f_equal. simpl. normalize.
 -
 (* after the for-loop *)
 autorewrite with sublist.
@@ -290,6 +311,7 @@ forward_call (Ews, gv _a, gv _compar_double, w);
 rewrite <- N6_eq.
 entailer!.
 rewrite H; auto.
+simpl. normalize.
 +
 rewrite H.
 cancel.
@@ -298,8 +320,9 @@ rewrite H.
 split3; auto.
 simpl sizeof.
 computable.
+rep_lia.
 simpl sizeof.
-split; try rep_lia.
+rep_lia.
 +
 clear w H_ok Hdef.
 rewrite H.
@@ -309,8 +332,8 @@ unfold Sfor.
 fold main_printf_loop.
 apply seq_assoc1.
 eapply semax_seq'.
-change (SEP (?R1; ?R2; ?R3)) with (@SEPx environ ([R1;R2]++[R3])).
-rewrite (app_nil_end [gvars gv]).
+change (@SEPx environ [?R1; ?R2; ?R3]) with (@SEPx environ ([R1;R2]++[R3])).
+rewrite <- (app_nil_r [gvars gv]).
 eapply semax_frame_PQR.
 unfold closed_wrt_modvars;  auto 50 with closed.
 apply verif_main_printf_loop; auto.

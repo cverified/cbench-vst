@@ -1,17 +1,11 @@
-ifeq ($(ls CONFIGURE),"")
-  $(error Please create a CONFIGURE file defining VST_LOC and COMPCERT_LOC)
-else
-  include CONFIGURE
-endif
-
-CLIGHTGEN= $(COMPCERT_LOC)/clightgen
+CLIGHTGEN ?= clightgen
 
 VST_DIRS= msl sepcomp veric floyd progs
 VSTFLAGS= -R $(VST_LOC)/compcert compcert $(foreach d, $(VST_DIRS), -Q $(VST_LOC)/$(d) VST.$(d)) -Q $(VST_LOC)/paco/src Paco -Q $(VST_LOC)/InteractionTrees/theories ITree -Q . Top
 
 
 target: _CoqProject verif_cat1.vo verif_cat1a.vo verif_cat2.vo
-_CoqProject: Makefile CONFIGURE
+_CoqProject: Makefile
 	@echo $(VSTFLAGS) > _CoqProject
 
 %.vo: %.v

@@ -10,7 +10,7 @@ Definition quicksort_spec :=
  DECLARE _quicksort
   WITH base: val, N: Z, al: list val
   PRE  [ tptr tdouble, tint] 
-    PROP(N=Zlength al; N <=Z.min Int.max_signed (Ptrofs.max_signed / sizeof tdouble); Forall def_float al)
+    PROP(N=Zlength al; N <=Z.min (Int.max_signed/2) (Ptrofs.max_signed / sizeof tdouble); Forall def_float al)
     PARAMS(base; Vint (Int.repr N)) GLOBALS ()
     SEP(data_at Ews (tarray tdouble N) al base)
   POST [ tvoid ]

@@ -64,14 +64,14 @@ forward_if (EX bl:list val,
     SEP(data_at Ews (tarray tdouble N)
              (before ++ bl ++ after) (gv _a))).
 2:{
-forward. Exists al. entailer!.
+forward. Exists al. entailer!!.
 rewrite if_false in H by (apply lt_false_inv; auto).
 subst al. constructor.
 }
 2:{
 Intros bl.
 Exists bl.
-entailer!.
+entailer!!.
 }
 apply lt_inv in H0.
 rewrite if_true in H by auto.
@@ -87,8 +87,8 @@ forget (Int.signed n') as n.
 pose proof I.
 pose proof I.
 forward.
-entailer!.
-entailer!.
+entailer!!.
+entailer!!.
 apply is_float_middle; auto; lia.
 forward.
 forward.
@@ -108,7 +108,7 @@ forward_while (EX i:Z, EX j:Z, EX bl: list val,
                (before ++ bl ++ after) (gv _a))).
 - (* precondition of main while loop *)
 Exists m n al.
-entailer!.
+entailer!!.
 autorewrite with sublist.
 split3.
 constructor.
@@ -120,7 +120,7 @@ right; split; auto.
 apply float_cmp_eq_refl.
 eapply Forall_forall; try apply Hdef_al. apply Znth_In; lia.
 - (* tc_expr of main while loop *)
-entailer!.
+entailer!!.
 - (* body of main while loop *)
 assert (Hpivot: def_float pivot)
    by (eapply Forall_Znth; try eassumption; lia).
@@ -162,14 +162,14 @@ forward_loop (EX i:Z,
                (before ++ bl ++ after) (gv _a))).
  + (* precondition of i loop *)
    Exists i.
-   entailer!.
+   entailer!!.
  + (* body of i loop *)
    clear dependent i.
    clear H.
    Intros i.
    forward.
-      entailer!.
-      entailer!.
+      entailer!!.
+      entailer!!.
       apply is_float_middle; auto; lia.
    forward_if.
    forward.
@@ -202,7 +202,7 @@ forward_loop (EX i:Z,
     apply Exists_app. auto.
 
    forward.
-   Exists i. entailer!.
+   Exists i. entailer!!.
    apply both_float_cmp_false in H11; auto.
    autorewrite with sublist in H11.
    fold m in H11. 
@@ -233,13 +233,13 @@ forward_loop (EX i:Z,
        SEP (data_at Ews (tarray tdouble N)
                (before ++ bl ++ after) (gv _a))).
   * 
-    Exists j; entailer!.
+    Exists j; entailer!!.
     autorewrite with sublist. constructor.
   * clear H.
     Intros j'. rename H11 into H'. destruct H6 as [_ H6']. rename H12 into H6.
     forward.
-      entailer!.
-      entailer!.
+      entailer!!.
+      entailer!!.
       apply is_float_middle; auto; rep_lia.
    forward_if.
    forward.
@@ -252,7 +252,7 @@ forward_loop (EX i:Z,
    fold m in H11.
    rewrite Z.sub_add.
    split. split; try lia.
-   destruct (zeq j' m); [elimtype False | lia]. {
+   destruct (zeq j' m); [exfalso | lia]. {
       subst j'.
       autorewrite with sublist in *.
       clear P_a HP_a H15 H12.
@@ -272,7 +272,7 @@ forward_loop (EX i:Z,
       apply f_cmp_ge_gt_eq; auto.
    }
    split. destruct (zeq j' (i-1)); [ | lia]. subst j'.
-   elimtype False. clear P_a HP_a H'.
+   exfalso. clear P_a HP_a H'.
    rewrite Z.sub_add in H6. 
    assert (f_cmp Cge pivot (Znth (i-1-m) bl)). {
       replace (Znth (i-1-m) bl) with (Znth (i-1-m) (sublist 0 (i-m) bl)).
@@ -304,11 +304,11 @@ forward_loop (EX i:Z,
    destruct H10; auto. destruct H10; subst j.
    destruct (zeq j' n); auto.
    left.
-   apply Forall_Znth with (i0:=n-j'-1) in H6; 
+   apply Forall_Znth with (i:=n-j'-1) in H6; 
      try (autorewrite with sublist; lia). 
    autorewrite with sublist in H6.
    replace (n - j' - 1 + (j' + 1 - m)) with (n-m) in H6 by lia.
-   elimtype False.
+   exfalso.
    eapply f_cmp_lt_ge_false; try apply H6.
    apply f_cmp_ge_gt_eq; auto.
   }
@@ -409,8 +409,8 @@ forward_loop (EX i:Z,
           replace (j-m+1-(i-m)-Z.succ 0 +(i-m+1)) with (j+1-m) by lia.
           replace (j-i- Z.succ 0 +(i-m+1)) with (j-m) by lia.
           replace (i-m+1) with (i+1-m) by lia.
-          rewrite <- (app_ass (sublist 0 (i-m) _)).
-          rewrite !app_ass. reflexivity.
+          rewrite (app_assoc (sublist 0 (i-m) _)).
+          rewrite <- !app_assoc. reflexivity.
         }
        split3.
        apply perm_trans
@@ -421,10 +421,10 @@ forward_loop (EX i:Z,
        rewrite <- !sublist_split by lia.
        autorewrite with sublist; auto.
        apply Permutation_app_head; auto.
-       rewrite <- !app_ass.
+       rewrite !app_assoc.
        apply Permutation_app_tail; auto.
        apply Permutation_app_comm_trans.
-       rewrite !app_ass.
+       rewrite <- !app_assoc.
        apply Permutation_app_head; auto.
        apply Permutation_app_comm.
        rewrite sublist0_app2 by (autorewrite with sublist; rep_lia).
@@ -488,35 +488,34 @@ forward_loop (EX i:Z,
           (gv _a))).
   +
    destruct (zlt m j).
-   * rewrite !app_ass.
+   * rewrite <- !app_assoc.
      forward_call (gv,Int.repr m, Int.repr j,before,sublist 0 (j+1-m) bl, (sublist (j+1-m) (n+1-m) bl)++after).
-     rewrite !Int.signed_repr by rep_lia.
      rewrite if_true by auto.
      split. split3; auto.
      autorewrite with sublist; lia.
      autorewrite with sublist; auto.
      apply Forall_sublist; auto.
      Intros cl. Exists cl.
-     rewrite !app_ass.
-     entailer!.
-   * rewrite !app_ass.
-      rewrite <- (app_ass (sublist _ _ _)).
+     rewrite <- !app_assoc.
+     entailer!!.
+   * rewrite <- !app_assoc.
+      rewrite (app_assoc (sublist _ _ _)).
       rewrite <- sublist_split by lia.
       rewrite sublist_same by lia.
       assert (j=m \/ j=m-1) by lia.
       forward_call (gv, Int.repr m, Int.repr j, before, @nil val, bl ++ after).
-      rewrite !Int.signed_repr by rep_lia.
       rewrite if_false by lia. split; auto.
       Intros vret.
       Exists (sublist 0 (j + 1 - m) bl).
-      entailer!. clear H. 
+      set (N' := N). clearbody N'. (* In Coq 8.17, VST 2.l3, without this line Coq dies in cancel tactic *)
+      entailer!!. clear H. 
       assert (Zlength bl > 0) by lia.
       clear - H H15. destruct H15; subst j.
       rewrite sublist_one by rep_lia.
       constructor. replace (m-1+1-m) with 0 by lia.
       autorewrite with sublist. constructor.
       apply Permutation_nil in H16. subst vret. simpl.
-      rewrite !app_ass. rewrite <- (app_ass (sublist _ _ _)).
+      rewrite <- !app_assoc. rewrite (app_assoc (sublist _ _ _)).
       rewrite <- sublist_split by lia.
       rewrite sublist_same by lia. auto.
   +
@@ -534,13 +533,12 @@ forward_loop (EX i:Z,
      clear H5 H7 HRE H2. destruct H12 as [H12 |[? ?]]; [ | lia].
      rewrite (sublist_split (i-1-m) (i-m)) by  rep_lia.
      rewrite (sublist_one (i-1-m) (i-m)) by rep_lia.
-     rewrite  (app_ass [_]).
-     rewrite <-  (app_ass (_ ++ _)).
-     rewrite (app_ass before).
+     rewrite  <- (app_assoc [_]).
+     rewrite  (app_assoc (_ ++ _)).
+     rewrite <- (app_assoc before).
      forward_call (gv,Int.repr i, Int.repr n,
                          before++(cl++[Znth(i-1-m) bl]),
                          sublist (i-m)(n+1-m) bl, after).
-     rewrite !Int.signed_repr by rep_lia.
      rewrite if_true by auto.
      split. split3; auto.
      autorewrite with sublist.
@@ -548,7 +546,7 @@ forward_loop (EX i:Z,
      autorewrite with sublist. lia.
      apply Forall_sublist; auto.
      Intros dl. Exists (cl ++ [Znth (i - 1 - m) bl] ++ dl).
-     rewrite !app_ass.
+     rewrite <- !app_assoc.
      entailer!.
      clear P_a HP_a.
      split.
@@ -588,14 +586,13 @@ destruct H9; auto.
      forward_call (gv,Int.repr i, Int.repr n,
                          before++cl,
                          sublist (i-m)(n+1-m) bl, after).
-     rewrite !Int.signed_repr by rep_lia.
      rewrite if_true by auto.
      split. split3; auto.
      autorewrite with sublist. lia.
      autorewrite with sublist. lia.
      apply Forall_sublist; auto.
      Intros dl. Exists (cl ++ dl).
-     rewrite !app_ass.
+     rewrite <- !app_assoc.
      entailer!.
      clear  P_a HP_a.
      split.
@@ -609,11 +606,10 @@ destruct H9; auto.
      clear; intros; apply (f_cmp_swap _ _ _ H).
      eapply Forall_perm; try apply H2. auto.     
    * subst MORE_COMMANDS; unfold abbreviate.
-      rewrite !app_ass.
-      rewrite <- (app_ass cl).
+      rewrite <- !app_assoc.
+      rewrite (app_assoc cl).
       forward_call (gv, Int.repr i, Int.repr n, before, @nil val,
                          (cl ++ sublist (j + 1 - m) (n + 1 - m) bl) ++ after).
-      rewrite !Int.signed_repr by rep_lia.
       rewrite if_false by lia. split; auto.
       Intros vret.
       apply Permutation_nil in H18. subst vret.

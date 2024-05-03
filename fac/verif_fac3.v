@@ -96,7 +96,6 @@ Lemma body_main:  semax_body Vprog Gprog f_main main_spec.
 Proof.
 start_function.
 forward_call.
-lia.
 forward.
 Qed.
 

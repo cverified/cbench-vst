@@ -12,7 +12,7 @@ forall (Espec : OracleKind) (base : val) (al : list val)
   (lo mid hi : Z) (bl : list val),
 Forall def_float al ->
 let N := Zlength al in
-0 < N <= Z.min Int.max_signed (Ptrofs.max_signed / 8) ->
+0 < N <= Z.min (Int.max_signed/2) (Ptrofs.max_signed / 8) ->
 isptr base ->
 0 <= lo <= mid ->
 mid < hi < N ->
@@ -66,6 +66,7 @@ rewrite dbase_sub by (auto; rep_lia).
 apply f_cmp_swap in H4; simpl in H4.
 eapply semax_seq'.
 apply forward_quicksort_do_loop; auto.
+unfold Z.min; simpl; rep_lia.
 destruct H2 as [H2 H2'].
 destruct H3 as [H3' H3].
 clear dependent mid.
@@ -76,18 +77,21 @@ assert (Hlen := Permutation_Zlength H10).
 assert (Hdef_bl: Forall def_float bl) by (apply Forall_perm with al; auto).
 forward_if.
 -
+rewrite prop_and.
 apply andp_right; apply denote_tc_samebase_dnth; auto.
 -
 clear H17.  (* we don't actually care! *)
 forward_call (dnth base left, hi-left+1, sublist left (hi+1) bl).
-rewrite (sum_sub_pp_base N) by (try assumption; lia).
+rewrite (sum_sub_pp_base N) by (try assumption; unfold Z.min; simpl; rep_lia).
 apply andp_right.
 apply prop_right; prove_it_now.
 apply denote_tc_samebase_dnth; auto.
 apply prop_right; simpl.
-rewrite (sum_sub_pp_base N) by (try assumption; lia).
-simpl. f_equal. f_equal. normalize.
-{
+rewrite (sum_sub_pp_base N) by (try assumption; unfold Z.min; simpl; rep_lia).
+simpl. f_equal. f_equal. f_equal.
+rewrite !Int64.Z_mod_modulus_eq.
+rewrite (Z.mod_small (hi-left)) by rep_lia.
+rewrite Z.mod_small by rep_lia. auto.
 erewrite (split3_data_at_Tarray Ews tdouble (Zlength al) left (hi+1) bl bl);
  try reflexivity; 
  change (@reptype CompSpecs tdouble) with val in *;
@@ -103,11 +107,8 @@ rep_lia.
 unfold tarray.
 replace (hi-left+1) with (hi+1-left) by lia.
 cancel.
-}
-set (M := Z.min _ _); compute in M; subst M.
-autorewrite with sublist.
-split3; try lia.
-apply Forall_sublist; auto.
+split3.
+list_solve. unfold Z.min. simpl. rep_lia. apply Forall_sublist; auto.
 Intros bl'.
 assert (Hlen_bl' := Permutation_Zlength H17);
   autorewrite with sublist in Hlen_bl'.
@@ -118,9 +119,8 @@ rewrite dbase_add by (auto; rep_lia). rewrite Z.add_0_l.
 Exists (lo, right,
        (sublist 0 left bl ++ bl' ++ sublist (hi+1) N bl)).
 unfold fst, snd.
-entailer!.
+entailer!!.
 +
-clear H31 H30 H29 H28 H27 H26 H25 H24 H23 H22 H21 H20 H19.
 clear Delta_specs FC H1 H11 H13 base.
 clear H0 Espec.
 split.
@@ -144,7 +144,7 @@ autorewrite with sublist.
 replace (hi-left+1) with (hi+1-left) by (clear; lia).
 fold N.
 fold (tarray tdouble N).
-rewrite <- !dnth_base_field_address0 by (auto; lia).
+rewrite <- !dnth_base_field_address0 by (auto; simpl; rep_lia).
 replace  (hi + 1 - left - Zlength bl' + (hi + 1))
   with (hi+1) by lia.
 replace (N - left - Zlength bl' + (hi + 1)) with N by lia.
@@ -154,13 +154,16 @@ cancel.
 -
 clear H17.  (* we don't actually care! *)
 forward_call (dnth base lo, right-lo+1, sublist lo (right+1) bl).
-rewrite (sum_sub_pp_base N) by (try assumption; lia).
+rewrite (sum_sub_pp_base N) by (try assumption; unfold Z.min; simpl; rep_lia).
 apply andp_right.
 apply prop_right; prove_it_now.
 apply denote_tc_samebase_dnth; auto.
 apply prop_right; simpl.
-rewrite (sum_sub_pp_base N) by (try assumption; lia).
-simpl. f_equal. f_equal. normalize.
+rewrite (sum_sub_pp_base N) by (try assumption; unfold Z.min; simpl; rep_lia).
+simpl. f_equal. f_equal. f_equal. f_equal.
+rewrite !Int64.Z_mod_modulus_eq.
+rewrite (Z.mod_small (_ - _)) by rep_lia.
+apply Z.mod_small. rep_lia.
 {
 erewrite (split3_data_at_Tarray Ews tdouble (Zlength al) lo (right+1) bl bl);
  try reflexivity; 
@@ -192,9 +195,8 @@ rewrite dbase_add by (auto; rep_lia). rewrite Z.add_0_l.
 Exists (left, hi,
        (sublist 0 lo bl ++ bl' ++ sublist (right+1) N bl)).
 unfold fst, snd.
-entailer!.
+entailer!!.
 +
-clear H31 H30 H29 H28 H27 H26 H25 H24 H23 H22 H21 H20 H19.
 clear Delta_specs FC H1 H11 H13 base.
 clear H0 Espec.
 split.
@@ -218,7 +220,7 @@ autorewrite with sublist.
 replace (right-lo+1) with (right+1-lo) by (clear; lia).
 fold N.
 fold (tarray tdouble N).
-rewrite <- !dnth_base_field_address0 by (auto; lia).
+rewrite <- !dnth_base_field_address0 by (auto; simpl; rep_lia).
 replace  (right + 1 - lo - Zlength bl' + (right + 1))
   with (right+1) by lia.
 replace (N - lo - Zlength bl' + (right + 1)) with N by lia.
@@ -229,15 +231,15 @@ Qed.
 
 Lemma calculate_midpoint:
   forall N base lo hi,
-0 < N <= 268435455 ->
+0 < N <= (*268435455*) Int.max_signed/2 ->
 isptr base ->
 0 <= lo < N ->
 0 <= hi < N ->
 lo < hi ->
 force_val
-  (sem_binary_operation' Oadd (tptr tdouble) tint
+  (sem_binary_operation' Oadd (tptr tdouble) tlong
      (dnth base lo)
-     (eval_binop Oshr tint tint
+     (eval_binop Oshr tlong tint
         (eval_binop Osub (tptr tdouble) (tptr tdouble)
            (dnth base hi) (dnth base lo)) 
         (Vint (Int.repr 1)))) = dnth base (lo + (hi - lo) / 2).
@@ -248,30 +250,37 @@ intros.
     unfold sem_add_ptr_int, Cop.sem_add_ptr_int. simpl.
     make_Vptr base; simpl. rewrite if_true by auto. simpl.
     f_equal. rewrite Ptrofs.add_assoc. f_equal.
-    normalize. f_equal.
-    rewrite <- Z.mul_add_distr_l. f_equal.
-    unfold Int.shr.
+    normalize.
     rewrite !(Ptrofs.add_commut i), Ptrofs.sub_shifted.
+    unfold Int.shr.
     normalize.
     unfold Ptrofs.divs. normalize.
     rewrite <- Z.mul_sub_distr_l.
+    simpl in H.
     rewrite (Int.signed_repr hi) by rep_lia.
     rewrite (Int.signed_repr lo) by rep_lia.
-    rewrite (Ptrofs.signed_repr 8) by rep_lia.
-    rewrite (Ptrofs.signed_repr) by rep_lia.
-    rewrite Z.mul_comm, Z.quot_mul by lia.
-    rewrite Int.signed_repr. f_equal.
-    rewrite (Int.signed_repr (hi-lo)) by rep_lia.
+    unfold Ptrofs.of_int64. normalize.
+    rewrite <- Z.mul_add_distr_l. f_equal. f_equal.
+    change (let (q, _) := Z.div_eucl (hi - lo) 2 in q)
+                 with ((hi-lo)/2).
+    assert (0 <= lo + (hi - lo) / 2 <= Int.max_signed). {
+    really_simplify Int.min_signed. 
+    really_simplify Int.max_signed. 
+    split.
+    assert (0 <= (hi-lo)/2); [|lia].
+    apply Z.div_pos; lia.
+    pose proof Z.div_le_upper_bound (hi-lo) 2 N (eq_refl _) ltac:(lia).
+    lia.
+   }
+    rewrite Int.signed_repr by rep_lia.
+    unfold Int64.shr.
+    rewrite (Int64.unsigned_repr 1) by rep_lia.
+    rewrite Z.mul_comm. rewrite Z.quot_mul by lia.
+    rewrite Int64.signed_repr by rep_lia.
     rewrite Z.shiftr_div_pow2 by lia. change (2^1) with 2.
-    rewrite Int.signed_repr. auto.
-    split.
-    assert (0 <= (hi-lo)/2); [|rep_lia].
-    apply Z.div_pos; rep_lia.
-    apply Z.div_le_upper_bound; rep_lia.
-    split.
-    assert (0 <= (hi-lo)/2); [|rep_lia].
-    apply Z.div_pos; rep_lia.
-    pose proof (mid_in_range lo hi); rep_lia.
+    rewrite Int64.unsigned_repr; auto.
+    split; try rep_lia.
+    apply Z.div_pos; lia.
 Qed.
 
 Lemma body_quicksort_while:
@@ -279,7 +288,7 @@ forall (Espec : OracleKind) (base : val) (al : list val)
   (lo hi : Z) (bl : list val),
 Forall def_float al ->
 let N := Zlength al in
-0 < N <= Z.min Int.max_signed (Ptrofs.max_signed/8) ->
+0 < N <= Z.min (Int.max_signed/2) (Ptrofs.max_signed/8) ->
 isptr base ->
 0 <= lo < N ->
 0 <= hi < N ->
@@ -322,9 +331,9 @@ unfold quicksort_while_body.
 simpl.
 abbreviate_semax.
 forward.
-entailer!.
-auto.
-rewrite (calculate_midpoint N) by assumption.
+entailer!!.
+apply prop_right; destruct base; try contradiction; simpl; normalize.
+rewrite (calculate_midpoint N); try assumption.
 pose proof (mid_in_range lo hi). spec H11; [lia|].
 forget (lo+(hi-lo)/2) as mid.
 pose_dnth_base mid.
@@ -347,6 +356,7 @@ forward_if (EX bl: list val,
 match goal with |- semax _ ?Pre _ ?Post => 
 forward_loop Pre continue:Post.(RA_normal) end;
   [solve [auto] | | forward; apply ENTAIL_refl ].
+rewrite <- bool2val_eq in H14.
 apply typed_true_cmp in H14.
 assert (lo<mid). {
  destruct (zeq lo mid); try lia.
@@ -359,8 +369,7 @@ forward.
 rewrite !def_float_f2f by (apply Forall_Znth; auto; lia).
 change (upd_Znth lo _ _) with (swap_in_list lo mid bl).
 Exists (swap_in_list lo mid bl).
-entailer!.
-clear H22 H21 H20 H19 H18.
+entailer!!.
 autorewrite with sublist.
 split.
 rewrite Znth_swap_in_list1 by lia.
@@ -373,18 +382,19 @@ split3; auto.
 split; intro.
 +
 rewrite Znth_swap_in_list_other by lia.
-eapply Forall_perm; [ | apply (H7 H18)].
+eapply Forall_perm; [ | auto].
 rewrite sublist_swap_in_list' by lia.
 apply Permutation_swap2; try list_solve.
 +
 rewrite Znth_swap_in_list_other by lia.
-eapply Forall_perm; [ | apply (H8 H18)].
+eapply Forall_perm; [ | auto].
 rewrite sublist_swap_in_list' by lia.
 apply Permutation_swap2; try list_solve.
 -
 forward.
 Exists bl.
-entailer!.
+entailer!!.
+rewrite <- bool2val_eq in H14.
 apply typed_false_cmp in H14.
 simpl in H14.
 apply f_cmp_swap in H14. auto.
@@ -412,6 +422,7 @@ forward_if (EX bl: list val,
    temp _hi (dnth base hi))
    SEP (data_at Ews (tarray tdouble N) bl base)).
 +
+rewrite <- bool2val_eq in H17.
 apply typed_true_cmp in H17.
 apply semax_seq' with (EX bl: list val, 
    PROP (f_cmp Cle (Znth mid bl) (Znth hi bl); 
@@ -436,8 +447,7 @@ forward.
 forward.
 rewrite !def_float_f2f by (apply Forall_Znth; auto; lia).
 Exists (swap_in_list hi mid bl).
-entailer!.
-clear H24 H23 H22 H21 H20 H19 H18.
+entailer!!.
 split3.
 rewrite Znth_swap_in_list1 by lia.
 rewrite Znth_swap_in_list2 by lia.
@@ -479,6 +489,7 @@ forward.
 apply tc_val_tdouble_Znth; auto; lia.
 forward_if.
 --
+rewrite <- bool2val_eq in H17.
 apply typed_true_cmp in H17.
 match goal with |- semax _ ?Pre _ ?Post => 
 forward_loop Pre continue:Post.(RA_normal) end;
@@ -489,8 +500,7 @@ forward.
 forward.
 rewrite !def_float_f2f by (apply Forall_Znth; auto; lia).
 Exists (swap_in_list lo mid bl).
-entailer!.
-clear H24 H23 H22 H21 H20 H18 H19.
+entailer!!.
 assert (lo<mid). {
  destruct (zeq lo mid); try lia.
  clear - H17 e. subst lo. apply f_lt_irrefl in H17. contradiction.
@@ -522,6 +532,7 @@ apply Permutation_swap2; try list_solve.
 forward.
 Exists bl.
 entailer!.
+rewrite <- bool2val_eq in H17.
 apply typed_false_cmp in H17.
 simpl in H17.
 apply f_cmp_swap in H17. auto.
@@ -530,7 +541,8 @@ apply Forall_Znth; auto; lia.
 +
 forward.
 Exists bl.
-entailer!.
+entailer!!.
+rewrite <- bool2val_eq in H17.
 apply typed_false_cmp in H17.
 simpl in H17.
 apply f_cmp_swap in H17. auto.
@@ -539,7 +551,7 @@ apply Forall_Znth; auto; lia.
 +
 clear dependent bl.
 Intros bl.
-apply body_quicksort_while_part2; auto; lia.
+apply body_quicksort_while_part2; auto; simpl; rep_lia.
 Qed.
 
 Lemma body_quicksort:  semax_body Vprog Gprog f_quicksort quicksort_spec.
@@ -551,10 +563,14 @@ assert (H0 := Z.min_glb_l _ _ _ H0'').
 forward_if.
 forward.
 Exists al.
-entailer!.
+entailer!!.
 destruct al; autorewrite with sublist in H2; try rep_lia.
 constructor.
-assert (0 < N <= Int.max_signed) by rep_lia.
+apply repr_inj_unsigned in H2. clear - H2; list_solve.
+clear - H0''; simpl in H0''. rewrite Zlength_cons in H0''. rep_lia. rep_lia.
+simpl in H0''.
+unfold Z.min in H0''. simpl in H0''.
+assert (N<>0) by congruence.
 clear H0 H2.
 assert_PROP (isptr base) by entailer!.
 forward.
@@ -590,7 +606,7 @@ forward_while (EX lo:Z, EX hi:Z, EX bl: list val,
                        SEP(data_at Ews (tarray tdouble N) bl base)).
 -
 Exists 0 (N-1) al.
-entailer!.
+entailer!!.
 autorewrite with sublist.
 split3.
 constructor.
@@ -601,12 +617,11 @@ unfold dnth. clear - H0. make_Vptr base. simpl. f_equal.
 entailer!.
 assert (0 <= lo <= Zlength al) by lia.
 assert (0 <= hi <= Zlength al) by lia.
-auto with valid_pointer.
+apply test_order_dnth; auto with valid_pointer. rep_lia.
 -
 pose_dnth_base lo. rename H10 into Hlo.
 pose_dnth_base hi. rename H10 into Hhi.
-rewrite <- (force_sem_cmp_pp Clt) in HRE
-  by (apply isptr_dnth; auto).
+change (typed_true tint (force_val (sem_cmp_pp Clt (dnth base lo) (dnth base hi) ))) in HRE.
 eapply typed_true_pp with (N:=N) in HRE; 
   eauto; try split; try assumption; try lia; simpl in HRE.
 rename HRE into H10.
@@ -617,13 +632,16 @@ subst POSTCONDITION; unfold abbreviate.
 autorewrite with ret_assert.
 apply body_quicksort_while; auto.
 split. lia.
-apply Z.min_glb; auto. lia.
+apply Z.min_glb; auto. simpl; rep_lia.
 -
 forward.
+change (typed_false tint (force_val (sem_cmp_pp Clt (dnth base lo) (dnth base hi) ))) in HRE.
 assert_PROP (lo >= hi). {
 entailer!.
-unfold compare_pp, dnth in HRE.
-destruct base; simpl in HRE; try solve [inv HRE].
+destruct base; try contradiction.
+unfold dnth in HRE. simpl in HRE.
+rewrite force_sem_cmp_pp in HRE by auto.
+simpl in HRE.
 rewrite if_true in HRE by auto.
 rewrite !ptrofs_of_ints_unfold in HRE.
 normalize in HRE.

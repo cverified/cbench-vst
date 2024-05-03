@@ -95,7 +95,7 @@ Proof.
 Qed.
 
 Definition loop_i :=
-                 (Sloop
+                  (Sloop
                     (Ssequence
                       (Ssequence
                         (Scall (Some _t'1)
@@ -112,7 +112,7 @@ Definition loop_i :=
                              (Ecast (Etempvar _base (tptr tvoid))
                                (tptr tuchar))
                              (Ebinop Omul (Etempvar _i tint)
-                               (Etempvar _size tuint) tuint) (tptr tuchar)) ::
+                               (Etempvar _size tulong) tulong) (tptr tuchar)) ::
                            (Evar _pivot (tarray tuchar 1024)) :: nil))
                         (Sifthenelse (Ebinop Olt (Etempvar _t'1 tint)
                                        (Econst_int (Int.repr 0) tint) tint)
@@ -134,7 +134,7 @@ Lemma qsort_loop_i:
    (bl : list (reptype t)),
    let N := Zlength bl in 
    forall (H0 : N <= Int.max_signed)
-    (H1 : N * sizeof t <= Int.max_signed)
+    (H1 : N * sizeof t <= Ptrofs.max_signed)
     (H : 0 <= sizeof t <= 1024)
     (Hbase : field_compatible (tarray t N) [] base)
     (Hmn : 0 < N - 1)
@@ -158,7 +158,7 @@ semax (func_tycontext f_qsort Vprog Gprog [])
    temp _m (Vint (Int.repr 0));
    lvar _tmp (tarray tuchar 1024) v_tmp;
    lvar _pivot (tarray tuchar 1024) v_pivot;
-   temp _base base; temp _size (Vint (Int.repr (sizeof t)));
+   temp _base base; temp _size (Vlong (Int64.repr (sizeof t)));
    temp _compar compar)
    SEP (data_at sh (tarray t N) bl base;
    data_at Tsh t pivot v_pivot; data_at_ Tsh t v_tmp;
@@ -178,7 +178,7 @@ semax (func_tycontext f_qsort Vprog Gprog [])
       lvar _tmp (tarray tuchar 1024) v_tmp;
       lvar _pivot (tarray tuchar 1024) v_pivot;
       temp _base base;
-      temp _size (Vint (Int.repr (sizeof t)));
+      temp _size (Vlong (Int64.repr (sizeof t)));
       temp _compar compar)
       SEP (data_at sh (tarray t N) bl base;
       data_at Tsh t pivot v_pivot; data_at_ Tsh t v_tmp;
@@ -197,7 +197,7 @@ forward_loop (EX i:Z,
                 temp _m (Vint (Int.repr 0));
                 lvar _tmp (tarray tuchar 1024) v_tmp;
                 lvar _pivot (tarray tuchar 1024) v_pivot;
-                temp _base base; temp _size (Vint (Int.repr (sizeof t)));
+                temp _base base; temp _size (Vlong (Int64.repr (sizeof t)));
                 temp _compar compar)
        SEP (data_at sh (tarray t N) bl base;
               data_at Tsh t pivot v_pivot; data_at_ Tsh t v_tmp;
@@ -210,6 +210,7 @@ forward_loop (EX i:Z,
    rename H into H'.
    Intros i.
    forward_call (sh, Tsh, offset_val (i*sizeof t) base, v_pivot, Znth i bl, pivot).
+(*
   split.
   assert (0 <= i*sizeof t); [ | rep_lia].
   apply Z.mul_nonneg_nonneg; rep_lia.
@@ -217,6 +218,7 @@ forward_loop (EX i:Z,
   apply Zmult_le_compat_r.
   lia.
   lia.
+*)
   {
   simpl.
   unfold tarray. 
@@ -231,8 +233,8 @@ forward_loop (EX i:Z,
   rewrite field_adr_ofs by (auto; lia).
   cancel.
   }
- split3; auto.
- split; auto.
+(* split3; auto.
+ split; auto.*)
  eapply Forall_Znth; eauto. lia.
  Intros vret.
  rewrite <- (data_at_singleton_array_eq sh t (Znth i bl) [Znth i bl]) by reflexivity.
@@ -254,23 +256,24 @@ forward_loop (EX i:Z,
   autorewrite with sublist; auto.  
   destruct vret.
  + (* Eq *)
-  forward_if. contradiction H6'; auto.
+  forward_if. lia.
   clear H6.
   forward.
   Exists i.
-  entailer!. destruct H5; auto.
+  entailer!. apply H5.
  + (* Lt *)
-  forward_if. 2: inv H6.
+  forward_if. 2: lia.
   clear H6.
   forward.
   Exists (i+1).
   entailer!.
+  set (N := Zlength bl) in *.
   assert (i<>j+1). {
     intro; subst.
     assert (ord_le ord pivot (Znth 0 (sublist (j+1) N bl))).
       eapply Forall_Znth; auto; autorewrite with sublist; lia.
-    autorewrite with sublist in H12.
-    clear - H5 H12.
+    autorewrite with sublist in H13.
+    clear - H5 H13.
     destruct H5. contradiction.
   }
   split3; try lia.
@@ -285,7 +288,7 @@ forward_loop (EX i:Z,
   left; auto.
   right; auto.
  + (* Gt *)
-  forward_if.  contradiction H6'; auto.
+  forward_if. lia.
   clear H6.
   forward.
   Exists i.
@@ -310,7 +313,8 @@ Definition loop_j :=
                                (Ecast (Etempvar _base (tptr tvoid))
                                  (tptr tuchar))
                                (Ebinop Omul (Etempvar _j tint)
-                                 (Etempvar _size tuint) tuint) (tptr tuchar)) ::
+                                 (Etempvar _size tulong) tulong)
+                               (tptr tuchar)) ::
                              (Evar _pivot (tarray tuchar 1024)) :: nil))
                           (Sifthenelse (Ebinop Ogt (Etempvar _t'2 tint)
                                          (Econst_int (Int.repr 0) tint) tint)
@@ -332,7 +336,7 @@ Lemma qsort_loop_j:
   (bl : list (reptype t)),
   let N := Zlength bl : Z in 
   forall (H0 : N <= Int.max_signed)
-  (H1 : N * sizeof t <= Int.max_signed)
+  (H1 : N * sizeof t <= Ptrofs.max_signed)
   (H : 0 <= sizeof t <= 1024) 
   (Hbase : field_compatible (tarray t N) [] base)
   (Hmn : 0 < N - 1)
@@ -359,7 +363,7 @@ semax (func_tycontext f_qsort Vprog Gprog [])
    temp _m (Vint (Int.repr 0));
    lvar _tmp (tarray tuchar 1024) v_tmp;
    lvar _pivot (tarray tuchar 1024) v_pivot;
-   temp _base base; temp _size (Vint (Int.repr (sizeof t)));
+   temp _base base; temp _size (Vlong (Int64.repr (sizeof t)));
    temp _compar compar)
    SEP (data_at sh (tarray t N) bl base;
    data_at Tsh t pivot v_pivot; data_at_ Tsh t v_tmp;
@@ -377,7 +381,7 @@ semax (func_tycontext f_qsort Vprog Gprog [])
       lvar _tmp (tarray tuchar 1024) v_tmp;
       lvar _pivot (tarray tuchar 1024) v_pivot;
       temp _base base;
-      temp _size (Vint (Int.repr (sizeof t)));
+      temp _size (Vlong (Int64.repr (sizeof t)));
       temp _compar compar)
       SEP (data_at sh (tarray t N) bl base;
       data_at Tsh t pivot v_pivot; data_at_ Tsh t v_tmp;
@@ -395,7 +399,7 @@ unfold loop_j.
    temp _m (Vint (Int.repr 0));
    lvar _tmp (tarray tuchar 1024) v_tmp;
    lvar _pivot (tarray tuchar 1024) v_pivot;
-   temp _base base; temp _size (Vint (Int.repr (sizeof t)));
+   temp _base base; temp _size (Vlong (Int64.repr (sizeof t)));
    temp _compar compar)
    SEP (data_at sh (tarray t N) bl base;
    data_at Tsh t pivot v_pivot; data_at_ Tsh t v_tmp;
@@ -406,14 +410,14 @@ unfold loop_j.
 -
    Intros j'.
    forward_call (sh, Tsh, offset_val (j'*sizeof t) base, v_pivot, Znth j' bl, pivot).
-   change (@sizeof _ t) with (sizeof t).
+(*   change (@sizeof _ t) with (sizeof t).
   split.
   assert (0 <= j'*sizeof t); [ | rep_lia].
   apply Z.mul_nonneg_nonneg; rep_lia.
   eapply Z.le_trans; try apply H1.
   apply Zmult_le_compat_r.
   lia.
-  lia.
+  lia.*)
   {
   simpl.
   unfold tarray. 
@@ -428,8 +432,9 @@ unfold loop_j.
   rewrite field_adr_ofs by (auto; lia).
   cancel.
   }
- split3; auto.
+(* split3; auto.
  split; auto.
+*)
  eapply Forall_Znth; auto. lia.
  Intros vret.
  rewrite <- (data_at_singleton_array_eq sh t (Znth j' bl) [Znth j' bl]) by reflexivity.
@@ -450,25 +455,26 @@ unfold loop_j.
   autorewrite with sublist; auto.  
   destruct vret.
  + (* Eq *)
-  forward_if. contradiction H9'; auto.
+  forward_if. lia.
   clear H9.
   forward.
   Exists j'.
   entailer!.
   destruct H6; auto.
  + (* Lt *)
-  forward_if. contradiction H9'; auto.
+  forward_if. lia.
   clear H9.
   forward.
   Exists j'.
   entailer!.
   destruct H6; auto.
  + (* Gt *)
-  forward_if. 2: inv H9.
-  clear H9 H9'.
+  forward_if. 2: lia.
+  clear H9.
   forward.
   Exists (j'-1).
-  entailer!.  
+  entailer!.
+  set (N := Zlength bl) in *.
   clear Pcompar H16 H15 H12 H11 H9 PNcompar PNbase Pv_pivot0.
   clear HPv_pivot Pv_pivot Pv_tmp0 HPv_tmp Pv_tmp.
   clear Delta_specs Hbase sh SH Hok.
@@ -501,5 +507,5 @@ unfold loop_j.
   destruct H6; contradiction.
   rewrite (sublist_split j' (j'+1)) by lia. rewrite Forall_app; split; auto.
   rewrite sublist_one by lia. constructor; [ | constructor].
-  auto.
+  auto.  
 Qed.
