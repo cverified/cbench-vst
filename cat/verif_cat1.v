@@ -1,9 +1,9 @@
 Require Import VST.floyd.proofauto.
 Require Import Top.io_specs_rollback.
 Require Import Top.cat1.
-Require Import ITree.Eq.Eq.
+Require Import ITree.Eq.Eqit.
 
-Instance CompSpecs : compspecs. make_compspecs prog. Defined.
+#[export] Instance CompSpecs : compspecs. make_compspecs prog. Defined.
 Definition Vprog : varspecs. mk_varspecs prog. Defined.
 
 Definition event := nondetE +' @IO_event nat.
@@ -11,8 +11,9 @@ Definition event := nondetE +' @IO_event nat.
 Definition putchar_spec := DECLARE _putchar putchar_spec(E := event).
 Definition getchar_spec := DECLARE _getchar getchar_spec(E := event).
 
+Open Scope itree_scope.
 Definition cat_loop : IO_itree :=
-   ITree.iter (fun _ => c <- read stdin;; or (write stdout c) (Ret tt);; Ret (inl tt)) tt.
+   ITree.iter (E := event) (fun _ => c <- read stdin;; or (write stdout c) (Ret tt);; Ret (inl tt)) tt.
 
 Definition main_spec :=
  DECLARE _main
@@ -27,21 +28,22 @@ Lemma cat_loop_eq : cat_loop ≈ (c <- read stdin;; or (write stdout c;; cat_loo
 Proof.
   intros.
   unfold cat_loop; rewrite unfold_iter.
-  unfold ITree._iter.
+  unfold ITree.iter.
   rewrite bind_bind.
-  apply eqit_bind; [intro | reflexivity].
+  apply eqit_bind; [reflexivity | intro ].
   unfold or; rewrite !bind_vis.
   apply eqit_Vis; intros [|].
-  - rewrite bind_bind; apply eqit_bind; [intros []|]; try reflexivity.
+  - rewrite bind_bind; apply eqit_bind; [| intros []]; try reflexivity.
     rewrite bind_ret_l.
-    apply eqit_tauL; reflexivity.
+    apply eqit_Tau_l; reflexivity.
   - rewrite !bind_ret_l.
-    apply eqit_tauL; reflexivity.
+    apply eqit_Tau_l; reflexivity.
 Qed.
 
 Lemma body_main: semax_body Vprog Gprog f_main main_spec.
 Proof.
   start_function.
+  pose proof (has_ext_ITREE(E := event)).
   sep_apply (has_ext_ITREE(E := event)).
   forward_loop (PROP () LOCAL () SEP (ITREE cat_loop))
     break: (PROP () LOCAL () SEP (ITREE cat_loop)).
@@ -52,27 +54,26 @@ Proof.
     forward.
     forward_if.
     + if_tac.
-      { apply f_equal with (f := Int.repr) in H1; rewrite Int.repr_signed in H1; contradiction. }
-      forward_call_io (Byte.repr (Int.signed c), cat_loop).
-      { entailer!.
-        unfold Vubyte.
-        rewrite Byte.unsigned_repr, Int.repr_signed by lia; auto. }
-      { apply or_case1. }
-      Intros r.
-      entailer!.
-      if_tac; [|apply derives_refl].
-      apply ITREE_impl', or_case2.
-    + rewrite if_true.
+     * apply f_equal with (f := Int.repr) in H2. rewrite Int.repr_signed in H2; contradiction.
+     * forward_call_io (Byte.repr (Int.signed c), cat_loop).
+      -- entailer!.
+        unfold Vubyte. simpl.
+        rewrite Byte.unsigned_repr, Int.repr_signed by lia; auto.
+      -- apply or_case1.
+      -- Intros r. entailer!.
+         if_tac; [|apply derives_refl].
+         apply ITREE_impl'.
+         apply or_case2.
+    + rewrite if_true
+       by (subst; rewrite neg_repr, Int.signed_repr by rep_lia; auto).
       forward.
       rewrite cat_loop_eq; entailer!.
-      { subst.
-        rewrite neg_repr, Int.signed_repr by rep_lia; auto. }
   - forward.
 Qed.
 
 Definition ext_link := ext_link_prog prog.
 
-Instance Espec : OracleKind := IO_Espec(E := event) ext_link.
+#[export] Instance Espec : OracleKind := IO_Espec(E := event) ext_link.
 
 Lemma prog_correct:
   semax_prog prog cat_loop Vprog Gprog.

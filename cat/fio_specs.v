@@ -1,7 +1,7 @@
 Require Import VST.floyd.proofauto.
 Require Import VST.veric.juicy_extspec.
 Require Export VST.floyd.printf.
-Require Export ITree.Eq.Eq.
+Require Export ITree.Eq.Eqit.
 Require Export ITree.Eq.SimUpToTaus.
 Require Export ITree.Events.Nondeterminism.
 Notation "x <- t1 ;; t2" := (ITree.bind t1 (fun x => t2))
@@ -11,7 +11,7 @@ Notation "' p <- t1 ;; t2" :=
 (at level 100, t1 at next level, p pattern, right associativity) : itree_scope.
 
 (* these should be in ITrees *)
-Instance Reflexive_sutt {E R} : RelationClasses.Reflexive (@sutt E R R eq).
+#[export] Instance Reflexive_sutt {E R} : RelationClasses.Reflexive (@sutt E R R eq).
 Proof. intro; apply eutt_sutt; reflexivity. Qed.
 
 Lemma or_case1 : forall {E R} `{nondetE -< E} a b, sutt eq a (or(R := R) a b).
@@ -26,7 +26,7 @@ Admitted.
 
 Class FileStruct := { abs_file :> FileId; FILEid : ident; reent : ident; f_stdin : ident; f_stdout : ident }.
 
-Instance nat_id : FileId := { file_id := nat; stdin := 0%nat; stdout := 1%nat }.
+#[export] Instance nat_id : FileId := { file_id := nat; stdin := 0%nat; stdout := 1%nat }.
 
 Section fio_specs.
 
@@ -61,6 +61,8 @@ Definition get_reent_spec :=
     PROP ()
     LOCAL (temp ret_temp p)
     SEP (reent_struct p).
+
+Open Scope itree_scope.
 
 (* In reality, this might also fail to write all the characters (unless it's a capability version). *)
 Definition fwrite_spec {CS : compspecs} :=

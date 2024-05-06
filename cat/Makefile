@@ -1,6 +1,6 @@
 CLIGHTGEN ?= clightgen
 
-VST_DIRS= msl sepcomp veric floyd progs
+VST_DIRS= msl sepcomp veric floyd progs64 zlist
 VSTFLAGS= -R $(VST_LOC)/compcert compcert $(foreach d, $(VST_DIRS), -Q $(VST_LOC)/$(d) VST.$(d)) -Q $(VST_LOC)/paco/src Paco -Q $(VST_LOC)/InteractionTrees/theories ITree -Q . Top
 
 

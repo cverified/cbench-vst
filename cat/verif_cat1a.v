@@ -1,13 +1,14 @@
-Require Import VST.progs.io_specs.
+Require Import VST.progs64.io_specs.
 Require Import VST.floyd.proofauto.
 Require Import Top.cat1a.
 
-Instance CompSpecs : compspecs. make_compspecs prog. Defined.
+#[export] Instance CompSpecs : compspecs. make_compspecs prog. Defined.
 Definition Vprog : varspecs. mk_varspecs prog. Defined.
 
 Definition putchar_spec := DECLARE _putchar putchar_spec.
 Definition getchar_spec := DECLARE _getchar getchar_spec.
 
+Open Scope itree_scope. 
 Definition cat_loop : IO_itree :=
    ITree.iter (fun _ => c <- read stdin;; write stdout c;; Ret (inl tt)) tt.
 
@@ -24,13 +25,13 @@ Lemma cat_loop_eq : cat_loop ≈ (c <- read stdin;; write stdout c;; cat_loop).
 Proof.
   intros.
   unfold cat_loop; rewrite unfold_iter.
-  unfold ITree._iter.
+  unfold ITree.iter.
   rewrite bind_bind.
   apply eqit_bind; try reflexivity.
   intros [].
   rewrite bind_bind; apply eqit_bind; try reflexivity.
   intros [].
-  rewrite bind_ret_l; apply eqit_tauL; reflexivity.
+  rewrite bind_ret_l; apply eqit_Tau_l; reflexivity.
 Qed.
 
 Lemma body_main: semax_body Vprog Gprog f_main main_spec.
@@ -68,7 +69,7 @@ Qed.
 
 Definition ext_link := ext_link_prog prog.
 
-Instance Espec : OracleKind := IO_Espec ext_link.
+#[export] Instance Espec : OracleKind := IO_Espec ext_link.
 
 Lemma prog_correct:
   semax_prog prog cat_loop Vprog Gprog.
