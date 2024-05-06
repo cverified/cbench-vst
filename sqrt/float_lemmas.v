@@ -1,6 +1,6 @@
-From Flocq3 Require Core Binary.
+From Flocq Require Core Binary.
 Import Defs Raux FLT Generic_fmt Binary Ulp.
-Require Import Psatz.
+Require Import Arith Psatz.
 Require Import Recdef.
 
 
@@ -32,13 +32,13 @@ Definition halfms := Eval compute in (ms / 2)%Z.
 Definition fmin := Eval compute in (-(es + ms - 3))%Z.
 
 Definition float_div: float -> float -> float :=
-   Bdiv ms es eq_refl eq_refl binop_nan mode_NE.
+   Bdiv ms es eq_refl eq_refl binop_nan BinarySingleNaN.mode_NE.
 
 Definition float_plus: float -> float -> float :=
-   Bplus ms es eq_refl eq_refl binop_nan mode_NE.
+   Bplus ms es eq_refl eq_refl binop_nan BinarySingleNaN.mode_NE.
 
 Definition float_minus: float -> float -> float :=
-   Bminus ms es eq_refl eq_refl binop_nan mode_NE.
+   Bminus ms es eq_refl eq_refl binop_nan BinarySingleNaN.mode_NE.
 
 Definition float_compare : float -> float -> option comparison :=
    Bcompare ms es.
@@ -72,16 +72,16 @@ Proof.  induction x as [ | x IH]; try (simpl; lia).  Qed.
 Open Scope Z_scope.
 
 Lemma bounded_bound_exp m e : 
-  Binary.bounded ms es m e = true -> fmin <= e <= es - ms.
+  SpecFloat.bounded ms es m e = true -> fmin <= e <= es - ms.
 Proof.
-intros vc; unfold Binary.bounded in vc.
+intros vc; unfold SpecFloat.bounded in vc.
 destruct (andb_prop _ _ vc) as [vc1 vc2].
 apply (canonical_canonical_mantissa _ _ false) in vc1.
 apply Zle_bool_imp_le in vc2.
 split;[simpl in vc1 |- *; clear vc vc2 | exact vc2].
 revert vc1.
 unfold canonical, F2R, cexp; simpl; unfold FLT_exp.
-destruct (mag radix2 (IZR (Z.pos m) * bpow radix2 e) - ms);
+destruct (mag Zaux.radix2 (IZR (Z.pos m) * bpow Zaux.radix2 e) - ms);
   intros v; rewrite v; apply Z.le_max_r.  
 Qed.
 
@@ -114,7 +114,7 @@ rewrite Digits.Zpos_digits2_pos in nd.
 replace (Pos.to_nat m) with (Z.to_nat (Z.pos m)) by reflexivity; try lia.
 replace (2 ^ Z.to_nat k)%nat with (Z.to_nat (2 ^ k)) by ( apply Zto_nat_pow; lia).
   rewrite <- Z2Nat.inj_lt; try lia.
-  apply (Digits.Zpower_gt_Zdigits radix2 k (Z.pos m)).
+  apply (Digits.Zpower_gt_Zdigits Zaux.radix2 k (Z.pos m)).
   lia.
 Qed.
 
@@ -132,20 +132,21 @@ replace (2 ^ Z.to_nat (Z.pos (Digits.digits2_pos m) - 1))%nat with
 rewrite <- Z2Nat.inj_le;[ | apply Z.lt_le_incl, Z.pow_pos_nonneg; lia | lia].
 rewrite Digits.Zpos_digits2_pos.
 rewrite <- (Z.abs_eq (Z.pos m)) at 2;[ | lia].
-apply (Digits.Zpower_le_Zdigits radix2); lia.
+apply (Digits.Zpower_le_Zdigits Zaux.radix2); lia.
 Qed.
 
 Lemma bound_mantissa_nat m e :
-  Binary.bounded ms es m e = true ->
+  SpecFloat.bounded ms es m e = true ->
   (Pos.to_nat m < 2 ^ (Z.to_nat ms))%nat.
 Proof.
 intros v.
 apply (bound_mantissa_digits m ms); try lia.
-unfold Binary.bounded in v.
-unfold canonical_mantissa in v.
+unfold SpecFloat.bounded in v.
+unfold SpecFloat.canonical_mantissa in v.
 apply andb_prop in v; destruct v as [v _].
-apply Zeq_bool_eq in v; unfold FLT_exp in v.
-destruct (Z_le_gt_dec (3 - es - ms) (Z.pos (Digits.digits2_pos m) + e - ms))
+apply Zeq_bool_eq in v.
+unfold SpecFloat.fexp in v.
+destruct (Z_le_gt_dec (3 - es - ms) (Z.pos (SpecFloat.digits2_pos m) + e - ms))
       as [l | r].
   rewrite Z.max_l in v; [lia | assumption].
 lia.
@@ -153,31 +154,35 @@ Qed.
 
 Lemma lower_bound_mantissa_nat e m :
   fmin < e ->
-  Binary.bounded ms es m e = true ->
+  SpecFloat.bounded ms es m e = true ->
   (2 ^ Z.to_nat ms' <= Pos.to_nat m)%nat.
 Proof.
 intros elb v.
-apply le_trans with (2 := lower_bound_mantissa_digits m).
-unfold Binary.bounded in v.
-unfold canonical_mantissa in v.
+apply Nat.le_trans with (2 := lower_bound_mantissa_digits m).
+unfold SpecFloat.bounded in v.
+unfold SpecFloat.canonical_mantissa in v.
 apply andb_prop in v; destruct v as [v _].
-apply Zeq_bool_eq in v; unfold FLT_exp in v.
-destruct (Z_le_gt_dec (3 - es - ms) (Z.pos (Digits.digits2_pos m) + e - ms))
+apply Zeq_bool_eq in v; unfold SpecFloat.fexp in v.
+apply Nat.pow_le_mono_r. lia.
+destruct (Z_le_gt_dec (3 - es - ms) (Z.pos (SpecFloat.digits2_pos m) + e - ms))
       as [l | r].
   rewrite Z.max_l in v; [ | assumption].
-  assert (vd : Z.pos (Digits.digits2_pos m) = ms) by lia.
+  assert (vd : Z.pos (SpecFloat.digits2_pos m) = ms) by lia.
   injection vd; intros vd'; rewrite vd'.
-  now apply Nat.pow_le_mono_r.
+  auto.
 apply Z.gt_lt in r.
 rewrite <- Z.sub_lt_mono_r in r.
-unfold fmin in elb; unfold es, ms in r, v; lia.
+unfold fmin in elb; unfold es, ms in r, v.
+unfold ms'.
+rewrite Z.max_r in v by lia.
+compute in v. subst e. lia.
 Qed.
 
-Lemma bound_float : forall x e, Binary.bounded ms es x e = true ->
+Lemma bound_float : forall x e, SpecFloat.bounded ms es x e = true ->
    (Pos.to_nat x * 2 ^ Z.to_nat (e - fmin) < 2 ^ Z.to_nat index_zero_mag)%nat.
 Proof.
 intros x e v.
-apply lt_trans with (2 ^ (Z.to_nat ms) * 2 ^ Z.to_nat (e - fmin))%nat.
+apply Nat.lt_trans with (2 ^ (Z.to_nat ms) * 2 ^ Z.to_nat (e - fmin))%nat.
 apply Nat.mul_lt_mono_pos_r.
     now apply pow2_pos.
   now apply (bound_mantissa_nat x e).
@@ -216,7 +221,7 @@ destruct a as [da | da | da1 da2 da3 | signa ma ea vca];
 - unfold Bcompare, float_to_nat.
   case da;[intros | discriminate].
   case signb.
-    apply lt_minus_O_lt.
+    apply ArithProp.lt_minus_O_lt.
     now apply bound_float.
   apply Nat.add_pos_r.
   apply Nat.mul_pos; split;[lia | apply pow2_pos].
@@ -228,18 +233,19 @@ destruct a as [da | da | da1 da2 da3 | signa ma ea vca];
 - unfold Bcompare, float_to_nat.
   case db;[discriminate | intros _].
   case signa.
-    apply lt_trans with (2 ^ Z.to_nat index_zero_mag)%nat.
+    apply Nat.lt_trans with (2 ^ Z.to_nat index_zero_mag)%nat.
   assert (tech : forall a b, (0 < a -> 0 < b -> a - b < a)%nat).
     intros a b a0 b0; destruct a as [ | a]; destruct b as [ | b]; lia.
   apply tech;[| apply Nat.mul_pos; split;[lia |]]; apply pow2_pos.
   apply Nat.pow_lt_mono_r; compute; lia.
-  apply lt_trans with (2 ^ Z.to_nat index_zero_mag +
+  apply Nat.lt_trans with (2 ^ Z.to_nat index_zero_mag +
                        2 ^ Z.to_nat index_zero_mag)%nat.
     apply Nat.add_lt_mono_l.
     now apply bound_float.
   assert (tech : forall x, (x + x = 2 ^ 1 * x)%nat) by (intros; simpl; ring).
   rewrite tech, <- Nat.pow_add_r; apply Nat.pow_lt_mono_r; compute; lia.
-- unfold Bcompare, float_to_nat.
+- unfold Bcompare, float_to_nat, BinarySingleNaN.Bcompare, 
+    SpecFloat.SFcompare, BinarySingleNaN.B2SF, B2BSN.
   case signa; case signb; try discriminate.
   * assert (tech : (forall a b c, b <= a -> c <= a -> c < b -> a - b < a - c)%nat).
       intros a b c ba ca cb; lia.

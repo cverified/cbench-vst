@@ -118,7 +118,7 @@ Lemma both_float_cmp_true:
   forall op a b,
     def_float a -> def_float b ->
    typed_true tint (force_val 
-     (both_float (fun n1 n2 : float => Some (Val.of_bool (Float.cmp op n1 n2)))
+     (both_float (fun n1 n2 : float => Some (bool2val (Float.cmp op n1 n2)))
         sem_cast_f2f sem_cast_f2f a b)) ->
    f_cmp op a b.
 Proof.
@@ -133,7 +133,7 @@ Lemma both_float_cmp_false:
   forall op a b,
     def_float a -> def_float b ->
    typed_false tint (force_val 
-     (both_float (fun n1 n2 : float => Some (Val.of_bool (Float.cmp op n1 n2)))
+     (both_float (fun n1 n2 : float => Some (bool2val (Float.cmp op n1 n2)))
         sem_cast_f2f sem_cast_f2f a b)) ->
    f_cmp (negate_comparison op) a b.
 Proof.

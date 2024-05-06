@@ -72,7 +72,7 @@ intros.
 unfold mem_mgr.
 Exists 0.
 rewrite <- HEAPSIZE_eq.
-entailer!.
+entailer!!.
 apply Z.divide_0_r.
 cancel.
 Qed.
@@ -83,7 +83,6 @@ start_function.
 fold noattr.
 fold tuchar.
 fold (tptr tuchar).
-sep_apply init_mem_mgr.
 forward.
 Qed.
 
@@ -124,15 +123,17 @@ normalize.
 rewrite !(Ptrofs.add_commut i).
 rewrite (Ptrofs.sub_shifted).
 unfold Ptrofs.divs.
-normalize.
+simpl.
 rewrite (Ptrofs.signed_repr 1) by rep_lia.
 rewrite Z.quot_1_r.
-unfold Int.lt.
+unfold Int64.lt.
 rewrite if_false. reflexivity.
-rewrite (Int.signed_repr (sizeof _)) by rep_lia.
-rewrite Ptrofs.signed_repr by rep_lia.
-rewrite Int.signed_repr by rep_lia.
+autorewrite with norm.
 lia.
+(*
+rewrite Int64.signed_repr by rep_lia.
+lia.
+*)
 destruct (gv _heap); try contradiction; simpl.
 unfold sem_sub_pp, both_int; simpl.
 rewrite if_true by auto.
@@ -141,25 +142,22 @@ rewrite (Ptrofs.sub_shifted).
 unfold Ptrofs.divs.
 rewrite (Ptrofs.signed_repr 1) by rep_lia.
 rewrite Z.quot_1_r.
-unfold Int.lt.
-normalize.
-rewrite Ptrofs.signed_repr by rep_lia.
+simpl.
+unfold Int64.lt.
+autorewrite with norm.
 rewrite if_true. reflexivity.
-normalize.
 lia.
 -
 forward_if.
 forward.
-Exists (Vint (Int.repr 0)) r.
-entailer!.
-rewrite if_true by auto.
-cancel.
+Exists (Vlong (Int64.repr 0)) r.
+entailer!!.
+if_tac in H3; try discriminate.
+if_tac in H3; try discriminate.
 forward.
 forward.
 forward.
 forward.
-destruct (zle (sizeof t) 0); try discriminate H3.
-destruct (zle (sizeof t) (HEAPSIZE-r)); try discriminate H3.
 Exists (offset_val r (gv _heap)) (r+sizeof t).
 entailer!.
 apply Z.divide_add_r; auto.
@@ -167,12 +165,12 @@ rewrite if_false.
 2:{ destruct (gv _heap); try contradiction; intro Hx; inv Hx. }
 change (data_at_ Ews (tarray tuchar (HEAPSIZE - r)))
   with (data_at Ews (tarray tuchar (HEAPSIZE - r))
-                      (list_repeat (Z.to_nat (HEAPSIZE-r)) Vundef)).
+                      (repeat Vundef (Z.to_nat (HEAPSIZE-r)))).
 unfold tarray.
 erewrite (split2_data_at_Tarray Ews tuchar
                 (HEAPSIZE-r) (sizeof t) 
-                 (list_repeat (Z.to_nat (HEAPSIZE-r)) Vundef)
-                 (list_repeat (Z.to_nat (HEAPSIZE-r)) Vundef)).
+                 (repeat Vundef (Z.to_nat (HEAPSIZE-r)))
+                 (repeat Vundef (Z.to_nat (HEAPSIZE-r)))).
 5,6: reflexivity.
 2: lia.
 2: list_solve.
@@ -196,7 +194,7 @@ reflexivity.
 rep_lia.
 +
 sep_apply (data_at_memory_block Ews (Tarray tuchar (sizeof t) noattr)
- (list_repeat (Z.to_nat (sizeof t)) Vundef) (offset_val r (gv _heap))).
+ (repeat Vundef (Z.to_nat (sizeof t))) (offset_val r (gv _heap))).
 rewrite <- memory_block_data_at_.
 apply derives_refl'.
 f_equal.
@@ -209,11 +207,8 @@ split.
 destruct HP_heap as [b' ?].
 symmetry in H5; inv H5.
 normalize.
-rewrite Ptrofs.unsigned_repr by rep_lia.
-auto.
 destruct HP_heap as [b' ?].
 symmetry in H5; inv H5.
 normalize.
-rewrite Ptrofs.unsigned_repr by rep_lia.
 rep_lia.
 Qed.

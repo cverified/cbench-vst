@@ -71,6 +71,26 @@ normalize in H.
 Qed.
 
 Definition call_memcpy_ij :=
+                         (Scall None
+                            (Evar _memcpy (Tfunction
+                                            (Tcons (tptr tvoid)
+                                              (Tcons (tptr tvoid)
+                                                (Tcons tulong Tnil)))
+                                            (tptr tvoid) cc_default))
+                            ((Ebinop Oadd
+                               (Ecast (Etempvar _base (tptr tvoid))
+                                 (tptr tuchar))
+                               (Ebinop Omul (Etempvar _i tint)
+                                 (Etempvar _size tulong) tulong)
+                               (tptr tuchar)) ::
+                             (Ebinop Oadd
+                               (Ecast (Etempvar _base (tptr tvoid))
+                                 (tptr tuchar))
+                               (Ebinop Omul (Etempvar _j tint)
+                                 (Etempvar _size tulong) tulong)
+                               (tptr tuchar)) :: (Etempvar _size tulong) ::
+                             nil)).
+(* 
                            (Scall None
                             (Evar _memcpy (Tfunction
                                             (Tcons (tptr tvoid)
@@ -88,6 +108,7 @@ Definition call_memcpy_ij :=
                                (Ebinop Omul (Etempvar _j tint)
                                  (Etempvar _size tuint) tuint) (tptr tuchar)) ::
                              (Etempvar _size tuint) :: nil)).
+*)
 
 Lemma forward_illegal_memcpy:
  forall (Espec : OracleKind)
@@ -98,7 +119,7 @@ Lemma forward_illegal_memcpy:
   (SH : writable_share sh),
   let N := Zlength bl in 
   forall (H0 : N <= Int.max_signed)
-  (H1 : N * sizeof t <= Int.max_signed)
+  (H1 : N * sizeof t <= Ptrofs.max_signed)
   (H'' : 0 <= sizeof t <= 1024)
   (Hbase : field_compatible (tarray t N) [] base)
   (i : Z)
@@ -107,7 +128,7 @@ semax (func_tycontext f_qsort Vprog Gprog [])
   (PROP ( )
    LOCAL (temp _i (Vint (Int.repr i));
    temp _j (Vint (Int.repr i)); temp _base base;
-   temp _size (Vint (Int.repr (sizeof t))))
+   temp _size (Vlong (Int64.repr (sizeof t))))
    SEP (data_at sh t (Znth i bl)
           (field_address0 (Tarray t (i + 1) noattr)
              [ArraySubsc i] base)))
@@ -116,7 +137,7 @@ semax (func_tycontext f_qsort Vprog Gprog [])
      (PROP ( )
       LOCAL (temp _i (Vint (Int.repr i));
       temp _j (Vint (Int.repr i)); temp _base base;
-      temp _size (Vint (Int.repr (sizeof t))))
+      temp _size (Vlong (Int64.repr (sizeof t))))
       SEP (data_at sh t (Znth i bl)
              (field_address0 (Tarray t (i + 1) noattr)
                 [ArraySubsc i] base)))).
@@ -134,7 +155,7 @@ Lemma forward_call_memcpy_ij:
     (SH : writable_share sh),
     let N := Zlength bl in 
    forall (H0 : N <= Int.max_signed)
-    (H1 : N * sizeof t <= Int.max_signed)
+    (H1 : N * sizeof t <= Ptrofs.max_signed)
     (H'' : 0 <= sizeof t <= 1024)
     (Hbase : field_compatible (tarray t N) [] base)
     (Hmn : 0 < N - 1)
@@ -145,14 +166,14 @@ Lemma forward_call_memcpy_ij:
   (PROP ( )
    LOCAL (temp _i (Vint (Int.repr i));
         temp _j (Vint (Int.repr j));
-        temp _base base; temp _size (Vint (Int.repr (sizeof t))))
+        temp _base base; temp _size (Vlong (Int64.repr (sizeof t))))
    SEP (data_at sh (Tarray t N noattr) bl base))
   call_memcpy_ij
   (normal_ret_assert
      (PROP ( )
    LOCAL (temp _i (Vint (Int.repr i));
         temp _j (Vint (Int.repr j));
-        temp _base base; temp _size (Vint (Int.repr (sizeof t))))
+        temp _base base; temp _size (Vlong (Int64.repr (sizeof t))))
       SEP (data_at sh (Tarray t N noattr)
              (upd_Znth i bl (Znth j bl)) base))).
 Proof.
@@ -190,7 +211,7 @@ auto.
    (LOCALx
       ([temp _i (Vint (Int.repr i));
        temp _j (Vint (Int.repr i)); temp _base base;
-       temp _size (Vint (Int.repr (sizeof t)))] ++ [])
+       temp _size (Vlong(Int64.repr (sizeof t)))] ++ [])
       (SEPx
          ([data_at sh t (Znth i bl)
              (field_address0 (Tarray t (i + 1) noattr)
@@ -206,7 +227,7 @@ auto.
          ([temp _i (Vint (Int.repr i));
           temp _j (Vint (Int.repr i)); 
           temp _base base;
-          temp _size (Vint (Int.repr (sizeof t)))] ++ [])
+          temp _size (Vlong (Int64.repr (sizeof t)))] ++ [])
          (SEPx
             ([data_at sh t (Znth i bl)
              (field_address0 (Tarray t (i + 1) noattr)
@@ -228,6 +249,7 @@ clear n H6.
 unfold call_memcpy_ij.
 forward_call (sh, sh, offset_val (i*sizeof t) base, offset_val (j*sizeof t) base, 
                             existT reptype t (Znth j bl)).
+(*
   split; split.
   assert (0 <= i*sizeof t); [ | rep_lia].
   apply Z.mul_nonneg_nonneg; rep_lia.
@@ -241,6 +263,7 @@ forward_call (sh, sh, offset_val (i*sizeof t) base, offset_val (j*sizeof t) base
   apply Zmult_le_compat_r.
   lia.
   lia.
+*)
   simpl.
   sep_apply (split2_data_at_Tarray_unfold sh t N j).
   lia.
@@ -264,7 +287,7 @@ forward_call (sh, sh, offset_val (i*sizeof t) base, offset_val (j*sizeof t) base
   fold (tarray t 1).
   erewrite data_at_singleton_array_eq by reflexivity.
   cancel.
-  split3; auto.
+(*  split3; auto.*)
  simpl. destruct Hok as [_ [_ ?]]; auto.
  entailer!.
  simpl.
@@ -319,37 +342,36 @@ forward_call (sh, sh, offset_val (i*sizeof t) base, offset_val (j*sizeof t) base
 Qed.
 
 Definition qsort_then2 :=
-                     (Ssequence
-                        (Scall None
+                        (Ssequence
+                         (Scall None
                           (Evar _memcpy (Tfunction
                                           (Tcons (tptr tvoid)
                                             (Tcons (tptr tvoid)
-                                              (Tcons tuint Tnil)))
+                                              (Tcons tulong Tnil)))
                                           (tptr tvoid) cc_default))
                           ((Evar _tmp (tarray tuchar 1024)) ::
                            (Ebinop Oadd
                              (Ecast (Etempvar _base (tptr tvoid))
                                (tptr tuchar))
                              (Ebinop Omul (Etempvar _i tint)
-                               (Etempvar _size tuint) tuint) (tptr tuchar)) ::
-                           (Etempvar _size tuint) :: nil))
-                        (Ssequence
-                          call_memcpy_ij
+                               (Etempvar _size tulong) tulong) (tptr tuchar)) ::
+                           (Etempvar _size tulong) :: nil))
+                      (Ssequence call_memcpy_ij
                           (Ssequence
                             (Scall None
                               (Evar _memcpy (Tfunction
                                               (Tcons (tptr tvoid)
                                                 (Tcons (tptr tvoid)
-                                                  (Tcons tuint Tnil)))
+                                                  (Tcons tulong Tnil)))
                                               (tptr tvoid) cc_default))
                               ((Ebinop Oadd
                                  (Ecast (Etempvar _base (tptr tvoid))
                                    (tptr tuchar))
                                  (Ebinop Omul (Etempvar _j tint)
-                                   (Etempvar _size tuint) tuint)
+                                   (Etempvar _size tulong) tulong)
                                  (tptr tuchar)) ::
                                (Evar _tmp (tarray tuchar 1024)) ::
-                               (Etempvar _size tuint) :: nil))
+                               (Etempvar _size tulong) :: nil))
                             (Ssequence
                               (Sset _i
                                 (Ebinop Oadd (Etempvar _i tint)
@@ -369,7 +391,7 @@ Lemma verif_qsort_then2:
     (SH : writable_share sh),
     let N := Zlength bl in 
     forall (H0 : N <= Int.max_signed)
-    (H1 : N * sizeof t <= Int.max_signed)
+    (H1 : N * sizeof t <= Ptrofs.max_signed)
      (H'' : 0 <= sizeof t <= 1024)
     (Hbase : field_compatible (tarray t N) [] base)
     (Hmn : 0 < N - 1)
@@ -397,7 +419,7 @@ semax (func_tycontext f_qsort Vprog Gprog [])
    temp _m (Vint (Int.repr 0));
    lvar _tmp (tarray tuchar 1024) v_tmp;
    lvar _pivot (tarray tuchar 1024) v_pivot;
-   temp _base base; temp _size (Vint (Int.repr (sizeof t)));
+   temp _base base; temp _size (Vlong (Int64.repr (sizeof t)));
    temp _compar compar)
    SEP (data_at sh (tarray t N) bl base;
    data_at Tsh t pivot v_pivot; data_at_ Tsh t v_tmp;
@@ -420,7 +442,7 @@ semax (func_tycontext f_qsort Vprog Gprog [])
       lvar _tmp (tarray tuchar 1024) v_tmp;
       lvar _pivot (tarray tuchar 1024) v_pivot;
       temp _base base;
-      temp _size (Vint (Int.repr (sizeof t)));
+      temp _size (Vlong (Int64.repr (sizeof t)));
       temp _compar compar)
       SEP (data_at sh (tarray t N) bl0 base;
       data_at Tsh t pivot v_pivot; data_at_ Tsh t v_tmp;
@@ -434,6 +456,7 @@ freeze FR2 := (FRZL _) (data_at _ _ _ v_pivot) (func_ptr' _ _).
 (* memcpy(tmp, a(i), size); *)
 forward_call (Tsh, sh, v_tmp, offset_val (i*sizeof t) base, 
                             existT reptype t (Znth i bl)).
+(*
   split.
   assert (0 <= i*sizeof t); [ | rep_lia].
   apply Z.mul_nonneg_nonneg; rep_lia.
@@ -441,6 +464,7 @@ forward_call (Tsh, sh, v_tmp, offset_val (i*sizeof t) base,
   apply Zmult_le_compat_r.
   lia.
   lia.
+*)
   simpl.
   sep_apply (split2_data_at_Tarray_unfold sh t N i).
   lia.
@@ -452,7 +476,7 @@ forward_call (Tsh, sh, v_tmp, offset_val (i*sizeof t) base,
   fold (tarray t 1).
   erewrite data_at_singleton_array_eq by reflexivity.
  cancel.
- split3; auto.
+(* split3; auto.*)
  simpl. destruct Hok as [_ [_ ?]]; auto.
  simpl.
  rewrite <- (data_at_singleton_array_eq sh t (Znth i bl) (sublist i (i+1) bl)).
@@ -473,7 +497,7 @@ apply semax_seq'
    temp _m (Vint (Int.repr 0));
    lvar _tmp (tarray tuchar 1024) v_tmp;
    lvar _pivot (tarray tuchar 1024) v_pivot;
-   temp _base base; temp _size (Vint (Int.repr (sizeof t)));
+   temp _base base; temp _size (Vlong (Int64.repr (sizeof t)));
    temp _compar compar)
    SEP (data_at sh (Tarray t N noattr) (upd_Znth i bl (Znth j bl)) base;
    data_at Tsh t (Znth i bl) v_tmp; FRZL FR2)).
@@ -484,7 +508,7 @@ apply semax_seq'
  ( PROP ( )
    (LOCALx ([temp _i (Vint (Int.repr i));
    temp _j (Vint (Int.repr j));
-   temp _base base; temp _size (Vint (Int.repr (sizeof t)))]
+   temp _base base; temp _size (Vlong (Int64.repr (sizeof t)))]
   ++ [temp _n (Vint (Int.repr (N - 1)));
    temp _m (Vint (Int.repr 0));
    lvar _tmp (tarray tuchar 1024) v_tmp;
@@ -495,7 +519,7 @@ apply semax_seq'
  (PROP ( )
    (LOCALx ([temp _i (Vint (Int.repr i));
    temp _j (Vint (Int.repr j));
-   temp _base base; temp _size (Vint (Int.repr (sizeof t)))]
+   temp _base base; temp _size (Vlong (Int64.repr (sizeof t)))]
   ++ [temp _n (Vint (Int.repr (N - 1)));
    temp _m (Vint (Int.repr 0));
    lvar _tmp (tarray tuchar 1024) v_tmp;
@@ -517,13 +541,14 @@ apply semax_seq'
   (* memcpy(a(j), tmp), size); *)
   forward_call (sh, Tsh, offset_val (j*sizeof t) base, v_tmp, 
                             existT reptype t (Znth i bl)).
-  split.
+(*  split.
   assert (0 <= j*sizeof t); [ | rep_lia].
   apply Z.mul_nonneg_nonneg; rep_lia.
   eapply Z.le_trans; try apply H1.
   apply Zmult_le_compat_r.
   lia.
   lia.
+*)
   simpl.
   sep_apply (split2_data_at_Tarray_unfold sh t N j).
   lia.
@@ -535,7 +560,7 @@ apply semax_seq'
   fold (tarray t 1).
   erewrite data_at_singleton_array_eq by reflexivity.
   cancel.
- split3; auto.
+(* split3; auto.*)
  simpl. destruct Hok as [_ [_ ?]]; auto.
  simpl.
  pose (bl'' := upd_Znth j bl' (Znth i bl)).
@@ -560,8 +585,7 @@ apply semax_seq'
  forward.
  forward.
  Exists (i+1) (j-1) (upd_Znth j (upd_Znth i bl (Znth j bl)) (Znth i bl)).
- entailer!.
- clear H2 H3 H4 H7 H PNbase PNcompar Pv_pivot0 HPv_pivot.
+ entailer!. clear H2 H3 H4 H7 H PNbase PNcompar Pv_pivot0 HPv_pivot.
  clear Delta_specs FR2 Pv_tmp HPv_tmp Pv_tmp0 Pv_pivot.
  autorewrite with sublist.
  split3; [ | | split3; [ | | split3]].
@@ -701,7 +725,7 @@ Hint Resolve no_saturate_hack: saturate_local.
 forward.
 forward.
 set (N := Zlength al) in *.
-rewrite sub_repr.
+normalize.
 deadvars!.
 forward_if (EX bl:list (reptype t), 
               PROP(Permutation al bl; sorted  (ord_le ord) bl) 
@@ -710,7 +734,7 @@ forward_if (EX bl:list (reptype t),
                          lvar _tmp (tarray tuchar 1024) v_tmp;
                          lvar _pivot (tarray tuchar 1024) v_pivot;
                          temp _base base;
-                         temp _size (Vint (Int.repr (sizeof t)));
+                         temp _size (Vptrofs (Ptrofs.repr (sizeof t)));
                          temp _compar compar)
               SEP(data_at_ Tsh (tarray tuchar 1024) v_tmp;
                     data_at_ Tsh (tarray tuchar 1024) v_pivot;
@@ -718,10 +742,24 @@ forward_if (EX bl:list (reptype t),
                     data_at sh (tarray t N) bl base)).
 2:{
 forward. Exists al. entailer!.
+subst N. 
+split.
 destruct al. constructor.
 destruct al. constructor.
-elimtype False.
-subst N. rewrite !Zlength_cons in H2. clear - H2. rep_lia.
+exfalso.
+rewrite !Zlength_cons in H0,H2. 
+clear - H2 H0.
+rewrite Int64.Z_mod_modulus_eq in H2.
+rewrite Z.mod_small in H2 by rep_lia.
+rewrite Int.signed_repr in H2; rep_lia.
+*
+rewrite Int64.Z_mod_modulus_eq in H2.
+destruct al. simpl. f_equal. compute. f_equal. apply proof_irr.
+rewrite Zlength_cons in *.
+rewrite Z.mod_small in H2 by rep_lia.
+f_equal. 
+rewrite Int64.unsigned_repr by rep_lia.
+auto.
 }
 2:{
 Intros bl.
@@ -730,10 +768,10 @@ entailer!.
 unfold func_ptr'. apply andp_left2; auto.
 }
 change (data_at_ Tsh (tarray tuchar 1024)) with 
-   (data_at Tsh (tarray tuchar 1024) (list_repeat (Z.to_nat 1024) Vundef)).
+   (data_at Tsh (tarray tuchar 1024) (repeat Vundef (Z.to_nat 1024))).
 replace (Z.to_nat 1024) with (Z.to_nat (sizeof t + (1024-sizeof t)))
  by (f_equal; lia).
-rewrite <- list_repeat_app' by lia.
+rewrite <- repeat_app' by lia.
 rewrite !(split2_data_at_Tarray_app (sizeof t) 1024)
  by (autorewrite with sublist; auto).
 Intros.
@@ -743,6 +781,11 @@ change (data_at Tsh (tarray tuchar (sizeof t)) _)
   with (data_at_ Tsh (tarray tuchar (sizeof t))).
 sep_apply data_at__change1; try solve [destruct Hok as [? [? ?]]; auto; rep_lia].
 sep_apply data_at__change1; try solve [destruct Hok as [? [? ?]]; auto; rep_lia].
+assert (N<>0) by (intro; rewrite H3 in H2; inv H2).
+rewrite Int64.Z_mod_modulus_eq in H2.
+rewrite Z.mod_small in H2 by rep_lia.
+rewrite Int.signed_repr in H2 by rep_lia. clear H3.
+rewrite Int64.unsigned_repr by rep_lia.
 forward_call (Tsh, sh, v_pivot, offset_val ((N-1)*sizeof t) base, 
                             existT reptype t (Znth (N-1) al)).
  simpl.
@@ -755,7 +798,6 @@ forward_call (Tsh, sh, v_pivot, offset_val ((N-1)*sizeof t) base,
   erewrite data_at_singleton_array_eq by reflexivity.
   rewrite field_adr_ofs by (auto; lia). 
  cancel.
- split3; auto.
  simpl. destruct Hok as [_ [_ ?]]; auto.
  simpl.
  set (pivot := Znth (N-1) al).
@@ -787,7 +829,7 @@ forward_call (Tsh, sh, v_pivot, offset_val ((N-1)*sizeof t) base,
                 temp _m (Vint (Int.repr 0));
                 lvar _tmp (tarray tuchar 1024) v_tmp;
                 lvar _pivot (tarray tuchar 1024) v_pivot;
-                temp _base base; temp _size (Vint (Int.repr (sizeof t)));
+                temp _base base; temp _size (Vlong (Int64.repr (sizeof t)));
                 temp _compar compar)
        SEP (data_at sh (Tarray t N noattr) bl base;
               data_at Tsh t pivot v_pivot; data_at_ Tsh t v_tmp;
@@ -798,15 +840,15 @@ entailer!.
 autorewrite with sublist.
 split3.
 constructor.
-constructor. subst pivot.
-split; auto.
-fold (ord_def ord (Znth (N-1) al)).
+subst pivot.
+fold (ord_def ord (Znth (Zlength al -1) al)).
 apply Forall_Znth; auto. lia.
 right; split; auto.
-pattern (Znth (N-1) al).
+subst pivot.
+pattern (Znth (Zlength al - 1) al).
 apply Forall_Znth; auto; try lia.
 eapply Forall_impl; try apply Hdef_al.
-intros. split; auto.
+intros.  split; auto.
 - (* tc_expr of main while loop *)
 entailer!.
 - (* body of main while loop *)
@@ -842,7 +884,7 @@ apply semax_seq' with (EX i:Z,
                 temp _m (Vint (Int.repr 0));
                 lvar _tmp (tarray tuchar 1024) v_tmp;
                 lvar _pivot (tarray tuchar 1024) v_pivot;
-                temp _base base; temp _size (Vint (Int.repr (sizeof t)));
+                temp _base base; temp _size (Vlong (Int64.repr (sizeof t)));
                 temp _compar compar)
        SEP (data_at sh (tarray t N) bl base;
               data_at Tsh t pivot v_pivot; data_at_ Tsh t v_tmp;
@@ -862,13 +904,12 @@ apply qsort_loop_i; auto; lia.
                  temp _m (Vint (Int.repr 0));
                  lvar _tmp (tarray tuchar 1024) v_tmp;
                  lvar _pivot (tarray tuchar 1024) v_pivot;
-                 temp _base base; temp _size (Vint (Int.repr (sizeof t)));
+                 temp _base base; temp _size (Vlong (Int64.repr (sizeof t)));
                  temp _compar compar)
        SEP (data_at sh (tarray t N) bl base;
               data_at Tsh t pivot v_pivot; data_at_ Tsh t v_tmp;
               FRZL FR1; func_ptr' (compare_spec t ord) compar)).
-apply qsort_loop_j; auto.
-lia.
+apply qsort_loop_j; auto; lia.
  (* after the j loop *)
  rename H into H''.
   Intros j'. subst n.
@@ -879,11 +920,11 @@ lia.
    destruct H10; auto. destruct H10; subst j.
    destruct (zeq j' (N-1)); auto.
    left.
-   apply Forall_Znth with (i0:=(N-1)-j'-1) in H6; 
+   apply Forall_Znth with (i:=(N-1)-j'-1) in H6; 
      try (autorewrite with sublist; lia). 
    autorewrite with sublist in H6.
    replace (N-1 - j' - 1 + (j' + 1)) with (N-1) in H6 by lia.
-   elimtype False.
+   exfalso.
    clear - H12 H6.
    red in H12,H6. destruct H12, H6. contradiction.
   }
@@ -916,7 +957,7 @@ lia.
                temp _m (Vint (Int.repr 0));
                lvar _tmp (tarray tuchar 1024) v_tmp;
                lvar _pivot (tarray tuchar 1024) v_pivot;
-               temp _base base; temp _size (Vint (Int.repr (sizeof t)));
+               temp _base base; temp _size (Vlong (Int64.repr (sizeof t)));
                temp _compar compar)
    SEP (data_at sh (tarray t N) bl base;
    data_at Tsh t pivot v_pivot; data_at_ Tsh t v_tmp;
@@ -948,11 +989,12 @@ lia.
     apply Forall_sublist; auto.
    pose (w1 := Build_qsort_witness _ t Hok ord _ Hdef_blj).
    forward_call (sh, base, compar, w1).
-     {entailer!.  simpl. autorewrite with sublist. auto. }
+     {entailer!.  simpl. autorewrite with sublist. normalize. }
      { simpl. autorewrite with sublist. cancel. }
      { simpl.
-       split3; auto; try lia.
-       autorewrite with sublist. split; try rep_lia.
+       split; auto; try lia.
+       autorewrite with sublist. 
+       split. rep_lia.
        eapply Z.le_trans; try apply H1.
        apply Z.mul_le_mono_nonneg_r; lia.
      }
@@ -982,6 +1024,7 @@ lia.
     apply Forall_sublist; auto.
    pose (w2 := Build_qsort_witness _ t Hok ord _ Hdef_blj').
    forward_call (sh, offset_val (i * sizeof t) base, compar, w2).
+(*
   split.
   assert (0 <= i*sizeof t); [ | rep_lia].
   apply Z.mul_nonneg_nonneg; rep_lia.
@@ -989,8 +1032,9 @@ lia.
   apply Zmult_le_compat_r.
   lia.
   lia.
+*)
   entailer!.
-  simpl. autorewrite with sublist. do 4 f_equal. lia.
+  simpl. autorewrite with sublist. do 4 f_equal. normalize. lia.
   simpl.
   autorewrite with sublist.
   cancel.
@@ -1068,10 +1112,10 @@ lia.
    sep_apply (data_at__change2 Tsh t).
    fold (tarray tuchar 1024).
    change (data_at_ Tsh (tarray tuchar 1024)) with 
-      (data_at Tsh (tarray tuchar 1024) (list_repeat (Z.to_nat 1024) Vundef)).
+      (data_at Tsh (tarray tuchar 1024) (repeat Vundef (Z.to_nat 1024))).
    replace (Z.to_nat 1024) with (Z.to_nat (sizeof t + (1024-sizeof t)))
      by (f_equal; lia).
-   rewrite <- list_repeat_app' by lia.
+   rewrite <- repeat_app' by lia.
    rewrite !(split2_data_at_Tarray_app (sizeof t) 1024) by (autorewrite with sublist; lia).
    unfold tarray.
    rewrite !field_adr_ofs; auto with field_compatible; try lia.

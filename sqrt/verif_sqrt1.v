@@ -1,6 +1,6 @@
 Require Import VST.floyd.proofauto.
 Require Import sqrt1.
-Instance CompSpecs : compspecs. make_compspecs prog. Defined.
+#[export] Instance CompSpecs : compspecs. make_compspecs prog. Defined.
 Definition Vprog : varspecs. mk_varspecs prog. Defined.
 
 Require Import float_lemmas sqrt1_f.

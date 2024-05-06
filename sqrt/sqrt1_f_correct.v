@@ -1,7 +1,7 @@
-From Flocq3 Require Core Binary.
+From Flocq Require Core Binary.
 From Coquelicot Require Import Coquelicot.
 Require Import Reals Psatz.
-From GappaFlocq3 Require Import Gappa_library Gappa_definitions.
+From Gappa Require Import Gappa_library Gappa_definitions.
 
 Import Defs Raux FLT Generic_fmt Binary Ulp.
 Require Import FunInd Recdef.
@@ -17,7 +17,7 @@ Definition body_exp x y := float_div (float_plus y (float_div x y)) float2.
 
 Notation f_exp := (FLT_exp fmin ms).
 
-Definition round' x := round radix2 f_exp (round_mode mode_NE) x.
+Definition round' x := round radix2 f_exp (BinarySingleNaN.round_mode BinarySingleNaN.mode_NE) x.
 
 Notation r2 := Gappa_definitions.radix2.
 
@@ -135,7 +135,7 @@ generalize (from_g.l1 b e).
 unfold from_g.s1, from_g.s2, from_g.s3, from_g.i1, from_g.i2, from_g.i3, BND.
 fold ms fmin.
 cbv [lower upper].
-change rndNE with (round_mode mode_NE).
+change rndNE with (BinarySingleNaN.round_mode BinarySingleNaN.mode_NE).
 replace (float2R from_g.f1) with 1 by (compute; lra).
 replace (float2R from_g.f2) with 2 by (compute; lra).
 replace (float2R from_g.f3) with (- (32) * bpow r2 (- ms')) by (compute; lra).
@@ -143,9 +143,9 @@ replace (float2R from_g.f4) with 3 by (compute; lra).
 replace (float2R from_g.f5) with (-5 * bpow r2 (- (ms))) by (compute; lra).
 replace (float2R from_g.f6) with (5 * bpow r2 (- (ms))) by (compute; lra).
 change (Float1 2) with 2.
-change (round r2 f_exp (round_mode mode_NE)
-     (round r2 f_exp (round_mode mode_NE)
-        (b + e + round r2 f_exp (round_mode mode_NE) (b * b / (b + e))) /
+change (round r2 f_exp (BinarySingleNaN.round_mode BinarySingleNaN.mode_NE)
+     (round r2 f_exp (BinarySingleNaN.round_mode BinarySingleNaN.mode_NE)
+        (b + e + round r2 f_exp (BinarySingleNaN.round_mode BinarySingleNaN.mode_NE) (b * b / (b + e))) /
       2)) with
  (round' (round' ((b + e) + round' (b * b / (b + e))) / 2)).
 lra.
@@ -290,7 +290,7 @@ Lemma round_f2real x : round' (f2real x) = f2real x.
 Proof.
 assert (tmp := generic_format_FLT radix2 _ ms _
                    (FLT_format_B2R ms es eq_refl x)).
-now apply round_generic;[ apply valid_rnd_round_mode | exact tmp ].
+now apply round_generic;[ apply BinarySingleNaN.valid_rnd_round_mode | exact tmp ].
 Qed.
 
 Lemma round_bpow e : (fmin <= e < es)%Z -> round' (bpow r2 e) = bpow r2 e.
@@ -300,15 +300,14 @@ destruct (Z.eq_dec fmin e) as [bottom | nobottom].
   now rewrite <- bottom, <- f_min_val, round_f2real.
 destruct (Z_le_dec (2 - es) e) as [normal | subnormal].
   set (m := (2 ^ Z.to_pos ms')%positive).
-  assert (bprf : Binary.bounded ms es m (e - ms') = true).
-    unfold Binary.bounded, canonical_mantissa.
+  assert (bprf : SpecFloat.bounded ms es m (e - ms') = true).
+    unfold SpecFloat.bounded, SpecFloat.canonical_mantissa.
     rewrite andb_true_iff; split; cycle 1.
       rewrite <- Zle_is_le_bool; unfold fmin, es, ms', ms in inte, normal|- *.
       lia.
     assert (vm : Z.pos (Digits.digits2_pos m) = ms) by reflexivity.
-    rewrite vm; unfold FLT_exp.
-    apply Zeq_bool_true; rewrite Zmax_left; [ring | ].
-    unfold fmin, ms', ms, es in inte, normal |- *; lia.
+    rewrite vm; unfold SpecFloat.fexp, SpecFloat.emin.
+    apply Zaux.Zeq_bool_true; rewrite Zmax.Zmax_left; [ring | ]. unfold ms'; lia.
   assert (v : bpow r2 e = f2real
            (B754_finite ms es false
                (2 ^ Z.to_pos ms')
@@ -318,23 +317,23 @@ destruct (Z_le_dec (2 - es) e) as [normal | subnormal].
     rewrite <- (bpow_powerRZ r2), <- bpow_plus; apply f_equal.
     unfold ms', ms; ring.
   now rewrite v; apply round_f2real.
-assert (bprf : Binary.bounded ms es (Z.to_pos (2 ^ (e - fmin))) fmin = true).
-  unfold Binary.bounded, canonical_mantissa, FLT_exp.
+assert (bprf : SpecFloat.bounded ms es (Z.to_pos (2 ^ (e - fmin))) fmin = true).
+  unfold SpecFloat.bounded, SpecFloat.canonical_mantissa, SpecFloat.fexp, SpecFloat.emin.
   rewrite Z2Pos.inj_pow; try lia.
   rewrite Digits.Zpos_digits2_pos, <- Z2Pos.inj_pow, Z2Pos.id; cycle 1.
-        apply (Zpower_gt_0 r2); unfold fmin in inte |- *; lia.
+        apply (Zaux.Zpower_gt_0 r2); unfold fmin in inte |- *; lia.
       lia.
     lia.
   rewrite andb_true_iff; split;[ | reflexivity].
-  apply Zeq_bool_true.
+  apply Zaux.Zeq_bool_true.
   rewrite Digits.Zdigits_Zpower; try lia.
-  rewrite Zmax_right;[unfold fmin, ms, es; ring | ].
+  rewrite Zmax.Zmax_right; [unfold fmin, ms, es; ring | ].
   unfold fmin, ms, es in inte, nobottom, subnormal |- *; lia.
 set (v := B754_finite ms es false _ fmin bprf).
 assert (ev : bpow r2 e = f2real v).
   unfold f2real, B2R; simpl; unfold F2R, Defs.Fnum, Defs.Fexp.
   rewrite Z2Pos.id; cycle 1. 
-    apply (Zpower_gt_0 r2); lia.
+    apply (Zaux.Zpower_gt_0 r2); lia.
   rewrite <- (Z2Nat.id (e - fmin)); try lia.
   rewrite <- pow_IZR, pow_powerRZ, Z2Nat.id; try lia.
   rewrite <- (bpow_powerRZ r2), <- bpow_plus; apply f_equal; ring.
@@ -366,16 +365,16 @@ Proof.
 intros xley.
 apply round_le; auto.
   now apply (fexp_correct ms es).
-now apply valid_rnd_round_mode.
+now apply BinarySingleNaN.valid_rnd_round_mode.
 Qed.
 
-Lemma round1 m: round radix2 f_exp (round_mode m) 1 = 1%R.
+Lemma round1 m: round radix2 f_exp (BinarySingleNaN.round_mode m) 1 = 1%R.
 Proof.
 assert (for1 : generic_format radix2 f_exp 1).
-  replace 1%R with (F2R (Float radix2 (cond_Zopp false (2 ^ 23)) (-23))).
+  replace 1%R with (F2R (Float radix2 (SpecFloat.cond_Zopp false (2 ^ 23)) (-23))).
     now apply generic_format_canonical, (canonical_canonical_mantissa 24 128).
   compute; lra.
-now apply round_generic; auto; apply valid_rnd_round_mode.
+now apply round_generic; auto; apply BinarySingleNaN.valid_rnd_round_mode.
 Qed.
 
 Definition f_max : float :=
@@ -456,7 +455,7 @@ assert (ygt0 : y <> 0) by lra.
 assert (divint : 0 < x / y <= 2 * x).
   now apply body_exp_div_x_y_bounds1.
 split.
-  rewrite <- (round_0 radix2 f_exp (round_mode mode_NE)).
+  rewrite <- (round_0 radix2 f_exp (BinarySingleNaN.round_mode BinarySingleNaN.mode_NE)).
   now apply round_le'; lra.
 apply round_le'; tauto.
 Qed.
@@ -471,7 +470,7 @@ assert (xgt0 : 0 < x).
 assert (ygt0 : 0 < y).
   now apply Rlt_le_trans with (2 := proj1 inty), bpow_gt_0.
 split.
-  rewrite <- (round_0 radix2 f_exp (round_mode mode_NE)).
+  rewrite <- (round_0 radix2 f_exp (BinarySingleNaN.round_mode BinarySingleNaN.mode_NE)).
   now apply round_le', Rlt_le, Rdiv_lt_0_compat.
 rewrite <- round_f2real.
 apply round_le'.
@@ -588,6 +587,8 @@ enough (0 < y) by lra.
 now apply Rlt_le_trans with (2 := proj1 inty); apply bpow_gt_0.
 Qed.
 
+Require Import Lra.
+
 Lemma body_exp_finite_value x y :
   is_finite ms es x = true ->
   is_finite ms es y = true ->
@@ -603,7 +604,7 @@ assert (tmp := body_exp_bounds _ _ intx' inty').
 assert (tm2 := body_exp_sum_bounds _ _ intx' inty').
 assert (tm3 := body_exp_div_x_y_bounds _ _ (proj1 intx') (proj1 inty')).
 unfold body_exp_R in tmp, tm2, tm3.
-assert (tm4 := Bdiv_correct ms es eq_refl eq_refl binop_nan mode_NE x y yn0).
+assert (tm4 := Bdiv_correct ms es eq_refl eq_refl binop_nan BinarySingleNaN.mode_NE x y yn0).
 assert (divlt : Rabs (round' (f2real x / f2real y)) < bpow radix2 es).
   rewrite Rabs_pos_eq;[ | lra].
   assert (tmp5:= conj boundpredf_max boundf_max).
@@ -614,7 +615,7 @@ rewrite Rlt_bool_true in tm4;[ | exact divlt].
 destruct tm4 as [vdivxy [findivxy signdivxy]].
 clear divlt.
 unfold float_plus.
-set (divxy := Bdiv ms es eq_refl eq_refl binop_nan mode_NE x y).
+set (divxy := Bdiv ms es eq_refl eq_refl binop_nan BinarySingleNaN.mode_NE x y).
 fold divxy in signdivxy, findivxy, vdivxy.
 fold (f2real divxy) in vdivxy.
 set (divxy' := f2real divxy); fold divxy' in vdivxy.
@@ -623,10 +624,13 @@ assert (findivxy' : is_finite ms es divxy = true).
 assert (pluslt : Rabs (round' (f2real y + divxy')) < bpow radix2 es).
   rewrite vdivxy.
   change (3 - es -ms)%Z with (fmin)%Z.
-  fold (f2real x); fold (f2real y); fold (round' (f2real x / f2real y)).
+  fold (f2real x) in *; fold (f2real y) in *; fold (round' (f2real x / f2real y)).
+  clear divxy' vdivxy.
+  change (SpecFloat.fexp ms es) with f_exp in *.
+  fold (round' (f2real x / f2real y)).  
   rewrite Rabs_pos_eq by lra.
   now assert (tmp5:= conj boundpredf_max boundf_max); lra.
-assert (tm6 := Bplus_correct ms es eq_refl eq_refl binop_nan mode_NE y
+assert (tm6 := Bplus_correct ms es eq_refl eq_refl binop_nan BinarySingleNaN.mode_NE y
                      divxy finy findivxy').
 rewrite Rlt_bool_true in tm6;[ | exact pluslt].
 fold (f2real divxy) in tm6; fold divxy' in tm6; fold (f2real y) in tm6.
@@ -635,23 +639,26 @@ fold (round' (f2real y + divxy')) in tm6.
 destruct tm6 as [vsum [finsum signsum]].
 assert (fin2 : is_finite ms es float2 = true) by reflexivity.
 assert (b2n0 : f2real float2 <> 0%R) by now compute; lra.
-assert (tm4 := Bdiv_correct ms es eq_refl eq_refl binop_nan mode_NE
-                   (Bplus ms es eq_refl eq_refl binop_nan mode_NE y
-          (Bdiv ms es eq_refl eq_refl binop_nan mode_NE x y))
+assert (tm4 := Bdiv_correct ms es eq_refl eq_refl binop_nan BinarySingleNaN.mode_NE
+                   (Bplus ms es eq_refl eq_refl binop_nan BinarySingleNaN.mode_NE y
+          (Bdiv ms es eq_refl eq_refl binop_nan BinarySingleNaN.mode_NE x y))
                    _ b2n0).
-  set (bexp :=   Bdiv ms es eq_refl eq_refl binop_nan mode_NE
-              (Bplus ms es eq_refl eq_refl binop_nan mode_NE y
-                 (Bdiv ms es eq_refl eq_refl binop_nan mode_NE x y))
+  set (bexp :=   Bdiv ms es eq_refl eq_refl binop_nan BinarySingleNaN.mode_NE
+              (Bplus ms es eq_refl eq_refl binop_nan BinarySingleNaN.mode_NE y
+                 (Bdiv ms es eq_refl eq_refl binop_nan BinarySingleNaN.mode_NE x y))
               float2).
 fold bexp in tm4.
-set (sum := (Bplus ms es eq_refl eq_refl binop_nan mode_NE y
+set (sum := (Bplus ms es eq_refl eq_refl binop_nan BinarySingleNaN.mode_NE y
                        divxy)).
 fold divxy sum in vsum, finsum, signsum, tm4.
+  change (SpecFloat.fexp ms es) with f_exp in *.
 assert (explt : Rabs (round' (f2real sum / f2real float2)) < bpow radix2 es).
   replace (f2real float2) with 2%R by (now compute; lra).
    fold (f2real sum) in vsum; rewrite vsum; rewrite vdivxy.
   change (3 - es -ms)%Z with (fmin)%Z; fold (f2real x) (f2real y).
-   fold (round' (f2real x / f2real y)) divxy'.
+  fold (round' (f2real x / f2real y)).
+  change (round _ _ _ ?a) with (round' a).
+(*   fold (round' (f2real x / f2real y)) divxy'.*)
   rewrite Rabs_pos_eq;[ | lra].
   now assert (tmp5:= conj boundpredf_max boundf_max); lra.
 rewrite Rlt_bool_true in tm4;[ | exact explt].
@@ -681,7 +688,7 @@ assert (tmp := body_exp_bounds' _ _ (round_f2real _) intx' inty').
 assert (tm2 := body_exp_sum_bounds' _ _ (round_f2real _) intx' inty').
 assert (tm3 := body_exp_div_x_y_bounds' _ _ intx' inty').
 unfold body_exp_R in tmp, tm2, tm3.
-assert (tm4 := Bdiv_correct ms es eq_refl eq_refl binop_nan mode_NE x y yn0).
+assert (tm4 := Bdiv_correct ms es eq_refl eq_refl binop_nan BinarySingleNaN.mode_NE x y yn0).
 assert (divlt : Rabs (round' (f2real x / f2real y)) < bpow radix2 es).
   rewrite Rabs_pos_eq;[ | lra].
   assert (tmp5:= conj boundpredf_max boundf_max).
@@ -692,7 +699,7 @@ rewrite Rlt_bool_true in tm4;[ | exact divlt].
 destruct tm4 as [vdivxy [findivxy signdivxy]].
 clear divlt.
 unfold float_plus.
-set (divxy := Bdiv ms es eq_refl eq_refl binop_nan mode_NE x y).
+set (divxy := Bdiv ms es eq_refl eq_refl binop_nan BinarySingleNaN.mode_NE x y).
 fold divxy in signdivxy, findivxy, vdivxy.
 fold (f2real divxy) in vdivxy.
 set (divxy' := f2real divxy); fold divxy' in vdivxy.
@@ -702,9 +709,10 @@ assert (pluslt : Rabs (round' (f2real y + divxy')) < bpow radix2 es).
   rewrite vdivxy.
   change (3 - es -ms)%Z with (fmin)%Z.
   fold (f2real x); fold (f2real y); fold (round' (f2real x / f2real y)).
+  change (round _ _ _ ?a) with (round' a).
   rewrite Rabs_pos_eq by lra.
   now assert (tmp5:= conj boundpredf_max boundf_max); lra.
-assert (tm6 := Bplus_correct ms es eq_refl eq_refl binop_nan mode_NE y
+assert (tm6 := Bplus_correct ms es eq_refl eq_refl binop_nan BinarySingleNaN.mode_NE y
                      divxy finy findivxy').
 rewrite Rlt_bool_true in tm6;[ | exact pluslt].
 fold (f2real divxy) in tm6; fold divxy' in tm6; fold (f2real y) in tm6.
@@ -713,16 +721,16 @@ fold (round' (f2real y + divxy')) in tm6.
 destruct tm6 as [vsum [finsum signsum]].
 assert (fin2 : is_finite ms es float2 = true) by reflexivity.
 assert (b2n0 : f2real float2 <> 0%R) by now compute; lra.
-assert (tm4 := Bdiv_correct ms es eq_refl eq_refl binop_nan mode_NE
-                   (Bplus ms es eq_refl eq_refl binop_nan mode_NE y
-          (Bdiv ms es eq_refl eq_refl binop_nan mode_NE x y))
+assert (tm4 := Bdiv_correct ms es eq_refl eq_refl binop_nan BinarySingleNaN.mode_NE
+                   (Bplus ms es eq_refl eq_refl binop_nan BinarySingleNaN.mode_NE y
+          (Bdiv ms es eq_refl eq_refl binop_nan BinarySingleNaN.mode_NE x y))
                    _ b2n0).
-  set (bexp :=   Bdiv ms es eq_refl eq_refl binop_nan mode_NE
-              (Bplus ms es eq_refl eq_refl binop_nan mode_NE y
-                 (Bdiv ms es eq_refl eq_refl binop_nan mode_NE x y))
+  set (bexp :=   Bdiv ms es eq_refl eq_refl binop_nan BinarySingleNaN.mode_NE
+              (Bplus ms es eq_refl eq_refl binop_nan BinarySingleNaN.mode_NE y
+                 (Bdiv ms es eq_refl eq_refl binop_nan BinarySingleNaN.mode_NE x y))
               float2).
 fold bexp in tm4.
-set (sum := (Bplus ms es eq_refl eq_refl binop_nan mode_NE y
+set (sum := (Bplus ms es eq_refl eq_refl binop_nan BinarySingleNaN.mode_NE y
                        divxy)).
 fold divxy sum in vsum, finsum, signsum, tm4.
 assert (0 < bpow r2 (1 - es)) by apply bpow_gt_0.
@@ -731,6 +739,8 @@ assert (explt : Rabs (round' (f2real sum / f2real float2)) < bpow radix2 es).
    fold (f2real sum) in vsum; rewrite vsum; rewrite vdivxy.
   change (3 - es -ms)%Z with (fmin)%Z; fold (f2real x) (f2real y).
    fold (round' (f2real x / f2real y)) divxy'.
+  change (round _ _ _ ?a) with (round' a).
+  change (round _ _ _ ?a) with (round' a).
   rewrite Rabs_pos_eq;[ | lra].
   now assert (tmp5:= conj boundpredf_max boundf_max); lra.
 rewrite Rlt_bool_true in tm4;[ | exact explt].
@@ -932,11 +942,11 @@ assert (0 < x / y).
   apply Rmult_lt_0_compat;[lra | apply Rinv_0_lt_compat; lra].
 assert (VE := @FLT_exp_valid fmin ms (eq_refl _)).
 assert (0 <= round' (x / y)).
-  rewrite <- (round_0 r2 f_exp (round_mode mode_NE)).
+  rewrite <- (round_0 r2 f_exp (BinarySingleNaN.round_mode BinarySingleNaN.mode_NE)).
   apply round_le; try typeclasses eauto; lra.
 assert (rsum : Rabs (round' (y + round' (x / y)) - (y + round' (x / y))) <=
             ulp r2 f_exp y * 2).
-  apply Rle_trans with (1 := error_le_ulp r2 f_exp (round_mode mode_NE)
+  apply Rle_trans with (1 := error_le_ulp r2 f_exp (BinarySingleNaN.round_mode BinarySingleNaN.mode_NE)
                              (y + round' (x / y))).
   replace 2 with (bpow r2 1) by (compute; lra).
   rewrite <- ulp_FLT_exact_shift;
@@ -950,7 +960,7 @@ rewrite Rmult_assoc, Rinv_r, Rmult_1_r in rsum;[ | lra].
 replace (/ 2) with (Rabs (/ 2)) in rsum by (rewrite Rabs_pos_eq; lra).
 rewrite <- Rabs_mult, Rmult_minus_distr_r in rsum. 
 assert (rdiv : Rabs (round' (x / y) - x / y) <= ulp r2 f_exp y).
-  assert (tmp := error_le_ulp r2 f_exp (round_mode mode_NE) (x / y)).
+  assert (tmp := error_le_ulp r2 f_exp (BinarySingleNaN.round_mode BinarySingleNaN.mode_NE) (x / y)).
   fold (round' (x / y)) in tmp; apply Rle_trans with (1 := tmp).
   apply ulp_le; try typeclasses eauto; rewrite !Rabs_pos_eq; lra.
 assert (rsum' : Rabs ((y + round' (x / y)) / 2 - (y + x / y) / 2) <=
@@ -1364,7 +1374,7 @@ assert (rdle1 : round' (x / y) <= 1).
   rewrite <- round'1; apply round_le'; lra.
 assert (dge0 : 0 <= x / y) by (apply Rdiv_le_swap_rl; lra).
 assert (rdge0 : 0 <= round' (x / y)).
-  rewrite <- (round_0 r2 f_exp (round_mode mode_NE)).
+  rewrite <- (round_0 r2 f_exp (BinarySingleNaN.round_mode BinarySingleNaN.mode_NE)).
   now apply round_le'.
 assert (sl5 : y + round' (x / y) <= 5 / 4 * y) by lra.
 assert (sge4 : 4 < y + round' (x / y)) by lra.
@@ -1372,7 +1382,7 @@ assert (sgt0 : 0 < y + round' (x / y)) by lra.
 assert (rsg4 : 4 <= round' (y + round' (x / y))).
   rewrite <- round'4; apply round_le'; lra.
 assert (rsl5 : round' (y + round' (x / y)) <= 11 / 8 * y).
-  assert (tmp := error_le_ulp r2 f_exp (round_mode mode_NE)
+  assert (tmp := error_le_ulp r2 f_exp (BinarySingleNaN.round_mode BinarySingleNaN.mode_NE)
              (y + round' (x / y))).
   apply Rabs_def2b in tmp.
   assert (a : bpow r2 (fmin + ms - 1) <= Rabs (y + round' (x / y))).
@@ -1390,7 +1400,7 @@ assert (rsl5 : round' (y + round' (x / y)) <= 11 / 8 * y).
   apply Rmult_le_compat_r; [ | compute]; lra.
 assert (round' (y + round' (x / y)) / 2 <= 11 / 16 * y) by lra.
 assert (bge2 : 2 <= round' (y + round' (x / y)) / 2) by lra.
-assert (tmp := error_le_ulp r2 f_exp (round_mode mode_NE)
+assert (tmp := error_le_ulp r2 f_exp (BinarySingleNaN.round_mode BinarySingleNaN.mode_NE)
              (round' (y + round' (x / y)) / 2)).
 apply Rabs_def2b in tmp; fold (round' (round' (y + round' (x / y)) / 2)) in tmp.
 fold (body_exp_R x y) in tmp.
@@ -1402,7 +1412,7 @@ intros tm2.
 split.
   assert (sge1 := sqrt_1_4 x intx).
   apply Rle_trans with (round' (sqrt x)).
-    assert (tm3 := error_le_ulp r2 f_exp (round_mode mode_NE) (sqrt x)).
+    assert (tm3 := error_le_ulp r2 f_exp (BinarySingleNaN.round_mode BinarySingleNaN.mode_NE) (sqrt x)).
     assert (a2 : bpow r2 (fmin + ms - 1) <= Rabs (sqrt x)).
       rewrite Rabs_pos_eq by lra.
       apply Rle_trans with (2 := proj1 sge1); compute; lra.
@@ -1653,13 +1663,13 @@ rewrite tech.
 rewrite round_mult_bpow;unfold fmin, ms in rsb |- *;[lra | lra | | ]; lia.
 Qed.
 
-Definition r4 := Build_radix 4 eq_refl.
+Definition r4 := Zaux.Build_radix 4 eq_refl.
 
 Lemma r2r4 e : bpow r2 (2 * e) = bpow r4 e.
 Proof.
 rewrite !bpow_powerRZ, !powerRZ_Rpower; try (simpl; lra).
-change (IZR r2) with 2%R.
-change (IZR r4) with 4%R.
+change (IZR (_ r2)) with 2%R.
+change (IZR (_ r4)) with 4%R.
 replace 4 with (Rpower 2 2).
   now rewrite Rpower_mult, mult_IZR.
 rewrite <- powerRZ_Rpower; simpl; lra.
@@ -1738,7 +1748,7 @@ assert (ediv2 : e = (mag_val _ _ (mag r2 (x)) / 2 +
   rewrite <- !r2r4.
   assert (cases : (v mod 2 = 0)%Z \/ (v mod 2 = 1)%Z).
     assert (tmp := Z.mod_pos_bound v 2 twogt0'); lia.
-  assert (veq := Z_div_mod_eq v _ twogt0).
+  assert (veq := Zdiv.Z_div_mod_eq_full v 2).
   destruct cases as [even | odd].
     rewrite even, Z.add_0_r in veq |- *.
     rewrite Z.mul_sub_distr_l, <- veq, Z.mul_1_r; split; [ | lra].
@@ -1758,13 +1768,13 @@ assert (cex2b : (- ms' <= (cexp' x2) <= -(ms - 3))%Z).
 assert (egemin : (2 - halfes <= e <= halfes)%Z).
   assert (mdiv2lb : (3 - halfes <= mag r2 x / 2)%Z).
     replace (3 - halfes)%Z with ((6 - es) / 2)%Z by reflexivity.
-    apply Z_div_le;[reflexivity | lia].
+    apply Zdiv.Z_div_le;[reflexivity | lia].
   assert (tmp := Z.mod_pos_bound (mag r2 (x)) 2 eq_refl).
   assert (steplb : (2 - halfes <= e)%Z).
      unfold fmin in mdiv2lb |- *; lia.
   split;[ | enough (mdiv2ub : (mag r2 x / 2 <= halfes)%Z) by lia]; cycle 1.
     replace halfes with (es / 2)%Z by reflexivity.
-    apply Z_div_le;[reflexivity | lia].
+    apply Zdiv.Z_div_le;[reflexivity | lia].
   lia.
 assert (cx'bounds : (fmin  < 2 * e + cexp' x2)%Z).
   unfold halfes, fmin, ms', ms, es in cex2b, egemin |- *; lia.
@@ -2367,7 +2377,7 @@ Qed.
 
 Lemma f_min'_eq: f2real f_min' = powerRZ 2 (6 - es).
 Proof.
-unfold f_min', f2real, B2R, F2R, Defs.Fnum, Defs.Fexp, cond_Zopp.
+unfold f_min', f2real, B2R, F2R, Defs.Fnum, Defs.Fexp, SpecFloat.cond_Zopp.
 rewrite Z2Pos.id by reflexivity.
 unfold ms'.
 rewrite (IZR_Zpower radix2) by (compute; congruence).
@@ -2378,7 +2388,7 @@ Qed.
 
 Lemma predf_max_eq:  f2real predf_max = powerRZ 2 (es-2).
 Proof.
-unfold predf_max, f2real, B2R, F2R, Defs.Fnum, Defs.Fexp, cond_Zopp.
+unfold predf_max, f2real, B2R, F2R, Defs.Fnum, Defs.Fexp, SpecFloat.cond_Zopp.
 rewrite Pos2Z.inj_pow.
 rewrite Z2Pos.id by reflexivity.
 rewrite (IZR_Zpower radix2) by (compute; congruence).

@@ -21,6 +21,28 @@ match quicksort_while_body_part2
 | _ => Sskip
 end.
 
+
+Lemma dnth_inj: forall n base a b, 
+  0 <= n <= Int.max_signed ->
+  0 <= a <= n ->
+  0 <= b <= n ->
+  field_compatible (Tarray tdouble n noattr) [] base ->
+  dnth base a = dnth base b -> a=b.
+Proof.
+ intros.
+  destruct H2 as [? [_ [? [_ _]]]].
+  destruct base; try contradiction.
+  red in H4. simpl in H4.
+  unfold dnth in H3. simpl in H3.
+  inv H3. rewrite !ptrofs_of_ints_unfold in *.
+  rewrite !Int.signed_repr in * by rep_lia.
+  rewrite !ptrofs_mul_repr in *.
+  rewrite !Ptrofs.Z_mod_modulus_eq in *.
+  rewrite !Ptrofs.unsigned_repr in * by rep_lia.
+  rewrite !Z.mod_small in H6 by rep_lia. lia.
+Qed.
+
+
 Lemma forward_quicksort_do_loop :
 forall (Espec : OracleKind) (base : val) (al : list val) 
   (lo mid hi : Z) (bl : list val),
@@ -136,6 +158,7 @@ apply tc_val_tdouble_Znth; auto; lia.
 forward.
 apply tc_val_tdouble_Znth; auto; lia.
 forward_if.
+rewrite <- bool2val_eq in H15.
 apply typed_true_cmp in H15.
 forward.
 rewrite dbase_add by (auto; rep_lia).
@@ -162,6 +185,7 @@ rewrite f_cmp_ge_gt_eq; auto.
 forward.
 Exists left.
 entailer!.
+rewrite <- bool2val_eq in H15.
 apply typed_false_cmp in H15; [ | apply Forall_Znth; auto; lia ..].
 auto.
 -
@@ -201,6 +225,7 @@ apply tc_val_tdouble_Znth; auto; lia.
 forward.
 apply tc_val_tdouble_Znth; auto; lia.
 forward_if.
+rewrite <- bool2val_eq in H16.
 apply typed_true_cmp in H16.
 forward.
 rewrite dbase_sub by (auto; rep_lia).
@@ -211,7 +236,7 @@ split.
 split; try lia.
 rewrite Z.sub_add.
 destruct (zeq left (right+1)); try lia.
-subst left. elimtype False.
+subst left. exfalso.
 rewrite (sublist_split lo right) in H14 by lia.
 rewrite Forall_app in H14. destruct  H14 as [_ H14].
 rewrite sublist_one in H14 by lia. inv H14.
@@ -225,6 +250,7 @@ rewrite f_cmp_le_lt_eq; auto.
 forward.
 Exists right.
 entailer!.
+rewrite <- bool2val_eq in H16.
 apply typed_false_cmp in H16; [ | apply Forall_Znth; auto; lia ..].
 auto.
 +
@@ -295,27 +321,33 @@ forward.
 replace base with (dnth base 0) at 1
  by (make_Vptr base; unfold dnth; simpl; normalize).
 rewrite dbase_add by (auto; rep_lia).
-eapply typed_true_pp in H4; eauto; simpl in H4.
-rewrite Z.add_0_l.
-Exists right.
-entailer!.
-clear H25 H24 H23 H22 H21 H20 H18.
+assert_PROP (mid=left)
+  by (entailer!; eapply dnth_inj in H4; try eassumption; rep_lia).
+  subst left.
+ rewrite Z.add_0_l.
+ Exists right.
+ entailer!!.
+(*clear H25 H24 H23 H22 H21 H20 H18.*)
 subst bl'.
 rewrite Znth_swap_in_list2 by lia.
 rewrite Znth_swap_in_list1 by lia.
 split; [ | split3].
 apply f_cmp_swap in H7; auto.
-rewrite sublist_swap_in_list by lia; auto.
+rewrite sublist_swap_in_list
+ by (simpl; rep_lia); auto.
 rewrite f_cmp_le_lt_eq. right.
 apply float_cmp_eq_refl. apply Forall_Znth; auto; lia.
 rewrite sublist_swap_in_list by lia; auto.
 --
-eapply typed_false_pp in H4; eauto; simpl in H4.
+(*eapply typed_false_pp in H4; eauto; simpl in H4.*)
 forward_if.
 ++
 apply test_eq_dnth; try rep_lia; auto.
 ++
-eapply typed_true_pp in H18; eauto; simpl in H18.
+assert_PROP (mid=right)
+  by (entailer!; eapply dnth_inj in H18; try eassumption; rep_lia).
+ subst right.
+ (*eapply typed_true_pp in H18; eauto; simpl in H18.*)
 forward.
 replace base with (dnth base 0) at 1
  by (make_Vptr base; unfold dnth; simpl; normalize).
@@ -334,14 +366,14 @@ auto.
 rewrite sublist_swap_in_list by lia; auto.
 ++
 forward.
-eapply typed_false_pp in H18; eauto; simpl in H18.
+(*eapply typed_false_pp in H18; eauto; simpl in H18.*)
 Exists mid.
 entailer!.
 clear H27 H26 H25 H24 H23 H22 H21 H20.
 subst bl'.
 rewrite Znth_swap_in_list2 by lia.
 rewrite Znth_swap_in_list1 by lia.
-rewrite Znth_swap_in_list_other by lia.
+rewrite Znth_swap_in_list_other by (try lia; congruence).
 split; [ | split3].
 apply f_cmp_swap in H7; auto.
 rewrite sublist_swap_in_list by lia; auto.
@@ -408,7 +440,8 @@ forward_if.
 ++
 apply test_eq_dnth; try rep_lia; auto.
 ++
-eapply typed_true_pp in H19; eauto; simpl in H19.
+assert_PROP (left=right)
+  by (entailer!; eapply dnth_inj in H19; try eassumption; rep_lia).
 subst right.
 forward.
 forward.
@@ -427,7 +460,8 @@ rewrite (sublist_split _ (left+1)) by lia.
 rewrite Forall_app; split; auto.
 rewrite sublist_len_1 by lia; repeat constructor; auto.
 ++
-eapply typed_false_pp in H19; eauto; simpl in H19.
+assert (left<>right) by congruence. clear H19; rename H20 into H19.
+(*eapply typed_false_pp in H19; eauto; simpl in H19.*)
 forward.
 Exists left mid right bl.
 entailer!.

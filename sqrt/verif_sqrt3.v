@@ -1,6 +1,6 @@
 Require Import VST.floyd.proofauto.
 Require Import sqrt3.
-Instance CompSpecs : compspecs. make_compspecs prog. Defined.
+#[export] Instance CompSpecs : compspecs. make_compspecs prog. Defined.
 Definition Vprog : varspecs. mk_varspecs prog. Defined.
 
 Definition sqrt_approx_f (x: float32) : float32 :=

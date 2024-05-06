@@ -2,6 +2,13 @@ Require Import VST.floyd.proofauto.
 Require Import qsort4a.
 Instance CompSpecs : compspecs. make_compspecs prog. Defined.
 Definition Vprog : varspecs. mk_varspecs prog. Defined.
+Import Maps.
+
+Definition member2type (m: member) : type :=
+ match m with
+ | Member_plain _ t => t
+ | Member_bitfield _ sz s a _ _ => Tint sz s a
+ end.
 
 Fixpoint no_volatiles' {cs: compspecs} (rank: nat) (t: type) :=
   match t with
@@ -12,22 +19,23 @@ Fixpoint no_volatiles' {cs: compspecs} (rank: nat) (t: type) :=
   | Tpointer _ a => negb (attr_volatile a)
   | Tarray _ _ a => negb (attr_volatile a)
   | Tfunction _ _ _ => true
+
   | Tstruct id a => 
       match rank with O => false | S rank' =>
-       match cenv_cs ! id with
+       match PTree.get id cenv_cs with
                            Some co => 
                               andb (negb (attr_volatile co.(co_attr)))
                               (forallb (no_volatiles' rank')
-                                 (map snd co.(co_members)))
+                                 (map member2type co.(co_members)))
                            | None => false
                            end end
   | Tunion id a => 
       match rank with O => false | S rank' =>
-       match cenv_cs ! id with
+       match PTree.get id cenv_cs with
                            Some co => 
                               andb (negb (attr_volatile co.(co_attr)))
                               (forallb (no_volatiles' rank')
-                                 (map snd co.(co_members)))
+                                 (map member2type co.(co_members)))
                            | None => false
                            end end             
  end.
@@ -107,10 +115,10 @@ Definition qsort_spec {cs: compspecs} :=
     PROP(writable_share sh;
              sizeof (qsort_t wit) <= 1024; 
              Zlength (qsort_al wit) <= Int.max_signed;
-             Zlength (qsort_al wit) * sizeof (qsort_t wit) <= Int.max_signed)
+             Zlength (qsort_al wit) * sizeof (qsort_t wit) <= Ptrofs.max_signed)
     PARAMS(base; 
-                 Vint (Int.repr (Zlength (qsort_al wit)));
-                 Vint (Int.repr (sizeof (qsort_t wit))); 
+                 Vptrofs (Ptrofs.repr (Zlength (qsort_al wit)));
+                 Vptrofs (Ptrofs.repr (sizeof (qsort_t wit))); 
                   compar)  
     GLOBALS ()
     SEP(func_ptr' (compare_spec (qsort_t wit) (qsort_ord wit)) compar;
