@@ -315,7 +315,7 @@ split.
 }
 rewrite (sublist_split i i) in H3 by lia.
 rewrite (sublist_one i (i+1)) in H3 by lia.
-rewrite app_ass in H3.
+rewrite <- app_assoc in H3.
 apply sorted_app_e3 in H3.
 destruct H3 as [_ [_ [? ?]]].
 auto.
@@ -385,10 +385,10 @@ intros.
    sublist mid (mid + 1) bl ++ sublist (mid + 1) N bl).
    autorewrite with sublist. apply Permutation_refl.
    apply Permutation_app_head.
-   rewrite <- !app_ass.
+   rewrite !app_assoc.
    apply Permutation_app_tail.
   eapply Permutation_trans; [apply Permutation_app_comm |].
-   rewrite !app_ass.
+   rewrite <- !app_assoc.
    apply Permutation_app_head.
    apply Permutation_app_comm.
    rewrite (sublist_app2 (lo+1) N) by list_solve.
@@ -412,12 +412,12 @@ intros.
    sublist (mid + 1) lo bl ++
    sublist lo (lo + 1) bl ++ sublist (lo + 1) N bl).
    autorewrite with sublist. apply Permutation_refl.
-   rewrite !app_ass.
+   rewrite <- !app_assoc.
    apply Permutation_app_head.
-   rewrite <- !app_ass.
+   rewrite !app_assoc.
    apply Permutation_app_tail.
   eapply Permutation_trans; [apply Permutation_app_comm |].
-   rewrite !app_ass.
+   rewrite <- !app_assoc.
    apply Permutation_app_head.
    apply Permutation_app_comm.
 Qed.
@@ -721,7 +721,7 @@ rewrite sublist_app by (autorewrite with sublist; rep_lia).
 autorewrite with sublist.
 rewrite sublist_app by (autorewrite with sublist; rep_lia).
 autorewrite with sublist.
-rewrite !app_ass.
+rewrite <- !app_assoc.
 f_equal.
 f_equal.
 f_equal.
