@@ -1,4 +1,5 @@
 Require Import VST.floyd.proofauto.
+Require Import VST.floyd.compat. Import NoOracle.
 Require Import fac6.
 Instance CompSpecs : compspecs. make_compspecs prog. Defined.
 Definition Vprog : varspecs. mk_varspecs prog. Defined.
@@ -467,7 +468,8 @@ forward_for_simple_bound L'
  deadvars!.
  forward.
  rewrite <- M_eq in *.
- normalize.
+ (*  normalize.  broken; see https://github.com/PrincetonUniversity/VST/issues/773 *)
+ autorewrite with norm.
  autorewrite with sublist.
  rewrite Int.unsigned_repr.
 2:{ clear - H6 Hal H9.
@@ -496,6 +498,7 @@ forward_for_simple_bound L'
  rewrite <- !Zmult_mod.
  rewrite <- !Zplus_mod.
  rewrite (Z.mod_small (_ + c) K) by rep_lia.
+ change (let (q, _) := Z.div_eucl ?a ?b in q) with (a/b).
  rewrite (Z.mod_small (_ / _) K)
     by (assert (M<K) by reflexivity; apply Zdiv_interval_1; nia).
  rewrite (Z.mod_small (_ * _) K).

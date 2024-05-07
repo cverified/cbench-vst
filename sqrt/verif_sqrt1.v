@@ -1,11 +1,12 @@
 Require Import VST.floyd.proofauto.
+Require Import VST.floyd.compat. Import NoOracle.
 Require Import sqrt1.
 #[export] Instance CompSpecs : compspecs. make_compspecs prog. Defined.
 Definition Vprog : varspecs. mk_varspecs prog. Defined.
 
 Require Import float_lemmas sqrt1_f.
 
-Definition sqrt_newton_spec :=
+Definition sqrt_newton_spec : ident * funspec :=
    DECLARE _sqrt_newton
    WITH x: float32
    PRE [ tfloat ]
@@ -41,17 +42,17 @@ forward. (* t'1=1; *) {
 }
 forward. (* y = t'1; *)
 forward_loop
-   (EX y:float32, PROP(main_loop (x,y) = fsqrt x)
-                 (LOCAL (temp _x (Vsingle x); temp _y (Vsingle y)) SEP()))
- continue: (EX y z:float32, PROP((if Float32.cmp Clt y z
+   ((EX y:float32, PROP(main_loop (x,y) = fsqrt x)
+                 (LOCAL (temp _x (Vsingle x); temp _y (Vsingle y)) SEP())):assert)
+   continue: ((EX y z:float32, PROP((if Float32.cmp Clt y z
                                 then main_loop  (x,y) else y) = fsqrt x)
                      (LOCAL (temp _x (Vsingle x); temp _y (Vsingle y); 
                                   temp _z (Vsingle z)) 
-                     SEP()))
-   break: (PROP()(LOCAL (temp _y (Vsingle (fsqrt x))) SEP())).
+                     SEP())): assert)
+   break: ((PROP()(LOCAL (temp _y (Vsingle (fsqrt x))) SEP())): assert).
 -  (* Prove that precondition implies loop invariant *)
 Exists t.
-entailer!.
+entailer!!.
 unfold fsqrt.
 change (float_of_Z ?A) with (Float32.of_int (Int.repr A)).
 change float_cmp with Float32.cmp.

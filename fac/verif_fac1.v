@@ -1,4 +1,5 @@
 Require Import VST.floyd.proofauto.
+Require Import VST.floyd.compat. Import NoOracle.
 Require Import fac1.
 Instance CompSpecs : compspecs. make_compspecs prog. Defined.
 Definition Vprog : varspecs. mk_varspecs prog. Defined.
@@ -52,8 +53,6 @@ rewrite Z.mul_comm. auto.
 -
 forward.
 Qed.
-
-Existing Instance NullExtension.Espec.
 
 Lemma prog_correct: semax_prog prog tt Vprog Gprog.
 Proof.
