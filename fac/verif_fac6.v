@@ -468,8 +468,7 @@ forward_for_simple_bound L'
  deadvars!.
  forward.
  rewrite <- M_eq in *.
- (*  normalize.  broken; see https://github.com/PrincetonUniversity/VST/issues/773 *)
- autorewrite with norm.
+ normalize.
  autorewrite with sublist.
  rewrite Int.unsigned_repr.
 2:{ clear - H6 Hal H9.

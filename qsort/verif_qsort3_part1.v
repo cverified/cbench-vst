@@ -1,11 +1,10 @@
 Require Import VST.floyd.proofauto.
+Require Import VST.floyd.compat. Import NoOracle.
 Require Import qsort3.
 Require Import spec_qsort3.
 Require Import float_lemmas.
 Require Import Permutation.
 Require Import qsort3_aux.
-
-Set Nested Proofs Allowed.
 
 Definition quicksort_while_body_part2 := 
 match quicksort_while_body
@@ -44,7 +43,7 @@ Qed.
 
 
 Lemma forward_quicksort_do_loop :
-forall (Espec : OracleKind) (base : val) (al : list val) 
+forall (Espec : ext_spec ()) (base : val) (al : list val) 
   (lo mid hi : Z) (bl : list val),
 Forall def_float al ->
 let N := Zlength al in
@@ -63,7 +62,7 @@ sorted (f_cmp Cle) (sublist (hi + 1) N bl) ->
  Forall (f_cmp Cge (Znth (hi + 1) bl))
    (sublist 0 (hi + 1) bl)) ->
 
-semax (func_tycontext f_quicksort Vprog Gprog [])
+semax ⊤(func_tycontext f_quicksort Vprog Gprog [])
   (PROP ()
    LOCAL (temp _right_ptr (dnth base (hi - 1));
    temp _left_ptr (dnth base (lo + 1));
@@ -289,7 +288,7 @@ apply semax_seq' with
    temp _hi (dnth base hi))
    SEP (data_at Ews (tarray tdouble N) bl' base)).
 abbreviate_semax.
-match goal with |- semax _ ?Pre _ ?Post => 
+match goal with |- semax _ _ ?Pre _ ?Post => 
 forward_loop Pre continue:Post.(RA_normal) end;
   [solve [auto] | | forward; apply ENTAIL_refl ].
 forward.
@@ -318,9 +317,10 @@ forward_if (EX mid:Z,
 apply test_eq_dnth; try rep_lia; auto.
 --
 forward.
-replace base with (dnth base 0) at 1
+assert (dnth base 0 = base)
  by (make_Vptr base; unfold dnth; simpl; normalize).
-rewrite dbase_add by (auto; rep_lia).
+pose proof dbase_add base 0 right.
+rewrite H18 in H20. rewrite H20 by (auto; rep_lia). clear H18 H20.
 assert_PROP (mid=left)
   by (entailer!; eapply dnth_inj in H4; try eassumption; rep_lia).
   subst left.
@@ -339,7 +339,6 @@ rewrite f_cmp_le_lt_eq. right.
 apply float_cmp_eq_refl. apply Forall_Znth; auto; lia.
 rewrite sublist_swap_in_list by lia; auto.
 --
-(*eapply typed_false_pp in H4; eauto; simpl in H4.*)
 forward_if.
 ++
 apply test_eq_dnth; try rep_lia; auto.
@@ -347,11 +346,11 @@ apply test_eq_dnth; try rep_lia; auto.
 assert_PROP (mid=right)
   by (entailer!; eapply dnth_inj in H18; try eassumption; rep_lia).
  subst right.
- (*eapply typed_true_pp in H18; eauto; simpl in H18.*)
 forward.
-replace base with (dnth base 0) at 1
+assert (dnth base 0 = base)
  by (make_Vptr base; unfold dnth; simpl; normalize).
-rewrite dbase_add by (auto; rep_lia).
+pose proof dbase_add base 0 left.
+rewrite H20 in H21. rewrite H21 by (auto; rep_lia). clear H20 H21.
 rewrite Z.add_0_l.
 Exists left.
 entailer!.
@@ -366,7 +365,6 @@ auto.
 rewrite sublist_swap_in_list by lia; auto.
 ++
 forward.
-(*eapply typed_false_pp in H18; eauto; simpl in H18.*)
 Exists mid.
 entailer!.
 clear H27 H26 H25 H24 H23 H22 H21 H20.
@@ -461,7 +459,6 @@ rewrite Forall_app; split; auto.
 rewrite sublist_len_1 by lia; repeat constructor; auto.
 ++
 assert (left<>right) by congruence. clear H19; rename H20 into H19.
-(*eapply typed_false_pp in H19; eauto; simpl in H19.*)
 forward.
 Exists left mid right bl.
 entailer!.

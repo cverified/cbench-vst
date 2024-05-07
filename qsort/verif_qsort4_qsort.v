@@ -1,10 +1,10 @@
 Require Import VST.floyd.proofauto.
+Require Import VST.floyd.compat. Import NoOracle.
 Require Import qsort4a.
 Require Import spec_qsort4.
 Require Import verif_qsort4_aux1.
 Require Import float_lemmas.
 Require Import Permutation.
-Set Nested Proofs Allowed.
 
 
 Lemma field_compatible_subarray' {cs: compspecs}:
@@ -30,7 +30,7 @@ split3; auto.
 -
 simpl in H3|-*.
 fold (sizeof t) in *.
-rewrite Z.max_r in * by lia.
+rewrite Z.max_r in H3|-*; try lia.
 rewrite <- (Ptrofs.repr_unsigned i0).
 rewrite ptrofs_add_repr.
 rewrite (Z.mul_comm i).
@@ -90,28 +90,9 @@ Definition call_memcpy_ij :=
                                  (Etempvar _size tulong) tulong)
                                (tptr tuchar)) :: (Etempvar _size tulong) ::
                              nil)).
-(* 
-                           (Scall None
-                            (Evar _memcpy (Tfunction
-                                            (Tcons (tptr tvoid)
-                                              (Tcons (tptr tvoid)
-                                                (Tcons tuint Tnil)))
-                                            (tptr tvoid) cc_default))
-                            ((Ebinop Oadd
-                               (Ecast (Etempvar _base (tptr tvoid))
-                                 (tptr tuchar))
-                               (Ebinop Omul (Etempvar _i tint)
-                                 (Etempvar _size tuint) tuint) (tptr tuchar)) ::
-                             (Ebinop Oadd
-                               (Ecast (Etempvar _base (tptr tvoid))
-                                 (tptr tuchar))
-                               (Ebinop Omul (Etempvar _j tint)
-                                 (Etempvar _size tuint) tuint) (tptr tuchar)) ::
-                             (Etempvar _size tuint) :: nil)).
-*)
 
 Lemma forward_illegal_memcpy:
- forall (Espec : OracleKind)
+ forall (Espec : ext_spec())
   (sh : share) (base : val) (t : type)
   (Hok : complete_legal_cosu_type t = true /\
       align_compatible_rec cenv_cs t 0 /\ no_volatiles t)
@@ -124,7 +105,7 @@ Lemma forward_illegal_memcpy:
   (Hbase : field_compatible (tarray t N) [] base)
   (i : Z)
   (H : 0 <= i < N),
-semax (func_tycontext f_qsort Vprog Gprog [])
+semax ⊤ (func_tycontext f_qsort Vprog Gprog [])
   (PROP ( )
    LOCAL (temp _i (Vint (Int.repr i));
    temp _j (Vint (Int.repr i)); temp _base base;
@@ -146,7 +127,7 @@ Admitted.  (* This program has a bug!  According to the C specification,
                  but i=j here.  *)
 
 Lemma forward_call_memcpy_ij:
- forall (Espec : OracleKind)
+ forall (Espec : ext_spec())
    (sh : share) (base : val)
     (t : type) 
    (Hok : complete_legal_cosu_type t = true /\
@@ -162,7 +143,7 @@ Lemma forward_call_memcpy_ij:
     (i j : Z)
     (H5 : j < N)
     (H6 : 0 <= i <= j),
-  semax (func_tycontext f_qsort Vprog Gprog [])
+  semax ⊤ (func_tycontext f_qsort Vprog Gprog [])
   (PROP ( )
    LOCAL (temp _i (Vint (Int.repr i));
         temp _j (Vint (Int.repr j));
@@ -248,22 +229,7 @@ assert (0 <= i < j) by lia.
 clear n H6.
 unfold call_memcpy_ij.
 forward_call (sh, sh, offset_val (i*sizeof t) base, offset_val (j*sizeof t) base, 
-                            existT reptype t (Znth j bl)).
-(*
-  split; split.
-  assert (0 <= i*sizeof t); [ | rep_lia].
-  apply Z.mul_nonneg_nonneg; rep_lia.
-  eapply Z.le_trans; try apply H1.
-  apply Zmult_le_compat_r.
-  lia.
-  lia.
-  assert (0 <= j*sizeof t); [ | rep_lia].
-  apply Z.mul_nonneg_nonneg; rep_lia.
-  eapply Z.le_trans; try apply H1.
-  apply Zmult_le_compat_r.
-  lia.
-  lia.
-*)
+                            existT t (Znth j bl)).
   simpl.
   sep_apply (split2_data_at_Tarray_unfold sh t N j).
   lia.
@@ -287,7 +253,6 @@ forward_call (sh, sh, offset_val (i*sizeof t) base, offset_val (j*sizeof t) base
   fold (tarray t 1).
   erewrite data_at_singleton_array_eq by reflexivity.
   cancel.
-(*  split3; auto.*)
  simpl. destruct Hok as [_ [_ ?]]; auto.
  entailer!.
  simpl.
@@ -381,7 +346,7 @@ Definition qsort_then2 :=
                                   (Econst_int (Int.repr 1) tint) tint)))))).
 
 Lemma verif_qsort_then2:
- forall (Espec : OracleKind) (sh : share) (base compar : val)
+ forall (Espec : ext_spec()) (sh : share) (base compar : val)
     (t : type) 
     (Hok : complete_legal_cosu_type t = true /\
       align_compatible_rec cenv_cs t 0 /\ no_volatiles t)
@@ -411,7 +376,7 @@ Lemma verif_qsort_then2:
     (H12 : Forall (ord_le ord pivot) (sublist (j + 1) N bl))
     (H5 : 0 <= j < N)
     (H6 : 0 <= i <= j),
-semax (func_tycontext f_qsort Vprog Gprog [])
+semax ⊤ (func_tycontext f_qsort Vprog Gprog [])
   (PROP ( )
    LOCAL (temp _i (Vint (Int.repr i));
    temp _j (Vint (Int.repr j));
@@ -423,7 +388,7 @@ semax (func_tycontext f_qsort Vprog Gprog [])
    temp _compar compar)
    SEP (data_at sh (tarray t N) bl base;
    data_at Tsh t pivot v_pivot; data_at_ Tsh t v_tmp;
-   FRZL FR1; func_ptr' (compare_spec t ord) compar))
+   FRZL FR1; func_ptr (compare_spec t ord) compar))
   qsort_then2
   (normal_ret_assert
      (EX (i0 j0 : Z) (bl0 : list (reptype t)),
@@ -446,25 +411,15 @@ semax (func_tycontext f_qsort Vprog Gprog [])
       temp _compar compar)
       SEP (data_at sh (tarray t N) bl0 base;
       data_at Tsh t pivot v_pivot; data_at_ Tsh t v_tmp;
-      FRZL FR1; func_ptr' (compare_spec t ord) compar))%assert).
+      FRZL FR1; func_ptr (compare_spec t ord) compar))%assert).
 Proof.
 intros.
 unfold qsort_then2.
 abbreviate_semax.
-freeze FR2 := (FRZL _) (data_at _ _ _ v_pivot) (func_ptr' _ _).
+freeze FR2 := (FRZL _) (data_at _ _ _ v_pivot) (func_ptr _ _).
 
-(* memcpy(tmp, a(i), size); *)
 forward_call (Tsh, sh, v_tmp, offset_val (i*sizeof t) base, 
-                            existT reptype t (Znth i bl)).
-(*
-  split.
-  assert (0 <= i*sizeof t); [ | rep_lia].
-  apply Z.mul_nonneg_nonneg; rep_lia.
-  eapply Z.le_trans; try apply H1.
-  apply Zmult_le_compat_r.
-  lia.
-  lia.
-*)
+                            existT t (Znth i bl)).
   simpl.
   sep_apply (split2_data_at_Tarray_unfold sh t N i).
   lia.
@@ -476,7 +431,6 @@ forward_call (Tsh, sh, v_tmp, offset_val (i*sizeof t) base,
   fold (tarray t 1).
   erewrite data_at_singleton_array_eq by reflexivity.
  cancel.
-(* split3; auto.*)
  simpl. destruct Hok as [_ [_ ?]]; auto.
  simpl.
  rewrite <- (data_at_singleton_array_eq sh t (Znth i bl) (sublist i (i+1) bl)).
@@ -540,15 +494,7 @@ apply semax_seq'
 
   (* memcpy(a(j), tmp), size); *)
   forward_call (sh, Tsh, offset_val (j*sizeof t) base, v_tmp, 
-                            existT reptype t (Znth i bl)).
-(*  split.
-  assert (0 <= j*sizeof t); [ | rep_lia].
-  apply Z.mul_nonneg_nonneg; rep_lia.
-  eapply Z.le_trans; try apply H1.
-  apply Zmult_le_compat_r.
-  lia.
-  lia.
-*)
+                            existT t (Znth i bl)).
   simpl.
   sep_apply (split2_data_at_Tarray_unfold sh t N j).
   lia.
@@ -560,7 +506,6 @@ apply semax_seq'
   fold (tarray t 1).
   erewrite data_at_singleton_array_eq by reflexivity.
   cancel.
-(* split3; auto.*)
  simpl. destruct Hok as [_ [_ ?]]; auto.
  simpl.
  pose (bl'' := upd_Znth j bl' (Znth i bl)).
@@ -710,6 +655,9 @@ apply semax_seq'
  thaw FR2. cancel.
 Qed.
 
+Lemma split_func_ptr:  forall fs p, func_ptr fs p = func_ptr fs p * func_ptr fs p.
+Admitted.
+
 Lemma body_qsort:  semax_body Vprog Gprog f_qsort qsort_spec.
 Proof.
 start_function.
@@ -738,7 +686,7 @@ forward_if (EX bl:list (reptype t),
                          temp _compar compar)
               SEP(data_at_ Tsh (tarray tuchar 1024) v_tmp;
                     data_at_ Tsh (tarray tuchar 1024) v_pivot;
-                    func_ptr' (compare_spec t ord) compar;
+                    func_ptr (compare_spec t ord) compar;
                     data_at sh (tarray t N) bl base)).
 2:{
 forward. Exists al. entailer!.
@@ -765,7 +713,7 @@ auto.
 Intros bl.
 Exists bl.
 entailer!.
-unfold func_ptr'. apply andp_left2; auto.
+apply func_ptr_emp.
 }
 change (data_at_ Tsh (tarray tuchar 1024)) with 
    (data_at Tsh (tarray tuchar 1024) (repeat Vundef (Z.to_nat 1024))).
@@ -787,7 +735,7 @@ rewrite Z.mod_small in H2 by rep_lia.
 rewrite Int.signed_repr in H2 by rep_lia. clear H3.
 rewrite Int64.unsigned_repr by rep_lia.
 forward_call (Tsh, sh, v_pivot, offset_val ((N-1)*sizeof t) base, 
-                            existT reptype t (Znth (N-1) al)).
+                            existT t (Znth (N-1) al)).
  simpl.
   simpl.
   sep_apply (split2_data_at_Tarray_unfold sh t N (N-1)).
@@ -833,7 +781,7 @@ forward_call (Tsh, sh, v_pivot, offset_val ((N-1)*sizeof t) base,
                 temp _compar compar)
        SEP (data_at sh (Tarray t N noattr) bl base;
               data_at Tsh t pivot v_pivot; data_at_ Tsh t v_tmp;
-              FRZL FR1; func_ptr' (compare_spec t ord) compar)).
+              FRZL FR1; func_ptr (compare_spec t ord) compar)).
 - (* precondition of main while loop *)
 Exists 0 (N-1) al.
 entailer!.
@@ -888,7 +836,7 @@ apply semax_seq' with (EX i:Z,
                 temp _compar compar)
        SEP (data_at sh (tarray t N) bl base;
               data_at Tsh t pivot v_pivot; data_at_ Tsh t v_tmp;
-              FRZL FR1; func_ptr' (compare_spec t ord) compar)).
+              FRZL FR1; func_ptr (compare_spec t ord) compar)).
 apply qsort_loop_i; auto; lia.
  (* after i loop *)
  clear dependent i.
@@ -908,7 +856,7 @@ apply qsort_loop_i; auto; lia.
                  temp _compar compar)
        SEP (data_at sh (tarray t N) bl base;
               data_at Tsh t pivot v_pivot; data_at_ Tsh t v_tmp;
-              FRZL FR1; func_ptr' (compare_spec t ord) compar)).
+              FRZL FR1; func_ptr (compare_spec t ord) compar)).
 apply qsort_loop_j; auto; lia.
  (* after the j loop *)
  rename H into H''.
@@ -961,7 +909,7 @@ apply qsort_loop_j; auto; lia.
                temp _compar compar)
    SEP (data_at sh (tarray t N) bl base;
    data_at Tsh t pivot v_pivot; data_at_ Tsh t v_tmp;
-   FRZL FR1; func_ptr' (compare_spec t ord) compar)).
+   FRZL FR1; func_ptr (compare_spec t ord) compar)).
  +
   apply verif_qsort_then2; auto; lia.
  +
@@ -983,7 +931,7 @@ apply qsort_loop_j; auto; lia.
    rewrite (sublist_split 0 (j+1) _ bl) by lia.
    fold (tarray t N).
    rewrite (split2_data_at_Tarray_app (j+1)) by Zlength_solve.
-   rewrite split_func_ptr'.
+   rewrite split_func_ptr.
    Intros.
    assert (Hdef_blj: Forall (ord_def ord) (sublist 0 (j+1) bl)).
     apply Forall_sublist; auto.
@@ -1018,21 +966,13 @@ apply qsort_loop_j; auto; lia.
    replace      ((j + 1) * sizeof t + (i - (j + 1)) * sizeof t)%Z
      with (i * sizeof t)%Z.
   2:{ rewrite <- Z.mul_add_distr_r. f_equal. lia. }
-   rewrite split_func_ptr'.
+   rewrite split_func_ptr.
    Intros.
    assert (Hdef_blj': Forall (ord_def ord) (sublist i N bl)).
     apply Forall_sublist; auto.
    pose (w2 := Build_qsort_witness _ t Hok ord _ Hdef_blj').
    forward_call (sh, offset_val (i * sizeof t) base, compar, w2).
-(*
-  split.
-  assert (0 <= i*sizeof t); [ | rep_lia].
-  apply Z.mul_nonneg_nonneg; rep_lia.
-  eapply Z.le_trans; try apply H1.
-  apply Zmult_le_compat_r.
-  lia.
-  lia.
-*)
+
   entailer!.
   simpl. autorewrite with sublist. do 4 f_equal. normalize. lia.
   simpl.

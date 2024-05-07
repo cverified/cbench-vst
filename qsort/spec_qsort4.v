@@ -1,8 +1,8 @@
 Require Import VST.floyd.proofauto.
+Require Import VST.floyd.compat. Import NoOracle.
 Require Import qsort4a.
 Instance CompSpecs : compspecs. make_compspecs prog. Defined.
 Definition Vprog : varspecs. mk_varspecs prog. Defined.
-Import Maps.
 
 Definition member2type (m: member) : type :=
  match m with
@@ -121,7 +121,7 @@ Definition qsort_spec {cs: compspecs} :=
                  Vptrofs (Ptrofs.repr (sizeof (qsort_t wit))); 
                   compar)  
     GLOBALS ()
-    SEP(func_ptr' (compare_spec (qsort_t wit) (qsort_ord wit)) compar;
+    SEP(func_ptr (compare_spec (qsort_t wit) (qsort_ord wit)) compar;
           data_at sh (tarray (qsort_t wit) (Zlength (qsort_al wit))) (qsort_al wit) base)
   POST [ tvoid ]
     EX bl: list (reptype (qsort_t wit)),

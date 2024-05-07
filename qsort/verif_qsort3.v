@@ -1,4 +1,5 @@
 Require Import VST.floyd.proofauto.
+Require Import VST.floyd.compat. Import NoOracle.
 Require Import qsort3.
 Require Import spec_qsort3.
 Require Import float_lemmas.
@@ -8,7 +9,7 @@ Require Import verif_qsort3_part1.
 Require Import verif_qsort3_part2.
 
 Lemma body_quicksort_while_part2:
-forall (Espec : OracleKind) (base : val) (al : list val) 
+forall (Espec : ext_spec ())  (base : val) (al : list val) 
   (lo mid hi : Z) (bl : list val),
 Forall def_float al ->
 let N := Zlength al in
@@ -26,7 +27,7 @@ sorted (f_cmp Cle) (sublist (hi + 1) N bl) ->
 (hi + 1 < N ->
  Forall (f_cmp Cge (Znth (hi + 1) bl))
    (sublist 0 (hi + 1) bl)) ->
-semax (func_tycontext f_quicksort Vprog Gprog [])
+semax ⊤ (func_tycontext f_quicksort Vprog Gprog [])
   (PROP ( )
    LOCAL (temp _mid (dnth base mid); temp _lo (dnth base lo);
    temp _hi (dnth base hi))
@@ -77,7 +78,6 @@ assert (Hlen := Permutation_Zlength H10).
 assert (Hdef_bl: Forall def_float bl) by (apply Forall_perm with al; auto).
 forward_if.
 -
-rewrite prop_and.
 apply andp_right; apply denote_tc_samebase_dnth; auto.
 -
 clear H17.  (* we don't actually care! *)
@@ -113,16 +113,18 @@ Intros bl'.
 assert (Hlen_bl' := Permutation_Zlength H17);
   autorewrite with sublist in Hlen_bl'.
 forward.
-replace base with (dnth base 0) at 1
+assert (dnth base 0 = base)
  by (make_Vptr base; unfold dnth; simpl; normalize).
-rewrite dbase_add by (auto; rep_lia). rewrite Z.add_0_l.
+pose proof dbase_add base 0 right.
+rewrite H19 in H20. rewrite H20 by (auto; rep_lia). clear H19 H20.
+(*rewrite dbase_add by (auto; rep_lia).*)  rewrite Z.add_0_l.
 Exists (lo, right,
        (sublist 0 left bl ++ bl' ++ sublist (hi+1) N bl)).
 unfold fst, snd.
 entailer!!.
 +
 clear Delta_specs FC H1 H11 H13 base.
-clear H0 Espec.
+clear H0.
 split.
 eapply Permutation_trans; [apply H10|].
 apply Permutation_trans with
@@ -189,16 +191,18 @@ Intros bl'.
 assert (Hlen_bl' := Permutation_Zlength H17);
   autorewrite with sublist in Hlen_bl'.
 forward.
-replace base with (dnth base 0) at 1
+assert (dnth base 0 = base)
  by (make_Vptr base; unfold dnth; simpl; normalize).
-rewrite dbase_add by (auto; rep_lia). rewrite Z.add_0_l.
+pose proof dbase_add base 0 left.
+rewrite H19 in H20. rewrite H20 by (auto; rep_lia). clear H19 H20.
+rewrite Z.add_0_l.
 Exists (left, hi,
        (sublist 0 lo bl ++ bl' ++ sublist (right+1) N bl)).
 unfold fst, snd.
 entailer!!.
 +
 clear Delta_specs FC H1 H11 H13 base.
-clear H0 Espec.
+clear H0.
 split.
 eapply Permutation_trans; [apply H10|].
 apply Permutation_trans with
@@ -284,7 +288,7 @@ intros.
 Qed.
 
 Lemma body_quicksort_while:
-forall (Espec : OracleKind) (base : val) (al : list val) 
+forall (Espec : ext_spec ()) (base : val) (al : list val) 
   (lo hi : Z) (bl : list val),
 Forall def_float al ->
 let N := Zlength al in
@@ -300,27 +304,22 @@ sorted (f_cmp Cle) (sublist (hi + 1) N bl) ->
  Forall (f_cmp Cge (Znth (hi + 1) bl)) (sublist 0 (hi + 1) bl)) ->
 lo < hi ->
 lo <= hi+1 ->
-semax (func_tycontext f_quicksort Vprog Gprog [])
+semax ⊤ (func_tycontext f_quicksort Vprog Gprog [])
   (PROP ( )
    LOCAL (temp _lo (dnth base lo); temp _hi (dnth base hi))
    SEP (data_at Ews (tarray tdouble N) bl base)) 
   quicksort_while_body
   (normal_ret_assert
      (EX a : Z * Z * list val,
-      PROP (0 <= fst (fst a) < N; 0 <= snd (fst a) < N;
-      Permutation al (snd a);
-      sorted (f_cmp Cle) (sublist 0 (fst (fst a)) (snd a));
-      sorted (f_cmp Cle) (sublist (snd (fst a) + 1) N (snd a));
-      0 < fst (fst a) ->
-      Forall (f_cmp Cle (Znth (fst (fst a) - 1) (snd a)))
-        (sublist (fst (fst a)) N (snd a));
-      snd (fst a) + 1 < N ->
-      Forall (f_cmp Cge (Znth (snd (fst a) + 1) (snd a)))
-        (sublist 0 (snd (fst a) + 1) (snd a));
-      fst (fst a) <= snd (fst a) + 1)
-      LOCAL (temp _lo (dnth base (fst (fst a)));
-      temp _hi (dnth base (snd (fst a))))
-      SEP (data_at Ews (tarray tdouble N) (snd a) base))).
+      PROP (0 <= a.1.1 < N; 0 <= a.1.2 < N; al ≡ₚ a.2;
+      sorted (f_cmp Cle) (sublist 0 a.1.1 a.2);
+      sorted (f_cmp Cle) (sublist (a.1.2 + 1) N a.2);
+      0 < a.1.1 → Forall (f_cmp Cle (Znth (a.1.1 - 1) a.2)) (sublist a.1.1 N a.2);
+      a.1.2 + 1 < N
+      → Forall (f_cmp Cge (Znth (a.1.2 + 1) a.2)) (sublist 0 (a.1.2 + 1) a.2);
+      a.1.1 <= a.1.2 + 1)
+      LOCAL (temp _lo (dnth base a.1.1); temp _hi (dnth base a.1.2))
+      SEP (data_at Ews (tarray tdouble N) a.2 base))).
 Proof.
 intros.
 abbreviate_semax.
@@ -353,7 +352,7 @@ forward_if (EX bl: list val,
    temp _hi (dnth base hi))
    SEP (data_at Ews (tarray tdouble N) bl base)).
 - (* then-clause *)
-match goal with |- semax _ ?Pre _ ?Post => 
+match goal with |- semax _ _ ?Pre _ ?Post => 
 forward_loop Pre continue:Post.(RA_normal) end;
   [solve [auto] | | forward; apply ENTAIL_refl ].
 rewrite <- bool2val_eq in H14.
@@ -438,7 +437,7 @@ apply semax_seq' with (EX bl: list val,
    SEP (data_at Ews (tarray tdouble N) bl base)).
 *
 abbreviate_semax.
-match goal with |- semax _ ?Pre _ ?Post => 
+match goal with |- semax _ _ ?Pre _ ?Post => 
 forward_loop Pre continue:Post.(RA_normal) end;
   [solve [auto] | | forward; apply ENTAIL_refl ].
 forward.
@@ -491,7 +490,7 @@ forward_if.
 --
 rewrite <- bool2val_eq in H17.
 apply typed_true_cmp in H17.
-match goal with |- semax _ ?Pre _ ?Post => 
+match goal with |- semax _ _ ?Pre _ ?Post => 
 forward_loop Pre continue:Post.(RA_normal) end;
   [solve [auto] | | forward; apply ENTAIL_refl ].
 forward.

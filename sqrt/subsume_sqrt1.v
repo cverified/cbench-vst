@@ -1,4 +1,5 @@
 Require Import VST.floyd.proofauto.
+Require Import VST.floyd.compat. Import NoOracle.
 Require Import sqrt1.
 
 Require Import float_lemmas sqrt1_f verif_sqrt1.
@@ -6,7 +7,7 @@ Require Import sqrt1_f_correct.
 Require Import Reals.
 Open Scope R_scope.
 
-Definition sqrt_newton_spec2 :=
+Definition sqrt_newton_spec2 : ident * funspec :=
    DECLARE _sqrt_newton
    WITH x: float32
    PRE [ tfloat ]
@@ -22,17 +23,13 @@ Close Scope R_scope.
 
 Lemma sub_sqrt: funspec_sub (snd sqrt_newton_spec) (snd sqrt_newton_spec2).
 Proof.
-apply NDsubsume_subsume.
-split; auto.
-unfold snd.
-hnf; intros.
-split; auto. intros x [? ?]. Exists x emp.
-simpl in x.
-normalize.
-match goal with |- context [PROPx (?A::_)] => set (P:=A) end.
-set (C := Rdiv 3_).
-unfold_for_go_lower; normalize. simpl; entailer!; intros.
-entailer!.
+Opaque powerRZ.
+do_funspec_sub. rename w into x.
+rewrite <- fupd_intro.
+Exists x (emp: mpred).
+entailer!!.
+intros rho ? ?. rewrite <- H3. clear rho H3 H2.
+entailer!!.
 apply (fsqrt_correct x); auto.
 Qed.
 

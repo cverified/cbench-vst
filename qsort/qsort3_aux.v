@@ -1,4 +1,5 @@
 Require Import VST.floyd.proofauto.
+Require Import VST.floyd.compat. Import NoOracle.
 Require Import qsort3.
 Require Import spec_qsort3.
 Require Import float_lemmas.
@@ -26,29 +27,11 @@ Lemma data_at_tarray_weak_valid_pointer {CS: compspecs}:
                                       (Ptrofs.of_ints (Int.repr i))))).
 Proof.
 intros.
-eapply derives_trans; [apply data_at_memory_block |].
-eapply derives_trans; [apply memory_block_weak_valid_pointer |]; auto.
-instantiate (1:= (i * sizeof t)%Z).
-split.
-apply Z.mul_nonneg_nonneg; try lia.
-simpl.
-rewrite Z.max_r by lia.
-rewrite Z.mul_comm.
-apply Z.mul_le_mono_nonneg_l; try lia.
-fold (sizeof t).
-rep_lia.
-simpl.
-rewrite Z.max_r by lia.
-apply Z.mul_pos_pos; try lia.
-auto.
-apply derives_refl'.
-f_equal.
-simpl.
-f_equal.
-f_equal.
 normalize.
-f_equal.
-apply Z.mul_comm.
+eapply derives_trans; [apply data_at_memory_block |].
+simpl sizeof. rewrite Z.max_r by lia. fold (sizeof t).
+eapply derives_trans; [apply memory_block_weak_valid_pointer |]; auto.
+nia. nia.
 Qed.
 
 Lemma data_at_tarray_valid_pointer {CS: compspecs}:
@@ -62,24 +45,14 @@ Lemma data_at_tarray_valid_pointer {CS: compspecs}:
                                       (Ptrofs.of_ints (Int.repr i))))).
 Proof.
 intros.
+saturate_local. clear H4 H5.
+destruct H3 as [_ [_ [? _]]].
+simpl in H3.
 eapply derives_trans; [apply data_at_memory_block |].
+simpl sizeof. rewrite Z.max_r in * by lia. fold (sizeof t) in *.
 eapply derives_trans; [apply memory_block_valid_pointer |]; auto.
-instantiate (1:= (i * sizeof t)%Z).
-split.
-apply Z.mul_nonneg_nonneg; try lia.
-simpl sizeof.
-rewrite Z.max_r by lia.
-rewrite  (Z.mul_comm i).
-fold (sizeof t).
-apply Zmult_lt_compat_l; lia.
-simpl offset_val.
-apply derives_refl'.
-f_equal.
-f_equal.
-f_equal.
 normalize.
-f_equal.
-apply Z.mul_comm.
+nia.
 Qed.
 
 Lemma test_order_dnth:
@@ -568,7 +541,7 @@ Qed.
 
 Ltac pose_dnth_base i :=
  match goal with |- 
-    semax _ (PROPx _ (LOCALx _ 
+    semax _ _ (PROPx _ (LOCALx _ 
       (SEPx (data_at _ (tarray tdouble ?N) _ ?base :: nil)))) _ _ =>
 assert_PROP (dnth base i = field_address (tarray tdouble N) [ArraySubsc i] base)
      by (entailer!; apply dnth_base_field_address; auto; simpl; rep_lia)
