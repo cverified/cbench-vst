@@ -655,9 +655,6 @@ apply semax_seq'
  thaw FR2. cancel.
 Qed.
 
-Lemma split_func_ptr:  forall fs p, func_ptr fs p = func_ptr fs p * func_ptr fs p.
-Admitted.
-
 Lemma body_qsort:  semax_body Vprog Gprog f_qsort qsort_spec.
 Proof.
 start_function.
