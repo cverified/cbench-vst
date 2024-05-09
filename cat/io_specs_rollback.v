@@ -27,6 +27,7 @@ Definition stdout := 1%nat.
 Section specs.
 
 Context {E : Type -> Type} `{IO_event(file_id := nat) -< E}.
+Context `{!VSTGS (@IO_itree E) Σ}.
 
 (* If putchar fails, we shouldn't be forced to commit to writing. *)
 Definition putchar_spec :=
@@ -36,7 +37,7 @@ Definition putchar_spec :=
     PARAMS (Vubyte c) GLOBALS()
     SEP (ITREE t)
   POST [ tint ]
-   EX i : int,
+   ∃ i : int,
     PROP (Int.signed i = -1 \/ Int.signed i = Byte.unsigned c)
     LOCAL (temp ret_temp (Vint i))
     SEP (ITREE (if eq_dec (Int.signed i) (-1) then t else k)).
@@ -48,18 +49,17 @@ Definition getchar_spec :=
     PARAMS () GLOBALS()
     SEP (ITREE t)
   POST [ tint ]
-   EX i : int,
+   ∃ i : int,
     PROP (-1 <= Int.signed i <= Byte.max_unsigned)
     LOCAL (temp ret_temp (Vint i))
     SEP (ITREE (if eq_dec (Int.signed i) (-1) then t else k (Byte.repr (Int.signed i)))).
 
 (* Build the external specification. *)
-Definition IO_void_Espec : OracleKind := ok_void_spec (@IO_itree E).
-
 Definition IO_specs (ext_link : string -> ident) :=
   [(ext_link "putchar"%string, putchar_spec); (ext_link "getchar"%string, getchar_spec)].
 
-Definition IO_Espec (ext_link : string -> ident) : OracleKind := add_funspecs IO_void_Espec ext_link (IO_specs ext_link).
+#[export] Instance IO_ext_spec (ext_link : string -> ident) : ext_spec IO_itree :=
+    add_funspecs_rec IO_itree ext_link (void_spec IO_itree) (IO_specs ext_link).
 
 End specs.
 

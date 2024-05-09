@@ -1,14 +1,20 @@
-Require Import VST.progs64.io_specs.
 Require Import VST.floyd.proofauto.
+Require Import VST.progs64.io_specs.
 Require Import Top.cat1a.
+
+Unset SsrRewrite.
 
 #[export] Instance CompSpecs : compspecs. make_compspecs prog. Defined.
 Definition Vprog : varspecs. mk_varspecs prog. Defined.
 
+Section IO.
+
+Context `{!VSTGS (@IO_itree (IO_event(file_id := nat))) Σ}.
+
 Definition putchar_spec := DECLARE _putchar putchar_spec.
 Definition getchar_spec := DECLARE _getchar getchar_spec.
 
-Open Scope itree_scope. 
+Open Scope itree_scope.
 Definition cat_loop : IO_itree :=
    ITree.iter (fun _ => c <- read stdin;; write stdout c;; Ret (inl tt)) tt.
 
@@ -69,7 +75,7 @@ Qed.
 
 Definition ext_link := ext_link_prog prog.
 
-#[export] Instance Espec : OracleKind := IO_Espec ext_link.
+#[local] Instance IO_Espec : ext_spec IO_itree := IO_ext_spec ext_link.
 
 Lemma prog_correct:
   semax_prog prog cat_loop Vprog Gprog.
@@ -77,11 +83,13 @@ Proof.
 prove_semax_prog.
 semax_func_cons_ext.
 { set (make_ext_rval _ _ _).
-  simpl; Intro i.
+  monPred.unseal; simpl; Intro i.
   apply typecheck_return_value with (t := Tint16signed); auto. }
 semax_func_cons_ext.
 { set (make_ext_rval _ _ _).
-  simpl; Intro i'.
+  destruct x; monPred.unseal; simpl; Intro i'.
   apply typecheck_return_value with (t := Tint16signed); auto. }
 semax_func_cons body_main.
 Qed.
+
+End IO.
