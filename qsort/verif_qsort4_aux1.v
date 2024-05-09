@@ -1,9 +1,9 @@
 Require Import VST.floyd.proofauto.
+Require Import VST.floyd.compat. Import NoOracle.
 Require Import qsort4a.
 Require Import spec_qsort4.
 Require Import float_lemmas.
 Require Import Permutation.
-Open Scope logic. 
 
 Lemma no_saturate_hack:
   forall sh t n al p,
@@ -124,7 +124,7 @@ Definition loop_i :=
                     Sskip).
 
 Lemma qsort_loop_i:
- forall (Espec : OracleKind)
+ forall (Espec : ext_spec ()) 
    (sh : share) (base compar : val) (t : type)
    (Hok : complete_legal_cosu_type t = true /\
       align_compatible_rec cenv_cs t 0 /\ no_volatiles t)
@@ -150,7 +150,7 @@ Lemma qsort_loop_i:
     (Hpivot : ord_def ord pivot)
     (Hdef_bl : Forall (ord_def ord) bl)
     (H6 : i <= j < N),
-semax (func_tycontext f_qsort Vprog Gprog [])
+semax ⊤ (func_tycontext f_qsort Vprog Gprog [])
   (PROP ( )
    LOCAL (temp _i (Vint (Int.repr i));
    temp _j (Vint (Int.repr j));
@@ -162,7 +162,7 @@ semax (func_tycontext f_qsort Vprog Gprog [])
    temp _compar compar)
    SEP (data_at sh (tarray t N) bl base;
    data_at Tsh t pivot v_pivot; data_at_ Tsh t v_tmp;
-   FRZL FR1; func_ptr' (compare_spec t ord) compar))
+   FRZL FR1; func_ptr (compare_spec t ord) compar))
    loop_i
   (normal_ret_assert
      (EX i0 : Z,
@@ -182,7 +182,7 @@ semax (func_tycontext f_qsort Vprog Gprog [])
       temp _compar compar)
       SEP (data_at sh (tarray t N) bl base;
       data_at Tsh t pivot v_pivot; data_at_ Tsh t v_tmp;
-      FRZL FR1; func_ptr' (compare_spec t ord) compar))%assert).
+      FRZL FR1; func_ptr (compare_spec t ord) compar))%assert).
 Proof.
 intros.
 abbreviate_semax.
@@ -201,7 +201,7 @@ forward_loop (EX i:Z,
                 temp _compar compar)
        SEP (data_at sh (tarray t N) bl base;
               data_at Tsh t pivot v_pivot; data_at_ Tsh t v_tmp;
-              FRZL FR1; func_ptr' (compare_spec t ord) compar)).
+              FRZL FR1; func_ptr (compare_spec t ord) compar)).
  - (* precondition of i loop *)
    Exists i.
    entailer!.
@@ -210,15 +210,6 @@ forward_loop (EX i:Z,
    rename H into H'.
    Intros i.
    forward_call (sh, Tsh, offset_val (i*sizeof t) base, v_pivot, Znth i bl, pivot).
-(*
-  split.
-  assert (0 <= i*sizeof t); [ | rep_lia].
-  apply Z.mul_nonneg_nonneg; rep_lia.
-  eapply Z.le_trans; try apply H1.
-  apply Zmult_le_compat_r.
-  lia.
-  lia.
-*)
   {
   simpl.
   unfold tarray. 
@@ -233,8 +224,6 @@ forward_loop (EX i:Z,
   rewrite field_adr_ofs by (auto; lia).
   cancel.
   }
-(* split3; auto.
- split; auto.*)
  eapply Forall_Znth; eauto. lia.
  Intros vret.
  rewrite <- (data_at_singleton_array_eq sh t (Znth i bl) [Znth i bl]) by reflexivity.
@@ -245,7 +234,6 @@ forward_loop (EX i:Z,
     [Znth i bl] (sublist (1 + i) N bl)
    (field_address0 (Tarray t N noattr) [ArraySubsc i] base));
    auto; try lia.
-  (* Time  list_solve. (* 272 seconds.  *) *)
   Zlength_solve.  (* 0.1 seconds *)
   rewrite sublist_one; autorewrite with sublist; auto.
   clear; lia.
@@ -326,7 +314,7 @@ Definition loop_j :=
                       Sskip).
 
 Lemma qsort_loop_j:
- forall (Espec : OracleKind)
+ forall (Espec : ext_spec ())
   (sh : share) (base compar : val) (t : type)
   (Hok : complete_legal_cosu_type t = true /\
       align_compatible_rec cenv_cs t 0 /\ no_volatiles t)
@@ -355,7 +343,7 @@ Lemma qsort_loop_j:
   (H10 : Exists (ord_eq ord pivot) (sublist 0 i bl) \/
       j = N - 1 /\ ord_eq ord pivot (Znth (N - 1) bl))
   (H6' : 0 <= j < N),
-semax (func_tycontext f_qsort Vprog Gprog [])
+semax ⊤ (func_tycontext f_qsort Vprog Gprog [])
   (PROP ( )
    LOCAL (temp _i (Vint (Int.repr i));
    temp _j (Vint (Int.repr j));
@@ -367,7 +355,7 @@ semax (func_tycontext f_qsort Vprog Gprog [])
    temp _compar compar)
    SEP (data_at sh (tarray t N) bl base;
    data_at Tsh t pivot v_pivot; data_at_ Tsh t v_tmp;
-   FRZL FR1; func_ptr' (compare_spec t ord) compar)) loop_j
+   FRZL FR1; func_ptr (compare_spec t ord) compar)) loop_j
   (normal_ret_assert
      (EX j' : Z,
       PROP (0 <= j' <= j /\ i - 1 <= j';
@@ -385,7 +373,7 @@ semax (func_tycontext f_qsort Vprog Gprog [])
       temp _compar compar)
       SEP (data_at sh (tarray t N) bl base;
       data_at Tsh t pivot v_pivot; data_at_ Tsh t v_tmp;
-      FRZL FR1; func_ptr' (compare_spec t ord) compar))%assert).
+      FRZL FR1; func_ptr (compare_spec t ord) compar))%assert).
 Proof.
 intros.
 abbreviate_semax.
@@ -403,21 +391,13 @@ unfold loop_j.
    temp _compar compar)
    SEP (data_at sh (tarray t N) bl base;
    data_at Tsh t pivot v_pivot; data_at_ Tsh t v_tmp;
-   FRZL FR1; func_ptr' (compare_spec t ord) compar)).
+   FRZL FR1; func_ptr (compare_spec t ord) compar)).
 - 
     Exists j; entailer!.
     autorewrite with sublist. constructor.
 -
    Intros j'.
    forward_call (sh, Tsh, offset_val (j'*sizeof t) base, v_pivot, Znth j' bl, pivot).
-(*   change (@sizeof _ t) with (sizeof t).
-  split.
-  assert (0 <= j'*sizeof t); [ | rep_lia].
-  apply Z.mul_nonneg_nonneg; rep_lia.
-  eapply Z.le_trans; try apply H1.
-  apply Zmult_le_compat_r.
-  lia.
-  lia.*)
   {
   simpl.
   unfold tarray. 
@@ -432,9 +412,6 @@ unfold loop_j.
   rewrite field_adr_ofs by (auto; lia).
   cancel.
   }
-(* split3; auto.
- split; auto.
-*)
  eapply Forall_Znth; auto. lia.
  Intros vret.
  rewrite <- (data_at_singleton_array_eq sh t (Znth j' bl) [Znth j' bl]) by reflexivity.

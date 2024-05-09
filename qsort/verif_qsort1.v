@@ -1,4 +1,5 @@
 Require Import VST.floyd.proofauto.
+Require Import VST.floyd.compat. Import NoOracle.
 Require Import qsort1.
 Instance CompSpecs : compspecs. make_compspecs prog. Defined.
 Definition Vprog : varspecs. mk_varspecs prog. Defined.
@@ -44,8 +45,6 @@ Definition main_spec :=
 
 Definition Gprog : funspecs :=
         ltac:(with_library prog [quicksort_spec]).
-
-Set Nested Proofs Allowed.
 
 Lemma no_saturate_hack:
   forall sh n al p,

@@ -1,10 +1,10 @@
 Require Import VST.floyd.proofauto.
+Require Import VST.floyd.compat. Import NoOracle.
 Require Import malloc1.
 Instance CompSpecs : compspecs. make_compspecs prog. Defined.
 Definition Vprog : varspecs. mk_varspecs prog. Defined.
-Open Scope logic.  (* this should not be necessary *)
 
-Definition malloc_token (sh: share) (t: type) (p: val) :=
+Definition malloc_token (sh: share) (t: type) (p: val) : mpred :=
   emp.
 
 Definition HEAPSIZE := proj1_sig (opaque_constant 1000).
@@ -190,7 +190,6 @@ simpl.
 rewrite if_true.
 normalize.
 eapply field_compatible0_cons_Tarray; auto.
-reflexivity.
 rep_lia.
 +
 sep_apply (data_at_memory_block Ews (Tarray tuchar (sizeof t) noattr)

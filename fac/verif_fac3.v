@@ -1,11 +1,12 @@
 Require Import VST.floyd.proofauto.
+Require Import VST.floyd.compat. Import NoOracle.
 Require Import fac3.
 Instance CompSpecs : compspecs. make_compspecs prog. Defined.
 Definition Vprog : varspecs. mk_varspecs prog. Defined.
 
 Require Import fac_facts.
 
-Definition fac_spec :=
+Definition fac_spec : ident * funspec :=
  DECLARE _fac
   WITH n: Z
   PRE  [ tint ] 
@@ -17,7 +18,7 @@ Definition fac_spec :=
      LOCAL (temp ret_temp (Vint (Int.repr (fac n))))
      SEP().
 
-Definition main_spec :=
+Definition main_spec : ident * funspec :=
  DECLARE _main
   WITH gv : globals
   PRE  [] main_pre prog tt gv
@@ -33,10 +34,10 @@ Lemma body_fac:  semax_body Vprog Gprog f_fac fac_spec.
 Proof.
 start_function.
 forward.
-forward_while (EX i:Z, EX f: Z,
+forward_while ((EX i:Z, EX f: Z,
           PROP(0 <= i <= n; 1 <= f; (fac i * f = fac n)%Z) 
           LOCAL (temp _n (Vint (Int.repr i)); temp _f (Vint (Int.repr f)))
-          SEP()).
+          SEP()): assert).
 Exists n 1. entailer!.
 entailer!.
 forward.
@@ -71,12 +72,7 @@ rewrite Z.mul_comm. rewrite H2. lia.
 }
 
 Exists (i-1, f*i)%Z.
-entailer!.
-split. lia.
-split.
-apply Z.le_trans with (f * 1)%Z.
-lia.
-apply Z.mul_le_mono_nonneg_l; try rep_lia.
+entailer!!.
 rewrite fac_equation in H2. rewrite if_true in H2 by lia.
 rewrite <- H2.
 rewrite (Z.mul_comm i).
@@ -98,8 +94,6 @@ start_function.
 forward_call.
 forward.
 Qed.
-
-Existing Instance NullExtension.Espec.
 
 Lemma prog_correct: semax_prog prog tt Vprog Gprog.
 Proof.
