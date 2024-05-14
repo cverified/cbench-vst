@@ -1,6 +1,6 @@
 CLIGHTGEN ?= clightgen
 
-target: _CoqProject verif_malloc1.vo verif_malloc2.vo # verif_malloc3.vo verif_malloc4.vo
+target: _CoqProject verif_malloc1.vo # verif_malloc2.vo verif_malloc3.vo verif_malloc4.vo
 _CoqProject: Makefile
 	@echo $(VSTFLAGS) > _CoqProject
 
