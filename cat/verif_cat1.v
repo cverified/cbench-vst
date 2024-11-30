@@ -3,10 +3,16 @@ Require Import Top.io_specs_rollback.
 Require Import Top.cat1.
 Require Import ITree.Eq.Eqit.
 
+Unset SsrRewrite.
+
 #[export] Instance CompSpecs : compspecs. make_compspecs prog. Defined.
 Definition Vprog : varspecs. mk_varspecs prog. Defined.
 
 Definition event := nondetE +' @IO_event nat.
+
+Section IO.
+
+Context `{!VSTGS (@IO_itree event) Σ}.
 
 Definition putchar_spec := DECLARE _putchar putchar_spec(E := event).
 Definition getchar_spec := DECLARE _getchar getchar_spec(E := event).
@@ -73,17 +79,19 @@ Qed.
 
 Definition ext_link := ext_link_prog prog.
 
-#[export] Instance Espec : OracleKind := IO_Espec(E := event) ext_link.
+#[local] Instance IO_Espec : ext_spec IO_itree := IO_ext_spec(E := event) ext_link.
 
 Lemma prog_correct:
   semax_prog prog cat_loop Vprog Gprog.
 Proof.
 prove_semax_prog.
 semax_func_cons_ext.
-{ simpl; Intro j.
+{ destruct x; monPred.unseal; simpl; Intro j.
   apply typecheck_return_value with (t := Tint16signed); auto. }
 semax_func_cons_ext.
-{ simpl; Intro j.
+{ destruct x as ((?, ?), ?); monPred.unseal; simpl; Intro j.
   apply typecheck_return_value with (t := Tint16signed); auto; apply I. }
 semax_func_cons body_main.
 Qed.
+
+End IO.

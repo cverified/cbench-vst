@@ -1,4 +1,5 @@
 Require Import VST.floyd.proofauto.
+Require Import VST.floyd.compat. Import NoOracle.
 Require Import sqrt3.
 #[export] Instance CompSpecs : compspecs. make_compspecs prog. Defined.
 Definition Vprog : varspecs. mk_varspecs prog. Defined.
@@ -8,7 +9,7 @@ Definition sqrt_approx_f (x: float32) : float32 :=
   (Int.add (Int.shru (Float32.to_bits x) (Int.repr 1))
      (Int.repr 532676608)).
 
-Definition sqrt_approx_spec :=
+Definition sqrt_approx_spec : ident * funspec :=
    DECLARE _sqrt_approx
    WITH x: float32
    PRE [ tfloat ]

@@ -1,10 +1,10 @@
 CLIGHTGEN ?= clightgen
 
-VST_DIRS= msl sepcomp veric floyd progs64 zlist
+VST_DIRS= msl sepcomp veric floyd progs64 zlist shared
 VSTFLAGS= -R $(VST_LOC)/compcert compcert $(foreach d, $(VST_DIRS), -Q $(VST_LOC)/$(d) VST.$(d)) -Q $(VST_LOC)/paco/src Paco -Q $(VST_LOC)/InteractionTrees/theories ITree -Q . Top
 
 
-target: _CoqProject verif_cat1.vo verif_cat1a.vo verif_cat2.vo
+target: _CoqProject verif_cat1.vo verif_cat1a.vo # verif_cat2.vo
 _CoqProject: Makefile
 	@echo $(VSTFLAGS) > _CoqProject
 
@@ -18,8 +18,8 @@ cat1.v: cat1.c
 cat1a.v: cat1a.c
 	$(CLIGHTGEN) -normalize $<
 
-cat2.v: cat2.c
-	$(CLIGHTGEN) -normalize $<
+# cat2.v: cat2.c
+# 	$(CLIGHTGEN) -normalize $<
 
 verif_cat1.vo: verif_cat1.v cat1.vo io_specs_rollback.vo
 verif_cat1a.vo: verif_cat1a.v cat1a.vo

@@ -1,4 +1,5 @@
 Require Import VST.floyd.proofauto.
+Require Import VST.floyd.compat. Import NoOracle.
 Require Import qsort3.
 Require Import spec_qsort3.
 Require Import float_lemmas.

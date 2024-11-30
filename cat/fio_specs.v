@@ -42,14 +42,17 @@ Definition read_list f n : itree E (list byte) := read_list_aux f n [].
 
 Context {CS : compspecs}.
 Context `{FileStruct}.
+Context `{!VSTGS (IO_itree(E := E)) Σ}.
 
 Axiom reent_struct : val -> mpred.
 
-Axiom init_stdio : emp |-- EX p : val, EX inp : val, EX outp : val, EX inp' : _, EX outp' : _,
-  !!(JMeq inp' inp /\ JMeq outp' outp) && reent_struct p *
-  field_at Ews (Tstruct reent noattr) [StructField f_stdin] inp' p *
-  field_at Ews (Tstruct reent noattr) [StructField f_stdout] outp' p *
-  file_at stdin inp * file_at stdout outp.
+Axiom init_stdio : emp ⊢ 
+  ∃ p : val, ∃ inp : val, ∃ outp : val, 
+  ∃ inp', ∃ outp',
+  ⌜ JMeq inp' inp /\ JMeq outp' outp ⌝ ∧ reent_struct p ∗
+  field_at Ews (Tstruct reent noattr) [StructField f_stdin] inp' p ∗
+  field_at Ews (Tstruct reent noattr) [StructField f_stdout] outp' p ∗
+  file_at stdin inp ∗ file_at stdout outp.
 
 Definition get_reent_spec :=
   WITH p : val
@@ -86,13 +89,13 @@ Definition fread_spec {CS : compspecs} :=
     SEP (ITREE (r <- read_list f (Z.to_nat (sz * count)) ;; k r); file_at f fp;
            data_at_ sh (tarray tschar (sz * count)) buf)
   POST [ tuint ]
-   EX msg : list byte,
+   ∃ msg : list byte,
     PROP ()
     LOCAL (temp ret_temp (Vint (Int.repr (Zlength msg))))
     SEP (ITREE (k msg); file_at f fp;
            data_at sh (tarray tschar (sz * count)) (map Vbyte msg ++ repeat Vundef (Z.to_nat (sz * count - Zlength msg))) buf).
 
-(* Build the external specification. *)
+(* Build the external specification. 
 Definition IO_void_Espec : OracleKind := ok_void_spec (@IO_itree E).
 
 Definition IO_specs {CS : compspecs} (ext_link : string -> ident) :=
@@ -101,5 +104,6 @@ Definition IO_specs {CS : compspecs} (ext_link : string -> ident) :=
 
 Definition IO_Espec {CS : compspecs} (ext_link : string -> ident) : OracleKind :=
   add_funspecs IO_void_Espec ext_link (IO_specs ext_link).
+*)
 
 End fio_specs.

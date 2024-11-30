@@ -1,10 +1,10 @@
 Require Import VST.floyd.proofauto.
+Require Import VST.floyd.compat. Import NoOracle.
 Require Import qsort4a.
 Require Import spec_qsort4.
 Require Import verif_qsort4_aux1.
 Require Import float_lemmas.
 Require Import Permutation.
-Set Nested Proofs Allowed.
 
 Lemma is_finite_Float_of_int:
  forall i,  Binary.is_finite 53 1024 (Float.of_int i) = true.
@@ -136,7 +136,7 @@ Proof.
 intros.
 replace (i+1) with (Z.succ i) by lia.
 rewrite Z2Nat.inj_succ by lia.
-rewrite <- (Z2Nat.id i) at 3 by lia.
+replace (i + k) with (Z.of_nat (Z.to_nat i) + k) by lia.
 clear.
 revert k; induction (Z.to_nat i); intros.
 simpl.
@@ -180,37 +180,14 @@ Definition main_printf_loop :=
             (Sset _i
               (Ebinop Oadd (Etempvar _i tint) (Econst_int (Int.repr 1) tint)
                 tint)))).
-(*
-        (Ssequence
-          (Sset _i (Econst_int (Int.repr 0) tint))
-          (Sloop
-            (Ssequence
-              (Sifthenelse (Ebinop Olt (Etempvar _i tint)
-                             (Econst_int (Int.repr 666666) tint) tint)
-                Sskip
-                Sbreak)
-              (Ssequence
-                (Sset _t'1
-                  (Ederef
-                    (Ebinop Oadd (Evar _a (tarray tdouble 666666))
-                      (Etempvar _i tint) (tptr tdouble)) tdouble))
-                (Scall None
-                  (Evar _printf (Tfunction (Tcons (tptr tschar) Tnil) tint
-                                  {|cc_vararg:=true; cc_unproto:=false; cc_structret:=false|}))
-                  ((Evar ___stringlit_1 (tarray tschar 4)) ::
-                   (Etempvar _t'1 tdouble) :: nil))))
-            (Sset _i
-              (Ebinop Oadd (Etempvar _i tint) (Econst_int (Int.repr 1) tint)
-                tint)))).
-*)
 
 Lemma verif_main_printf_loop:
- forall (Espec : OracleKind)
+ forall (Espec : ext_spec () )
   (gv : globals)
   (bl : list (reptype tdouble))
   (H : Permutation (upto (Z.to_nat N6) 0) bl)
   (H0 : sorted (ord_le double_le_order) bl),
- semax (func_tycontext f_main Vprog Gprog nil)
+ semax ⊤ (func_tycontext f_main Vprog Gprog nil)
   (PROP ( )
    LOCAL (gvars gv)
    SEP (data_at Ews (tarray tdouble N6) bl (gv _a);
@@ -332,7 +309,7 @@ unfold Sfor.
 fold main_printf_loop.
 apply seq_assoc1.
 eapply semax_seq'.
-change (@SEPx environ [?R1; ?R2; ?R3]) with (@SEPx environ ([R1;R2]++[R3])).
+change (@SEPx ?x ?y [?R1; ?R2; ?R3]) with (@SEPx x y ([R1;R2]++[R3])).
 rewrite <- (app_nil_r [gvars gv]).
 eapply semax_frame_PQR.
 unfold closed_wrt_modvars;  auto 50 with closed.
