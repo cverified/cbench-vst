@@ -100,13 +100,9 @@ Definition loop_i :=
                       (Ssequence
                         (Scall (Some _t'1)
                           (Ederef
-                            (Etempvar _compar (tptr (Tfunction
-                                                      (Tcons (tptr tvoid)
-                                                        (Tcons (tptr tvoid)
-                                                          Tnil)) tint
+                            (Etempvar _compar (tptr (Tfunction [tptr tvoid; tptr tvoid] tint
                                                       cc_default)))
-                            (Tfunction
-                              (Tcons (tptr tvoid) (Tcons (tptr tvoid) Tnil))
+                            (Tfunction [tptr tvoid; tptr tvoid]
                               tint cc_default))
                           ((Ebinop Oadd
                              (Ecast (Etempvar _base (tptr tvoid))
@@ -301,14 +297,9 @@ Definition loop_j :=
                         (Ssequence
                           (Scall (Some _t'2)
                             (Ederef
-                              (Etempvar _compar (tptr (Tfunction
-                                                        (Tcons (tptr tvoid)
-                                                          (Tcons (tptr tvoid)
-                                                            Tnil)) tint
+                              (Etempvar _compar (tptr (Tfunction [tptr tvoid; tptr tvoid] tint
                                                         cc_default)))
-                              (Tfunction
-                                (Tcons (tptr tvoid)
-                                  (Tcons (tptr tvoid) Tnil)) tint cc_default))
+                              (Tfunction [tptr tvoid; tptr tvoid] tint cc_default))
                             ((Ebinop Oadd
                                (Ecast (Etempvar _base (tptr tvoid))
                                  (tptr tuchar))
