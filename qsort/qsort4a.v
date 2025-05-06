@@ -6,7 +6,7 @@ Local Open Scope string_scope.
 Local Open Scope clight_scope.
 
 Module Info.
-  Definition version := "3.13".
+  Definition version := "3.15".
   Definition build_number := "".
   Definition build_tag := "".
   Definition build_branch := "".
@@ -38,7 +38,6 @@ Definition ___builtin_debug : ident := $"__builtin_debug".
 Definition ___builtin_expect : ident := $"__builtin_expect".
 Definition ___builtin_fabs : ident := $"__builtin_fabs".
 Definition ___builtin_fabsf : ident := $"__builtin_fabsf".
-Definition ___builtin_fence : ident := $"__builtin_fence".
 Definition ___builtin_fmadd : ident := $"__builtin_fmadd".
 Definition ___builtin_fmax : ident := $"__builtin_fmax".
 Definition ___builtin_fmin : ident := $"__builtin_fmin".
@@ -112,8 +111,7 @@ Definition f_qsort := {|
   fn_params := ((_base, (tptr tvoid)) :: (_nmemb, tulong) ::
                 (_size, tulong) ::
                 (_compar,
-                 (tptr (Tfunction
-                         (Tcons (tptr tvoid) (Tcons (tptr tvoid) Tnil)) tint
+                 (tptr (Tfunction ((tptr tvoid) :: (tptr tvoid) :: nil) tint
                          cc_default))) :: nil);
   fn_vars := ((_pivot, (tarray tuchar 1024)) ::
               (_tmp, (tarray tuchar 1024)) :: nil);
@@ -131,8 +129,7 @@ Definition f_qsort := {|
       (Ssequence
         (Scall None
           (Evar _memcpy (Tfunction
-                          (Tcons (tptr tvoid)
-                            (Tcons (tptr tvoid) (Tcons tulong Tnil)))
+                          ((tptr tvoid) :: (tptr tvoid) :: tulong :: nil)
                           (tptr tvoid) cc_default))
           ((Evar _pivot (tarray tuchar 1024)) ::
            (Ebinop Oadd (Ecast (Etempvar _base (tptr tvoid)) (tptr tuchar))
@@ -152,12 +149,10 @@ Definition f_qsort := {|
                         (Scall (Some _t'1)
                           (Ederef
                             (Etempvar _compar (tptr (Tfunction
-                                                      (Tcons (tptr tvoid)
-                                                        (Tcons (tptr tvoid)
-                                                          Tnil)) tint
-                                                      cc_default)))
-                            (Tfunction
-                              (Tcons (tptr tvoid) (Tcons (tptr tvoid) Tnil))
+                                                      ((tptr tvoid) ::
+                                                       (tptr tvoid) :: nil)
+                                                      tint cc_default)))
+                            (Tfunction ((tptr tvoid) :: (tptr tvoid) :: nil)
                               tint cc_default))
                           ((Ebinop Oadd
                              (Ecast (Etempvar _base (tptr tvoid))
@@ -180,13 +175,12 @@ Definition f_qsort := {|
                           (Scall (Some _t'2)
                             (Ederef
                               (Etempvar _compar (tptr (Tfunction
-                                                        (Tcons (tptr tvoid)
-                                                          (Tcons (tptr tvoid)
-                                                            Tnil)) tint
-                                                        cc_default)))
+                                                        ((tptr tvoid) ::
+                                                         (tptr tvoid) :: nil)
+                                                        tint cc_default)))
                               (Tfunction
-                                (Tcons (tptr tvoid)
-                                  (Tcons (tptr tvoid) Tnil)) tint cc_default))
+                                ((tptr tvoid) :: (tptr tvoid) :: nil) tint
+                                cc_default))
                             ((Ebinop Oadd
                                (Ecast (Etempvar _base (tptr tvoid))
                                  (tptr tuchar))
@@ -207,10 +201,9 @@ Definition f_qsort := {|
                       (Ssequence
                         (Scall None
                           (Evar _memcpy (Tfunction
-                                          (Tcons (tptr tvoid)
-                                            (Tcons (tptr tvoid)
-                                              (Tcons tulong Tnil)))
-                                          (tptr tvoid) cc_default))
+                                          ((tptr tvoid) :: (tptr tvoid) ::
+                                           tulong :: nil) (tptr tvoid)
+                                          cc_default))
                           ((Evar _tmp (tarray tuchar 1024)) ::
                            (Ebinop Oadd
                              (Ecast (Etempvar _base (tptr tvoid))
@@ -221,10 +214,9 @@ Definition f_qsort := {|
                         (Ssequence
                           (Scall None
                             (Evar _memcpy (Tfunction
-                                            (Tcons (tptr tvoid)
-                                              (Tcons (tptr tvoid)
-                                                (Tcons tulong Tnil)))
-                                            (tptr tvoid) cc_default))
+                                            ((tptr tvoid) :: (tptr tvoid) ::
+                                             tulong :: nil) (tptr tvoid)
+                                            cc_default))
                             ((Ebinop Oadd
                                (Ecast (Etempvar _base (tptr tvoid))
                                  (tptr tuchar))
@@ -241,9 +233,8 @@ Definition f_qsort := {|
                           (Ssequence
                             (Scall None
                               (Evar _memcpy (Tfunction
-                                              (Tcons (tptr tvoid)
-                                                (Tcons (tptr tvoid)
-                                                  (Tcons tulong Tnil)))
+                                              ((tptr tvoid) ::
+                                               (tptr tvoid) :: tulong :: nil)
                                               (tptr tvoid) cc_default))
                               ((Ebinop Oadd
                                  (Ecast (Etempvar _base (tptr tvoid))
@@ -264,14 +255,10 @@ Definition f_qsort := {|
               (Ssequence
                 (Scall None
                   (Evar _qsort (Tfunction
-                                 (Tcons (tptr tvoid)
-                                   (Tcons tulong
-                                     (Tcons tulong
-                                       (Tcons
-                                         (tptr (Tfunction
-                                                 (Tcons (tptr tvoid)
-                                                   (Tcons (tptr tvoid) Tnil))
-                                                 tint cc_default)) Tnil))))
+                                 ((tptr tvoid) :: tulong :: tulong ::
+                                  (tptr (Tfunction
+                                          ((tptr tvoid) :: (tptr tvoid) ::
+                                           nil) tint cc_default)) :: nil)
                                  tvoid cc_default))
                   ((Ebinop Oadd
                      (Ecast (Etempvar _base (tptr tvoid)) (tptr tuchar))
@@ -282,19 +269,14 @@ Definition f_qsort := {|
                      (Econst_int (Int.repr 1) tint) tint) ::
                    (Etempvar _size tulong) ::
                    (Etempvar _compar (tptr (Tfunction
-                                             (Tcons (tptr tvoid)
-                                               (Tcons (tptr tvoid) Tnil))
-                                             tint cc_default))) :: nil))
+                                             ((tptr tvoid) :: (tptr tvoid) ::
+                                              nil) tint cc_default))) :: nil))
                 (Scall None
                   (Evar _qsort (Tfunction
-                                 (Tcons (tptr tvoid)
-                                   (Tcons tulong
-                                     (Tcons tulong
-                                       (Tcons
-                                         (tptr (Tfunction
-                                                 (Tcons (tptr tvoid)
-                                                   (Tcons (tptr tvoid) Tnil))
-                                                 tint cc_default)) Tnil))))
+                                 ((tptr tvoid) :: tulong :: tulong ::
+                                  (tptr (Tfunction
+                                          ((tptr tvoid) :: (tptr tvoid) ::
+                                           nil) tint cc_default)) :: nil)
                                  tvoid cc_default))
                   ((Ebinop Oadd
                      (Ecast (Etempvar _base (tptr tvoid)) (tptr tuchar))
@@ -305,9 +287,8 @@ Definition f_qsort := {|
                      (Econst_int (Int.repr 1) tint) tint) ::
                    (Etempvar _size tulong) ::
                    (Etempvar _compar (tptr (Tfunction
-                                             (Tcons (tptr tvoid)
-                                               (Tcons (tptr tvoid) Tnil))
-                                             tint cc_default))) :: nil)))))))
+                                             ((tptr tvoid) :: (tptr tvoid) ::
+                                              nil) tint cc_default))) :: nil)))))))
       Sskip)))
 |}.
 
@@ -375,24 +356,18 @@ Definition f_main := {|
     (Ssequence
       (Scall None
         (Evar _qsort (Tfunction
-                       (Tcons (tptr tvoid)
-                         (Tcons tulong
-                           (Tcons tulong
-                             (Tcons
-                               (tptr (Tfunction
-                                       (Tcons (tptr tvoid)
-                                         (Tcons (tptr tvoid) Tnil)) tint
-                                       cc_default)) Tnil)))) tvoid
-                       cc_default))
+                       ((tptr tvoid) :: tulong :: tulong ::
+                        (tptr (Tfunction
+                                ((tptr tvoid) :: (tptr tvoid) :: nil) tint
+                                cc_default)) :: nil) tvoid cc_default))
         ((Ecast (Evar _a (tarray tdouble 666666)) (tptr tvoid)) ::
          (Econst_int (Int.repr 666666) tint) :: (Esizeof tdouble tulong) ::
          (Eaddrof
            (Evar _compar_double (Tfunction
-                                  (Tcons (tptr tvoid)
-                                    (Tcons (tptr tvoid) Tnil)) tint
+                                  ((tptr tvoid) :: (tptr tvoid) :: nil) tint
                                   cc_default))
-           (tptr (Tfunction (Tcons (tptr tvoid) (Tcons (tptr tvoid) Tnil))
-                   tint cc_default))) :: nil))
+           (tptr (Tfunction ((tptr tvoid) :: (tptr tvoid) :: nil) tint
+                   cc_default))) :: nil))
       (Ssequence
         (Ssequence
           (Sset _i (Econst_int (Int.repr 0) tint))
@@ -408,7 +383,7 @@ Definition f_main := {|
                     (Ebinop Oadd (Evar _a (tarray tdouble 666666))
                       (Etempvar _i tint) (tptr tdouble)) tdouble))
                 (Scall None
-                  (Evar _printf (Tfunction (Tcons (tptr tschar) Tnil) tint
+                  (Evar _printf (Tfunction ((tptr tschar) :: nil) tint
                                   {|cc_vararg:=(Some 1); cc_unproto:=false; cc_structret:=false|}))
                   ((Evar ___stringlit_1 (tarray tschar 4)) ::
                    (Etempvar _t'1 tdouble) :: nil))))
@@ -425,273 +400,258 @@ nil.
 Definition global_definitions : list (ident * globdef fundef type) :=
 ((___compcert_va_int32,
    Gfun(External (EF_runtime "__compcert_va_int32"
-                   (mksignature (AST.Tlong :: nil) AST.Tint cc_default))
-     (Tcons (tptr tvoid) Tnil) tuint cc_default)) ::
+                   (mksignature (AST.Xptr :: nil) AST.Xint cc_default))
+     ((tptr tvoid) :: nil) tuint cc_default)) ::
  (___compcert_va_int64,
    Gfun(External (EF_runtime "__compcert_va_int64"
-                   (mksignature (AST.Tlong :: nil) AST.Tlong cc_default))
-     (Tcons (tptr tvoid) Tnil) tulong cc_default)) ::
+                   (mksignature (AST.Xptr :: nil) AST.Xlong cc_default))
+     ((tptr tvoid) :: nil) tulong cc_default)) ::
  (___compcert_va_float64,
    Gfun(External (EF_runtime "__compcert_va_float64"
-                   (mksignature (AST.Tlong :: nil) AST.Tfloat cc_default))
-     (Tcons (tptr tvoid) Tnil) tdouble cc_default)) ::
+                   (mksignature (AST.Xptr :: nil) AST.Xfloat cc_default))
+     ((tptr tvoid) :: nil) tdouble cc_default)) ::
  (___compcert_va_composite,
    Gfun(External (EF_runtime "__compcert_va_composite"
-                   (mksignature (AST.Tlong :: AST.Tlong :: nil) AST.Tlong
-                     cc_default)) (Tcons (tptr tvoid) (Tcons tulong Tnil))
+                   (mksignature (AST.Xptr :: AST.Xlong :: nil) AST.Xptr
+                     cc_default)) ((tptr tvoid) :: tulong :: nil)
      (tptr tvoid) cc_default)) ::
  (___compcert_i64_dtos,
    Gfun(External (EF_runtime "__compcert_i64_dtos"
-                   (mksignature (AST.Tfloat :: nil) AST.Tlong cc_default))
-     (Tcons tdouble Tnil) tlong cc_default)) ::
+                   (mksignature (AST.Xfloat :: nil) AST.Xlong cc_default))
+     (tdouble :: nil) tlong cc_default)) ::
  (___compcert_i64_dtou,
    Gfun(External (EF_runtime "__compcert_i64_dtou"
-                   (mksignature (AST.Tfloat :: nil) AST.Tlong cc_default))
-     (Tcons tdouble Tnil) tulong cc_default)) ::
+                   (mksignature (AST.Xfloat :: nil) AST.Xlong cc_default))
+     (tdouble :: nil) tulong cc_default)) ::
  (___compcert_i64_stod,
    Gfun(External (EF_runtime "__compcert_i64_stod"
-                   (mksignature (AST.Tlong :: nil) AST.Tfloat cc_default))
-     (Tcons tlong Tnil) tdouble cc_default)) ::
+                   (mksignature (AST.Xlong :: nil) AST.Xfloat cc_default))
+     (tlong :: nil) tdouble cc_default)) ::
  (___compcert_i64_utod,
    Gfun(External (EF_runtime "__compcert_i64_utod"
-                   (mksignature (AST.Tlong :: nil) AST.Tfloat cc_default))
-     (Tcons tulong Tnil) tdouble cc_default)) ::
+                   (mksignature (AST.Xlong :: nil) AST.Xfloat cc_default))
+     (tulong :: nil) tdouble cc_default)) ::
  (___compcert_i64_stof,
    Gfun(External (EF_runtime "__compcert_i64_stof"
-                   (mksignature (AST.Tlong :: nil) AST.Tsingle cc_default))
-     (Tcons tlong Tnil) tfloat cc_default)) ::
+                   (mksignature (AST.Xlong :: nil) AST.Xsingle cc_default))
+     (tlong :: nil) tfloat cc_default)) ::
  (___compcert_i64_utof,
    Gfun(External (EF_runtime "__compcert_i64_utof"
-                   (mksignature (AST.Tlong :: nil) AST.Tsingle cc_default))
-     (Tcons tulong Tnil) tfloat cc_default)) ::
+                   (mksignature (AST.Xlong :: nil) AST.Xsingle cc_default))
+     (tulong :: nil) tfloat cc_default)) ::
  (___compcert_i64_sdiv,
    Gfun(External (EF_runtime "__compcert_i64_sdiv"
-                   (mksignature (AST.Tlong :: AST.Tlong :: nil) AST.Tlong
-                     cc_default)) (Tcons tlong (Tcons tlong Tnil)) tlong
-     cc_default)) ::
+                   (mksignature (AST.Xlong :: AST.Xlong :: nil) AST.Xlong
+                     cc_default)) (tlong :: tlong :: nil) tlong cc_default)) ::
  (___compcert_i64_udiv,
    Gfun(External (EF_runtime "__compcert_i64_udiv"
-                   (mksignature (AST.Tlong :: AST.Tlong :: nil) AST.Tlong
-                     cc_default)) (Tcons tulong (Tcons tulong Tnil)) tulong
+                   (mksignature (AST.Xlong :: AST.Xlong :: nil) AST.Xlong
+                     cc_default)) (tulong :: tulong :: nil) tulong
      cc_default)) ::
  (___compcert_i64_smod,
    Gfun(External (EF_runtime "__compcert_i64_smod"
-                   (mksignature (AST.Tlong :: AST.Tlong :: nil) AST.Tlong
-                     cc_default)) (Tcons tlong (Tcons tlong Tnil)) tlong
-     cc_default)) ::
+                   (mksignature (AST.Xlong :: AST.Xlong :: nil) AST.Xlong
+                     cc_default)) (tlong :: tlong :: nil) tlong cc_default)) ::
  (___compcert_i64_umod,
    Gfun(External (EF_runtime "__compcert_i64_umod"
-                   (mksignature (AST.Tlong :: AST.Tlong :: nil) AST.Tlong
-                     cc_default)) (Tcons tulong (Tcons tulong Tnil)) tulong
+                   (mksignature (AST.Xlong :: AST.Xlong :: nil) AST.Xlong
+                     cc_default)) (tulong :: tulong :: nil) tulong
      cc_default)) ::
  (___compcert_i64_shl,
    Gfun(External (EF_runtime "__compcert_i64_shl"
-                   (mksignature (AST.Tlong :: AST.Tint :: nil) AST.Tlong
-                     cc_default)) (Tcons tlong (Tcons tint Tnil)) tlong
-     cc_default)) ::
+                   (mksignature (AST.Xlong :: AST.Xint :: nil) AST.Xlong
+                     cc_default)) (tlong :: tint :: nil) tlong cc_default)) ::
  (___compcert_i64_shr,
    Gfun(External (EF_runtime "__compcert_i64_shr"
-                   (mksignature (AST.Tlong :: AST.Tint :: nil) AST.Tlong
-                     cc_default)) (Tcons tulong (Tcons tint Tnil)) tulong
-     cc_default)) ::
+                   (mksignature (AST.Xlong :: AST.Xint :: nil) AST.Xlong
+                     cc_default)) (tulong :: tint :: nil) tulong cc_default)) ::
  (___compcert_i64_sar,
    Gfun(External (EF_runtime "__compcert_i64_sar"
-                   (mksignature (AST.Tlong :: AST.Tint :: nil) AST.Tlong
-                     cc_default)) (Tcons tlong (Tcons tint Tnil)) tlong
-     cc_default)) ::
+                   (mksignature (AST.Xlong :: AST.Xint :: nil) AST.Xlong
+                     cc_default)) (tlong :: tint :: nil) tlong cc_default)) ::
  (___compcert_i64_smulh,
    Gfun(External (EF_runtime "__compcert_i64_smulh"
-                   (mksignature (AST.Tlong :: AST.Tlong :: nil) AST.Tlong
-                     cc_default)) (Tcons tlong (Tcons tlong Tnil)) tlong
-     cc_default)) ::
+                   (mksignature (AST.Xlong :: AST.Xlong :: nil) AST.Xlong
+                     cc_default)) (tlong :: tlong :: nil) tlong cc_default)) ::
  (___compcert_i64_umulh,
    Gfun(External (EF_runtime "__compcert_i64_umulh"
-                   (mksignature (AST.Tlong :: AST.Tlong :: nil) AST.Tlong
-                     cc_default)) (Tcons tulong (Tcons tulong Tnil)) tulong
+                   (mksignature (AST.Xlong :: AST.Xlong :: nil) AST.Xlong
+                     cc_default)) (tulong :: tulong :: nil) tulong
      cc_default)) :: (___stringlit_1, Gvar v___stringlit_1) ::
  (___builtin_bswap64,
    Gfun(External (EF_builtin "__builtin_bswap64"
-                   (mksignature (AST.Tlong :: nil) AST.Tlong cc_default))
-     (Tcons tulong Tnil) tulong cc_default)) ::
+                   (mksignature (AST.Xlong :: nil) AST.Xlong cc_default))
+     (tulong :: nil) tulong cc_default)) ::
  (___builtin_bswap,
    Gfun(External (EF_builtin "__builtin_bswap"
-                   (mksignature (AST.Tint :: nil) AST.Tint cc_default))
-     (Tcons tuint Tnil) tuint cc_default)) ::
+                   (mksignature (AST.Xint :: nil) AST.Xint cc_default))
+     (tuint :: nil) tuint cc_default)) ::
  (___builtin_bswap32,
    Gfun(External (EF_builtin "__builtin_bswap32"
-                   (mksignature (AST.Tint :: nil) AST.Tint cc_default))
-     (Tcons tuint Tnil) tuint cc_default)) ::
+                   (mksignature (AST.Xint :: nil) AST.Xint cc_default))
+     (tuint :: nil) tuint cc_default)) ::
  (___builtin_bswap16,
    Gfun(External (EF_builtin "__builtin_bswap16"
-                   (mksignature (AST.Tint :: nil) AST.Tint16unsigned
-                     cc_default)) (Tcons tushort Tnil) tushort cc_default)) ::
+                   (mksignature (AST.Xint16unsigned :: nil)
+                     AST.Xint16unsigned cc_default)) (tushort :: nil) tushort
+     cc_default)) ::
  (___builtin_clz,
    Gfun(External (EF_builtin "__builtin_clz"
-                   (mksignature (AST.Tint :: nil) AST.Tint cc_default))
-     (Tcons tuint Tnil) tint cc_default)) ::
+                   (mksignature (AST.Xint :: nil) AST.Xint cc_default))
+     (tuint :: nil) tint cc_default)) ::
  (___builtin_clzl,
    Gfun(External (EF_builtin "__builtin_clzl"
-                   (mksignature (AST.Tlong :: nil) AST.Tint cc_default))
-     (Tcons tulong Tnil) tint cc_default)) ::
+                   (mksignature (AST.Xlong :: nil) AST.Xint cc_default))
+     (tulong :: nil) tint cc_default)) ::
  (___builtin_clzll,
    Gfun(External (EF_builtin "__builtin_clzll"
-                   (mksignature (AST.Tlong :: nil) AST.Tint cc_default))
-     (Tcons tulong Tnil) tint cc_default)) ::
+                   (mksignature (AST.Xlong :: nil) AST.Xint cc_default))
+     (tulong :: nil) tint cc_default)) ::
  (___builtin_ctz,
    Gfun(External (EF_builtin "__builtin_ctz"
-                   (mksignature (AST.Tint :: nil) AST.Tint cc_default))
-     (Tcons tuint Tnil) tint cc_default)) ::
+                   (mksignature (AST.Xint :: nil) AST.Xint cc_default))
+     (tuint :: nil) tint cc_default)) ::
  (___builtin_ctzl,
    Gfun(External (EF_builtin "__builtin_ctzl"
-                   (mksignature (AST.Tlong :: nil) AST.Tint cc_default))
-     (Tcons tulong Tnil) tint cc_default)) ::
+                   (mksignature (AST.Xlong :: nil) AST.Xint cc_default))
+     (tulong :: nil) tint cc_default)) ::
  (___builtin_ctzll,
    Gfun(External (EF_builtin "__builtin_ctzll"
-                   (mksignature (AST.Tlong :: nil) AST.Tint cc_default))
-     (Tcons tulong Tnil) tint cc_default)) ::
+                   (mksignature (AST.Xlong :: nil) AST.Xint cc_default))
+     (tulong :: nil) tint cc_default)) ::
  (___builtin_fabs,
    Gfun(External (EF_builtin "__builtin_fabs"
-                   (mksignature (AST.Tfloat :: nil) AST.Tfloat cc_default))
-     (Tcons tdouble Tnil) tdouble cc_default)) ::
+                   (mksignature (AST.Xfloat :: nil) AST.Xfloat cc_default))
+     (tdouble :: nil) tdouble cc_default)) ::
  (___builtin_fabsf,
    Gfun(External (EF_builtin "__builtin_fabsf"
-                   (mksignature (AST.Tsingle :: nil) AST.Tsingle cc_default))
-     (Tcons tfloat Tnil) tfloat cc_default)) ::
+                   (mksignature (AST.Xsingle :: nil) AST.Xsingle cc_default))
+     (tfloat :: nil) tfloat cc_default)) ::
  (___builtin_fsqrt,
    Gfun(External (EF_builtin "__builtin_fsqrt"
-                   (mksignature (AST.Tfloat :: nil) AST.Tfloat cc_default))
-     (Tcons tdouble Tnil) tdouble cc_default)) ::
+                   (mksignature (AST.Xfloat :: nil) AST.Xfloat cc_default))
+     (tdouble :: nil) tdouble cc_default)) ::
  (___builtin_sqrt,
    Gfun(External (EF_builtin "__builtin_sqrt"
-                   (mksignature (AST.Tfloat :: nil) AST.Tfloat cc_default))
-     (Tcons tdouble Tnil) tdouble cc_default)) ::
+                   (mksignature (AST.Xfloat :: nil) AST.Xfloat cc_default))
+     (tdouble :: nil) tdouble cc_default)) ::
  (___builtin_memcpy_aligned,
    Gfun(External (EF_builtin "__builtin_memcpy_aligned"
                    (mksignature
-                     (AST.Tlong :: AST.Tlong :: AST.Tlong :: AST.Tlong ::
-                      nil) AST.Tvoid cc_default))
-     (Tcons (tptr tvoid)
-       (Tcons (tptr tvoid) (Tcons tulong (Tcons tulong Tnil)))) tvoid
+                     (AST.Xptr :: AST.Xptr :: AST.Xlong :: AST.Xlong :: nil)
+                     AST.Xvoid cc_default))
+     ((tptr tvoid) :: (tptr tvoid) :: tulong :: tulong :: nil) tvoid
      cc_default)) ::
  (___builtin_sel,
    Gfun(External (EF_builtin "__builtin_sel"
-                   (mksignature (AST.Tint :: nil) AST.Tvoid
+                   (mksignature (AST.Xbool :: nil) AST.Xvoid
                      {|cc_vararg:=(Some 1); cc_unproto:=false; cc_structret:=false|}))
-     (Tcons tbool Tnil) tvoid
+     (tbool :: nil) tvoid
      {|cc_vararg:=(Some 1); cc_unproto:=false; cc_structret:=false|})) ::
  (___builtin_annot,
    Gfun(External (EF_builtin "__builtin_annot"
-                   (mksignature (AST.Tlong :: nil) AST.Tvoid
+                   (mksignature (AST.Xptr :: nil) AST.Xvoid
                      {|cc_vararg:=(Some 1); cc_unproto:=false; cc_structret:=false|}))
-     (Tcons (tptr tschar) Tnil) tvoid
+     ((tptr tschar) :: nil) tvoid
      {|cc_vararg:=(Some 1); cc_unproto:=false; cc_structret:=false|})) ::
  (___builtin_annot_intval,
    Gfun(External (EF_builtin "__builtin_annot_intval"
-                   (mksignature (AST.Tlong :: AST.Tint :: nil) AST.Tint
-                     cc_default)) (Tcons (tptr tschar) (Tcons tint Tnil))
-     tint cc_default)) ::
+                   (mksignature (AST.Xptr :: AST.Xint :: nil) AST.Xint
+                     cc_default)) ((tptr tschar) :: tint :: nil) tint
+     cc_default)) ::
  (___builtin_membar,
    Gfun(External (EF_builtin "__builtin_membar"
-                   (mksignature nil AST.Tvoid cc_default)) Tnil tvoid
+                   (mksignature nil AST.Xvoid cc_default)) nil tvoid
      cc_default)) ::
  (___builtin_va_start,
    Gfun(External (EF_builtin "__builtin_va_start"
-                   (mksignature (AST.Tlong :: nil) AST.Tvoid cc_default))
-     (Tcons (tptr tvoid) Tnil) tvoid cc_default)) ::
+                   (mksignature (AST.Xptr :: nil) AST.Xvoid cc_default))
+     ((tptr tvoid) :: nil) tvoid cc_default)) ::
  (___builtin_va_arg,
    Gfun(External (EF_builtin "__builtin_va_arg"
-                   (mksignature (AST.Tlong :: AST.Tint :: nil) AST.Tvoid
-                     cc_default)) (Tcons (tptr tvoid) (Tcons tuint Tnil))
-     tvoid cc_default)) ::
+                   (mksignature (AST.Xptr :: AST.Xint :: nil) AST.Xvoid
+                     cc_default)) ((tptr tvoid) :: tuint :: nil) tvoid
+     cc_default)) ::
  (___builtin_va_copy,
    Gfun(External (EF_builtin "__builtin_va_copy"
-                   (mksignature (AST.Tlong :: AST.Tlong :: nil) AST.Tvoid
-                     cc_default))
-     (Tcons (tptr tvoid) (Tcons (tptr tvoid) Tnil)) tvoid cc_default)) ::
+                   (mksignature (AST.Xptr :: AST.Xptr :: nil) AST.Xvoid
+                     cc_default)) ((tptr tvoid) :: (tptr tvoid) :: nil) tvoid
+     cc_default)) ::
  (___builtin_va_end,
    Gfun(External (EF_builtin "__builtin_va_end"
-                   (mksignature (AST.Tlong :: nil) AST.Tvoid cc_default))
-     (Tcons (tptr tvoid) Tnil) tvoid cc_default)) ::
+                   (mksignature (AST.Xptr :: nil) AST.Xvoid cc_default))
+     ((tptr tvoid) :: nil) tvoid cc_default)) ::
  (___builtin_unreachable,
    Gfun(External (EF_builtin "__builtin_unreachable"
-                   (mksignature nil AST.Tvoid cc_default)) Tnil tvoid
+                   (mksignature nil AST.Xvoid cc_default)) nil tvoid
      cc_default)) ::
  (___builtin_expect,
    Gfun(External (EF_builtin "__builtin_expect"
-                   (mksignature (AST.Tlong :: AST.Tlong :: nil) AST.Tlong
-                     cc_default)) (Tcons tlong (Tcons tlong Tnil)) tlong
-     cc_default)) ::
- (___builtin_fence,
-   Gfun(External (EF_builtin "__builtin_fence"
-                   (mksignature nil AST.Tvoid cc_default)) Tnil tvoid
-     cc_default)) ::
+                   (mksignature (AST.Xlong :: AST.Xlong :: nil) AST.Xlong
+                     cc_default)) (tlong :: tlong :: nil) tlong cc_default)) ::
  (___builtin_cls,
    Gfun(External (EF_builtin "__builtin_cls"
-                   (mksignature (AST.Tint :: nil) AST.Tint cc_default))
-     (Tcons tint Tnil) tint cc_default)) ::
+                   (mksignature (AST.Xint :: nil) AST.Xint cc_default))
+     (tint :: nil) tint cc_default)) ::
  (___builtin_clsl,
    Gfun(External (EF_builtin "__builtin_clsl"
-                   (mksignature (AST.Tlong :: nil) AST.Tint cc_default))
-     (Tcons tlong Tnil) tint cc_default)) ::
+                   (mksignature (AST.Xlong :: nil) AST.Xint cc_default))
+     (tlong :: nil) tint cc_default)) ::
  (___builtin_clsll,
    Gfun(External (EF_builtin "__builtin_clsll"
-                   (mksignature (AST.Tlong :: nil) AST.Tint cc_default))
-     (Tcons tlong Tnil) tint cc_default)) ::
+                   (mksignature (AST.Xlong :: nil) AST.Xint cc_default))
+     (tlong :: nil) tint cc_default)) ::
  (___builtin_fmadd,
    Gfun(External (EF_builtin "__builtin_fmadd"
                    (mksignature
-                     (AST.Tfloat :: AST.Tfloat :: AST.Tfloat :: nil)
-                     AST.Tfloat cc_default))
-     (Tcons tdouble (Tcons tdouble (Tcons tdouble Tnil))) tdouble
-     cc_default)) ::
+                     (AST.Xfloat :: AST.Xfloat :: AST.Xfloat :: nil)
+                     AST.Xfloat cc_default))
+     (tdouble :: tdouble :: tdouble :: nil) tdouble cc_default)) ::
  (___builtin_fmsub,
    Gfun(External (EF_builtin "__builtin_fmsub"
                    (mksignature
-                     (AST.Tfloat :: AST.Tfloat :: AST.Tfloat :: nil)
-                     AST.Tfloat cc_default))
-     (Tcons tdouble (Tcons tdouble (Tcons tdouble Tnil))) tdouble
-     cc_default)) ::
+                     (AST.Xfloat :: AST.Xfloat :: AST.Xfloat :: nil)
+                     AST.Xfloat cc_default))
+     (tdouble :: tdouble :: tdouble :: nil) tdouble cc_default)) ::
  (___builtin_fnmadd,
    Gfun(External (EF_builtin "__builtin_fnmadd"
                    (mksignature
-                     (AST.Tfloat :: AST.Tfloat :: AST.Tfloat :: nil)
-                     AST.Tfloat cc_default))
-     (Tcons tdouble (Tcons tdouble (Tcons tdouble Tnil))) tdouble
-     cc_default)) ::
+                     (AST.Xfloat :: AST.Xfloat :: AST.Xfloat :: nil)
+                     AST.Xfloat cc_default))
+     (tdouble :: tdouble :: tdouble :: nil) tdouble cc_default)) ::
  (___builtin_fnmsub,
    Gfun(External (EF_builtin "__builtin_fnmsub"
                    (mksignature
-                     (AST.Tfloat :: AST.Tfloat :: AST.Tfloat :: nil)
-                     AST.Tfloat cc_default))
-     (Tcons tdouble (Tcons tdouble (Tcons tdouble Tnil))) tdouble
-     cc_default)) ::
+                     (AST.Xfloat :: AST.Xfloat :: AST.Xfloat :: nil)
+                     AST.Xfloat cc_default))
+     (tdouble :: tdouble :: tdouble :: nil) tdouble cc_default)) ::
  (___builtin_fmax,
    Gfun(External (EF_builtin "__builtin_fmax"
-                   (mksignature (AST.Tfloat :: AST.Tfloat :: nil) AST.Tfloat
-                     cc_default)) (Tcons tdouble (Tcons tdouble Tnil))
-     tdouble cc_default)) ::
+                   (mksignature (AST.Xfloat :: AST.Xfloat :: nil) AST.Xfloat
+                     cc_default)) (tdouble :: tdouble :: nil) tdouble
+     cc_default)) ::
  (___builtin_fmin,
    Gfun(External (EF_builtin "__builtin_fmin"
-                   (mksignature (AST.Tfloat :: AST.Tfloat :: nil) AST.Tfloat
-                     cc_default)) (Tcons tdouble (Tcons tdouble Tnil))
-     tdouble cc_default)) ::
+                   (mksignature (AST.Xfloat :: AST.Xfloat :: nil) AST.Xfloat
+                     cc_default)) (tdouble :: tdouble :: nil) tdouble
+     cc_default)) ::
  (___builtin_debug,
    Gfun(External (EF_external "__builtin_debug"
-                   (mksignature (AST.Tint :: nil) AST.Tvoid
+                   (mksignature (AST.Xint :: nil) AST.Xvoid
                      {|cc_vararg:=(Some 1); cc_unproto:=false; cc_structret:=false|}))
-     (Tcons tint Tnil) tvoid
+     (tint :: nil) tvoid
      {|cc_vararg:=(Some 1); cc_unproto:=false; cc_structret:=false|})) ::
  (_memcpy,
    Gfun(External (EF_external "memcpy"
-                   (mksignature (AST.Tlong :: AST.Tlong :: AST.Tlong :: nil)
-                     AST.Tlong cc_default))
-     (Tcons (tptr tvoid) (Tcons (tptr tvoid) (Tcons tulong Tnil)))
-     (tptr tvoid) cc_default)) :: (_qsort, Gfun(Internal f_qsort)) ::
+                   (mksignature (AST.Xptr :: AST.Xptr :: AST.Xlong :: nil)
+                     AST.Xptr cc_default))
+     ((tptr tvoid) :: (tptr tvoid) :: tulong :: nil) (tptr tvoid)
+     cc_default)) :: (_qsort, Gfun(Internal f_qsort)) ::
  (_printf,
    Gfun(External (EF_external "printf"
-                   (mksignature (AST.Tlong :: nil) AST.Tint
+                   (mksignature (AST.Xptr :: nil) AST.Xint
                      {|cc_vararg:=(Some 1); cc_unproto:=false; cc_structret:=false|}))
-     (Tcons (tptr tschar) Tnil) tint
+     ((tptr tschar) :: nil) tint
      {|cc_vararg:=(Some 1); cc_unproto:=false; cc_structret:=false|})) ::
  (_a, Gvar v_a) :: (_compar_double, Gfun(Internal f_compar_double)) ::
  (_main, Gfun(Internal f_main)) :: nil).
@@ -701,22 +661,21 @@ Definition public_idents : list ident :=
  ___builtin_debug :: ___builtin_fmin :: ___builtin_fmax ::
  ___builtin_fnmsub :: ___builtin_fnmadd :: ___builtin_fmsub ::
  ___builtin_fmadd :: ___builtin_clsll :: ___builtin_clsl :: ___builtin_cls ::
- ___builtin_fence :: ___builtin_expect :: ___builtin_unreachable ::
- ___builtin_va_end :: ___builtin_va_copy :: ___builtin_va_arg ::
- ___builtin_va_start :: ___builtin_membar :: ___builtin_annot_intval ::
- ___builtin_annot :: ___builtin_sel :: ___builtin_memcpy_aligned ::
- ___builtin_sqrt :: ___builtin_fsqrt :: ___builtin_fabsf ::
- ___builtin_fabs :: ___builtin_ctzll :: ___builtin_ctzl :: ___builtin_ctz ::
- ___builtin_clzll :: ___builtin_clzl :: ___builtin_clz ::
- ___builtin_bswap16 :: ___builtin_bswap32 :: ___builtin_bswap ::
- ___builtin_bswap64 :: ___compcert_i64_umulh :: ___compcert_i64_smulh ::
- ___compcert_i64_sar :: ___compcert_i64_shr :: ___compcert_i64_shl ::
- ___compcert_i64_umod :: ___compcert_i64_smod :: ___compcert_i64_udiv ::
- ___compcert_i64_sdiv :: ___compcert_i64_utof :: ___compcert_i64_stof ::
- ___compcert_i64_utod :: ___compcert_i64_stod :: ___compcert_i64_dtou ::
- ___compcert_i64_dtos :: ___compcert_va_composite ::
- ___compcert_va_float64 :: ___compcert_va_int64 :: ___compcert_va_int32 ::
- nil).
+ ___builtin_expect :: ___builtin_unreachable :: ___builtin_va_end ::
+ ___builtin_va_copy :: ___builtin_va_arg :: ___builtin_va_start ::
+ ___builtin_membar :: ___builtin_annot_intval :: ___builtin_annot ::
+ ___builtin_sel :: ___builtin_memcpy_aligned :: ___builtin_sqrt ::
+ ___builtin_fsqrt :: ___builtin_fabsf :: ___builtin_fabs ::
+ ___builtin_ctzll :: ___builtin_ctzl :: ___builtin_ctz :: ___builtin_clzll ::
+ ___builtin_clzl :: ___builtin_clz :: ___builtin_bswap16 ::
+ ___builtin_bswap32 :: ___builtin_bswap :: ___builtin_bswap64 ::
+ ___compcert_i64_umulh :: ___compcert_i64_smulh :: ___compcert_i64_sar ::
+ ___compcert_i64_shr :: ___compcert_i64_shl :: ___compcert_i64_umod ::
+ ___compcert_i64_smod :: ___compcert_i64_udiv :: ___compcert_i64_sdiv ::
+ ___compcert_i64_utof :: ___compcert_i64_stof :: ___compcert_i64_utod ::
+ ___compcert_i64_stod :: ___compcert_i64_dtou :: ___compcert_i64_dtos ::
+ ___compcert_va_composite :: ___compcert_va_float64 ::
+ ___compcert_va_int64 :: ___compcert_va_int32 :: nil).
 
 Definition prog : Clight.program := 
   mkprogram composites global_definitions public_idents _main Logic.I.

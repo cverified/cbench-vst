@@ -173,7 +173,7 @@ Definition main_printf_loop :=
                     (Ebinop Oadd (Evar _a (tarray tdouble 666666))
                       (Etempvar _i tint) (tptr tdouble)) tdouble))
                 (Scall None
-                  (Evar _printf (Tfunction (Tcons (tptr tschar) Tnil) tint
+                  (Evar _printf (Tfunction [tptr tschar] tint
                                   {|cc_vararg:=(Some 1); cc_unproto:=false; cc_structret:=false|}))
                   ((Evar ___stringlit_1 (tarray tschar 4)) ::
                    (Etempvar _t'1 tdouble) :: nil))))
@@ -195,7 +195,7 @@ Definition main_printf_loop :=
                     (Ebinop Oadd (Evar _a (tarray tdouble 666666))
                       (Etempvar _i tint) (tptr tdouble)) tdouble))
                 (Scall None
-                  (Evar _printf (Tfunction (Tcons (tptr tschar) Tnil) tint
+                  (Evar _printf (Tfunction [tptr tschar] tint
                                   {|cc_vararg:=true; cc_unproto:=false; cc_structret:=false|}))
                   ((Evar ___stringlit_1 (tarray tschar 4)) ::
                    (Etempvar _t'1 tdouble) :: nil))))

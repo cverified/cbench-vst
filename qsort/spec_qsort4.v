@@ -61,7 +61,7 @@ Definition memcpy_spec {cs: compspecs} :=
 Require Import float_lemmas.
 Require Import Permutation.
 Definition compare_type :=
-   tptr (Tfunction (Tcons (tptr tvoid) (Tcons (tptr tvoid) Tnil)) tint cc_default).
+   tptr (Tfunction [tptr tvoid; tptr tvoid] tint cc_default).
 
 Record le_order (t: Type) := {
  ord_le: t -> t -> Prop;

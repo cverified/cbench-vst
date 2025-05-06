@@ -72,11 +72,8 @@ Qed.
 
 Definition call_memcpy_ij :=
                          (Scall None
-                            (Evar _memcpy (Tfunction
-                                            (Tcons (tptr tvoid)
-                                              (Tcons (tptr tvoid)
-                                                (Tcons tulong Tnil)))
-                                            (tptr tvoid) cc_default))
+                            (Evar _memcpy (Tfunction [tptr tvoid; tptr tvoid; tulong]
+			                       (tptr tvoid) cc_default))
                             ((Ebinop Oadd
                                (Ecast (Etempvar _base (tptr tvoid))
                                  (tptr tuchar))
@@ -92,10 +89,7 @@ Definition call_memcpy_ij :=
                              nil)).
 (* 
                            (Scall None
-                            (Evar _memcpy (Tfunction
-                                            (Tcons (tptr tvoid)
-                                              (Tcons (tptr tvoid)
-                                                (Tcons tuint Tnil)))
+                            (Evar _memcpy (Tfunction [tptr tvoid; tptr tvoid; tulong]
                                             (tptr tvoid) cc_default))
                             ((Ebinop Oadd
                                (Ecast (Etempvar _base (tptr tvoid))
@@ -344,10 +338,7 @@ Qed.
 Definition qsort_then2 :=
                         (Ssequence
                          (Scall None
-                          (Evar _memcpy (Tfunction
-                                          (Tcons (tptr tvoid)
-                                            (Tcons (tptr tvoid)
-                                              (Tcons tulong Tnil)))
+                          (Evar _memcpy (Tfunction  [tptr tvoid; tptr tvoid; tulong]
                                           (tptr tvoid) cc_default))
                           ((Evar _tmp (tarray tuchar 1024)) ::
                            (Ebinop Oadd
@@ -359,10 +350,7 @@ Definition qsort_then2 :=
                       (Ssequence call_memcpy_ij
                           (Ssequence
                             (Scall None
-                              (Evar _memcpy (Tfunction
-                                              (Tcons (tptr tvoid)
-                                                (Tcons (tptr tvoid)
-                                                  (Tcons tulong Tnil)))
+                              (Evar _memcpy (Tfunction [tptr tvoid; tptr tvoid; tulong]
                                               (tptr tvoid) cc_default))
                               ((Ebinop Oadd
                                  (Ecast (Etempvar _base (tptr tvoid))
